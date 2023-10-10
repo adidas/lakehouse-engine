@@ -1,0 +1,70 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/custom_expectations/expect_column_values_to_be_date_not_older_than/data",
+      "schema": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "salesorder",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "item",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "date",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "customer",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "article",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "amount",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      }
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "append",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/custom_expectations/expect_column_values_to_be_date_not_older_than/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/custom_expectations/expect_column_values_to_be_date_not_older_than/checkpoint"
+      }
+    }
+  ],
+  "exec_env": {
+    "spark.sql.streaming.schemaInference": true
+  }
+}

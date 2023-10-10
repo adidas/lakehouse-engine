@@ -1,0 +1,100 @@
+@Library(['GlobalJenkinsLibrary']) _
+
+pipeline {
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+        ansiColor('xterm')
+        timestamps()
+    }
+
+    agent {
+        node {
+            label 'lakehouse_base'
+        }
+    }
+
+    environment {
+        VERSION = env.BRANCH_NAME.replaceAll("[/-]", "_").toLowerCase()
+    }
+
+    stages {
+        stage('cleanup workspace') {
+            steps {
+                cleanWs(disableDeferredWipeout: true, deleteDirs: true)
+            }
+        }
+
+        stage('Clone') {
+            steps {
+                retry(3) {
+                    script {
+                        checkout([
+                                $class           : 'GitSCM',
+                                branches         : scm.branches,
+                                userRemoteConfigs: scm.userRemoteConfigs
+                        ])
+                    }
+                }
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh 'make build-image version=$VERSION'
+            }
+        }
+
+        stage('Create Docs') {
+            steps {
+                sh 'make docs version=$VERSION'
+            }
+        }
+
+        stage('Parallel') {
+            parallel {
+                stage('Lint') {
+                    steps {
+                        sh 'make lint version=$VERSION'
+                    }
+                }
+
+                stage('Test Security') {
+                    steps {
+                        sh 'make test-security version=$VERSION'
+                    }
+                }
+
+                stage('Test dependencies') {
+                    steps {
+                        sh 'make test-deps version=$VERSION'
+                    }
+                }
+
+                stage('Test') {
+                    steps {
+                        sh 'make test version=$VERSION'
+                    }
+                }
+            }
+        }
+
+        stage('Sonar') {
+            steps {
+                script {
+                    tools.sonar.run(env: 'COMMUNITY-PRD', version: '1.0', branch: env.BRANCH_NAME)
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'artefacts/docs/**/*'
+            junit 'artefacts/tests.xml'
+            step([$class: 'CoberturaPublisher', coberturaReportFile: 'artefacts/coverage.xml'])
+        }
+    }
+}

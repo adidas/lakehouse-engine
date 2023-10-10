@@ -1,0 +1,5 @@
+salesorder|item|article|amount|sample|date2|customer2|constant|length_customer2|sample_json_field1|sample_json_field2|sample_json_field3|sample_json_field4_field1|sample_json_field4_field2|item_amount_json
+1|1|article1|1000|{"field1":"value1","field2":"value2","field4":{"field1":"value1","field2":"value2"}}|20220101|customer1|just a constant|9|value1|value2||value1|value2|{"item":1,"amount":1000}
+1|2|article2|1000|{"field1":"value3","field2":"value4","field4":{"field1":"1value","field2":"2value"}}|20220102|customer2|just a constant|9|value3|value4||1value|2value|{"item":2,"amount":1000}
+2|1|article3|1200|{"field1":"value5","field3":6.25,"field4":{"field1":"1value1","field2":"2value2"}}|20220102|customer3|just a constant|9|value5||6.25|1value1|2value2|{"item":1,"amount":1200}
+2|1|article4|1500|{"field1":"value5","field3":6.25,"field4":{"field1":"1value1","field2":"2value2"}}|20220103|customer2|just a constant|9|value5||6.25|1value1|2value2|{"item":1,"amount":1500}

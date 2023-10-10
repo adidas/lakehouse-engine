@@ -1,0 +1,51 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/schema_evolution/full_load/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/schema_evolution/full_load/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "transformed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "cast",
+          "args": {
+            "cols": {
+              "code": "StringType"
+            }
+          }
+        },
+        {
+          "function": "rename",
+          "args": {
+            "cols": {
+              "ARTICLE": "article"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/schema_evolution/full_load/data"
+    }
+  ],
+  "exec_env": {
+    "spark.databricks.delta.schema.autoMerge.enabled": true
+  }
+}

@@ -1,0 +1,110 @@
+{
+    "input_specs": [
+        {
+            "spec_id": "sales_historical",
+            "read_type": "streaming",
+            "data_format": "csv",
+            "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/schema/sales_schema.json",
+            "options": {
+                "header": true,
+                "delimiter": "|",
+                "mode": "FAILFAST"
+            },
+            "location": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/source/sales_historical/"
+        },
+        {
+            "spec_id": "sales_new",
+            "read_type": "streaming",
+            "data_format": "csv",
+            "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/schema/sales_schema.json",
+            "options": {
+                "header": true,
+                "delimiter": "|",
+                "mode": "FAILFAST"
+            },
+            "location": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/source/sales_new/"
+        },
+        {
+            "spec_id": "customers",
+            "read_type": "batch",
+            "data_format": "csv",
+            "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/schema/customer_schema.json",
+            "options": {
+                "header": true,
+                "delimiter": "|",
+                "mode": "FAILFAST"
+            },
+            "location": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/source/customers/"
+        }
+    ],
+    "transform_specs": [
+        {
+            "spec_id": "incremented_historical",
+            "input_id": "sales_historical",
+            "transformers": [
+                {
+                    "function": "with_literals",
+                    "args": {
+                        "literals": {
+                            "is_historical": true
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "spec_id": "incremented_new",
+            "input_id": "sales_new",
+            "transformers": [
+                {
+                    "function": "with_literals",
+                    "args": {
+                        "literals": {
+                            "is_historical": false
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "spec_id": "union_dataframes",
+            "input_id": "incremented_historical",
+            "transformers": [
+                {
+                    "function": "union",
+                    "args": {"union_with": ["incremented_new"]}
+                }
+            ]
+        },
+        {
+            "spec_id": "join_with_customers",
+            "input_id": "union_dataframes",
+            "force_streaming_foreach_batch_processing": true,
+            "transformers": [
+                {
+                    "function": "join",
+                    "args": {
+                        "join_with": "customers",
+                        "join_type": "left outer",
+                        "join_condition": "a.customer = b.customer",
+                        "select_cols": ["a.*", "b.name as customer_name"]
+                    }
+                },
+                {"function": "with_row_id"}
+            ]
+        }
+    ],
+    "output_specs": [
+        {
+            "spec_id": "sales",
+            "input_id": "join_with_customers",
+            "write_type": "append",
+            "data_format": "delta",
+            "partitions": ["date"],
+            "options": {
+                "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/chain_transformations/streaming_batch/checkpoint"
+            },
+            "location": "file:///app/tests/lakehouse/out/feature/transformations/chain_transformations/streaming_batch/data"
+        }
+    ]
+}

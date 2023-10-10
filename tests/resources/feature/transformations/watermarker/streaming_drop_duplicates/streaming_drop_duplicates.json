@@ -1,0 +1,70 @@
+{
+    "input_specs": [
+      {
+        "spec_id": "orders_source",
+        "read_type": "streaming",
+        "data_format": "csv",
+        "options": {
+          "mode": "FAILFAST",
+          "header": true,
+          "delimiter": "|"
+        },
+        "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_drop_duplicates/source_schema.json",
+        "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_drop_duplicates/data"
+      }
+    ],
+    "transform_specs": [
+      {
+        "spec_id": "orders_duplicate_no_args",
+        "input_id": "orders_source",
+        "transformers": [
+          {
+            "function": "drop_duplicate_rows",
+            "args": {
+                 "watermarker": {"col": "date", "watermarking_time":"2 days"}
+            }
+          }
+        ]
+      }
+    ],
+  "dq_specs": [
+    {
+      "spec_id": "dq_validator",
+      "input_id": "orders_duplicate_no_args",
+      "dq_type": "validator",
+      "store_backend": "file_system",
+      "local_fs_root_dir": "/app/tests/lakehouse/out/feature/transformations/watermarker/streaming_drop_duplicates/dq",
+      "result_sink_db_table": "test_db.validator_full_overwrite",
+      "result_sink_explode": true,
+      "result_sink_extra_columns": ["validation_results.result.*"],
+      "source": "orders_source",
+      "dq_functions": [
+        {
+          "function": "expect_column_to_exist",
+          "args": {
+            "column": "date"
+          }
+        },
+        {
+          "function": "expect_table_row_count_to_be_between",
+          "args": {
+            "min_value": 0,
+            "max_value": 20
+          }
+        }
+      ]
+    }
+  ],
+    "output_specs": [
+      {
+        "spec_id": "orders_duplicate_no_args_write",
+        "input_id": "orders_duplicate_no_args",
+        "write_type": "append",
+        "data_format": "delta",
+        "options": {
+          "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_drop_duplicates/checkpoint"
+        },
+        "location": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_drop_duplicates/data"
+      }
+    ]
+  }

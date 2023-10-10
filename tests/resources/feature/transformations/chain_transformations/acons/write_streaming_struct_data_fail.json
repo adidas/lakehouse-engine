@@ -1,0 +1,144 @@
+{
+    "input_specs": [
+        {
+            "spec_id": "sales_source",
+            "read_type": "streaming",
+            "data_format": "csv",
+            "options": {
+                "mode": "FAILFAST",
+                "header": true,
+                "delimiter": "|"
+            },
+            "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/schema/struct_data_schema.json",
+            "location": "file:///app/tests/lakehouse/in/feature/transformations/chain_transformations/source/struct_data/"
+        }
+    ],
+    "transform_specs": [
+        {
+            "spec_id": "first_transform",
+            "input_id": "sales_source",
+            "force_streaming_foreach_batch_processing": true,
+            "transformers": [
+                {
+                    "function": "cast",
+                    "args": {
+                        "cols": {
+                            "date": "StringType",
+                            "amount": "StringType"
+                        }
+                    }
+                },
+                {
+                    "function": "rename",
+                    "args": {
+                        "cols": {
+                            "date": "date2",
+                            "customer": "customer2"
+                        }
+                    }
+                },
+                {
+                    "function": "with_expressions",
+                    "args": {
+                        "cols_and_exprs": {
+                            "constant": "'just a constant'",
+                            "length_customer2": "length(customer2)"
+                        }
+                    }
+                },
+                {
+                    "function": "from_json",
+                    "args": {
+                        "input_col": "sample",
+                        "schema": {
+                            "type": "struct",
+                            "fields": [
+                                {
+                                    "name": "field1",
+                                    "type": "string",
+                                    "nullable": true,
+                                    "metadata": {}
+                                },
+                                {
+                                    "name": "field2",
+                                    "type": "string",
+                                    "nullable": true,
+                                    "metadata": {}
+                                },
+                                {
+                                    "name": "field3",
+                                    "type": "double",
+                                    "nullable": true,
+                                    "metadata": {}
+                                },
+                                {
+                                    "name": "field4",
+                                    "type": {
+                                        "type": "struct",
+                                        "fields": [
+                                            {
+                                                "name": "field1",
+                                                "type": "string",
+                                                "nullable": true,
+                                                "metadata": {}
+                                            },
+                                            {
+                                                "name": "field2",
+                                                "type": "string",
+                                                "nullable": true,
+                                                "metadata": {}
+                                            }
+                                        ]
+                                    },
+                                    "nullable": true,
+                                    "metadata": {}
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "function": "to_json",
+                    "args": {
+                        "in_cols": [
+                            "item",
+                            "amount"
+                        ],
+                        "out_col": "item_amount_json"
+                    }
+                },
+                {
+                    "function": "flatten_schema",
+                    "args": {
+                        "max_level": 1
+                    }
+                }
+            ]
+        },
+        {
+            "spec_id": "second_transform",
+            "input_id": "first_transform",
+            "force_streaming_foreach_batch_processing": true,
+            "transformers": [
+                {
+                    "function": "column_filter_exp",
+                    "args": {
+                        "exp": ["salesorder","item","article","sample_json_field1","sample_json_field4","item_amount_json"]
+                    }
+                }
+            ]
+        }
+    ],
+    "output_specs": [
+        {
+            "spec_id": "sales_bronze",
+            "input_id": "second_transform",
+            "write_type": "append",
+            "data_format": "delta",
+            "location": "file:///app/tests/lakehouse/out/feature/transformations/chain_transformations/write_streaming_struct_data_fail/data",
+            "options": {
+                "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/chain_transformations/write_streaming_struct_data_fail/checkpoint"
+            }
+        }
+    ]
+}

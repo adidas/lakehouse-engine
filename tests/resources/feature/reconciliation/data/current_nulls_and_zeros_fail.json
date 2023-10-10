@@ -1,0 +1,20 @@
+[
+ {
+   "country": "pt",
+   "consumer": 1,
+   "date": "20211112",
+   "net_sales": 0
+ },
+ {
+   "country": "ge",
+   "consumer": 2,
+   "date": "20211113",
+   "net_sales": 0
+ },
+ {
+   "country": "pt",
+   "consumer": 3,
+   "date": "20211114",
+   "net_sales": null
+ }
+]

@@ -1,0 +1,58 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/joiners/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/joiners/data/sales"
+    },
+    {
+      "spec_id": "customers",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/joiners/customer_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/joiners/data/customers"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "join_with_customers",
+      "input_id": "sales",
+      "transformers": [
+        {
+          "function": "join",
+          "args": {
+            "join_with": "customers",
+            "join_type": "left outer",
+            "join_condition": "a.customer = b.customer",
+            "select_cols": ["a.*", "b.name"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales",
+      "input_id": "join_with_customers",
+      "write_type": "append",
+      "db_table": "test_db.streaming_join_without_column_rename",
+      "data_format": "delta",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/joiners/streaming_without_column_rename/checkpoint"
+      },
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/joiners/streaming_without_column_rename/data"
+    }
+  ]
+}

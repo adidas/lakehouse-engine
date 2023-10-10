@@ -1,0 +1,11 @@
+salesorder|item|date|customer|article|amount
+4|1|2017-04-30T12:00:00|customer3|article3|800
+4|2|2017-04-30T12:00:00|customer3|article7|700
+4|3|2017-04-30T12:00:00|customer3|article1|300
+4|4|2017-04-30T12:00:00|customer3|article2|500
+5|1|2017-05-10T12:00:00|customer4|article6|1500
+5|2|2017-05-10T12:00:00|customer4|article3|1000
+5|3|2017-05-10T12:00:00|customer4|article5|800
+6|1|2017-06-01T12:00:00|customer2|article4|1000
+6|2|2017-06-01T12:00:00|customer2|article1|500
+6|3|2017-06-01T12:00:00|customer2|article2|900

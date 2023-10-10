@@ -1,0 +1,38 @@
+[
+ {
+   "salesorder": 1,
+   "item": 1,
+   "article": "article1",
+   "amount": 1000,
+   "date": 20160601,
+   "customer": "customer1",
+   "dummy_string": "this is a string",
+   "dummy_int": 100,
+   "dummy_double": 10.2,
+   "dummy_boolean": true
+ },
+ {
+   "salesorder": 1,
+   "item": 2,
+   "article": "article2",
+   "amount": 2000,
+   "date": 20160601,
+   "customer": "customer1",
+   "dummy_string": "this is a string",
+   "dummy_int": 100,
+   "dummy_double": 10.2,
+   "dummy_boolean": true
+ },
+ {
+   "salesorder": 1,
+   "item": 3,
+   "article": "article3",
+   "amount": 500,
+   "date": 20160601,
+   "customer": "customer1",
+   "dummy_string": "this is a string",
+   "dummy_int": 100,
+   "dummy_double": 10.2,
+   "dummy_boolean": true
+ }
+]

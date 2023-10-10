@@ -1,0 +1,44 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "with_filepath": true,
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|",
+        "inferSchema": true
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/regex_transformers/with_regex_value/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/regex_transformers/with_regex_value/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "with_extraction_date",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "with_regex_value",
+          "args": {
+            "input_col": "lhe_extraction_filepath",
+            "output_col": "extraction_date",
+            "drop_input_col": true,
+            "regex": ".*WE_SO_SCL_(\\d+).csv"
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "with_extraction_date",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/regex_transformers/with_regex_value/data"
+    }
+  ]
+}

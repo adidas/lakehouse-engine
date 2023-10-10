@@ -1,0 +1,11 @@
+actrequest_timestamp|request|datapakid|partno|record|salesorder|item|recordmode|date|customer|article|amount
+20180110120052t|request1|1|1|1|7|1|N|20180110|customer5|article2|120
+20180110120052t|request1|1|1|2|1|1|X|20160601|customer1|article1|100
+20180110120052t|request1|1|1|3|1|1||20160601|customer1|article1|150
+20180110120052t|request1|1|1|4|2|2|X|20170215|customer2|article6|50
+20180110120052t|request1|1|1|5|2|2||20170215|customer2|article2|50
+20180110120052t|request1|1|1|6|3|2|D|20170215|customer1|article2|120
+20180110120052t|request1|1|1|7|3|3|R|20170215|customer1|article4|-90
+20180110120052t|request1|1|1|8|4|1|X|20170430|customer3|article3|80
+20180110120052t|request1|1|1|4|2|2|X|20170215|customer2|article6|50
+20180110120052t|request1|1|1|5|2|2||20170215|customer2|article2|50

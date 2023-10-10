@@ -1,0 +1,40 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "bronze_sales_historical",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/writers/schema/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/writers/source/sales_historical/"
+    },
+    {
+      "spec_id": "bronze_sales_new",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/writers/schema/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+    "location": "file:///app/tests/lakehouse/in/feature/writers/source/sales_new/"
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_historical",
+      "input_id": "bronze_sales_historical",
+      "data_format": "dataframe"
+    },
+    {
+      "spec_id": "sales_new",
+      "input_id": "bronze_sales_new",
+      "data_format": "dataframe"
+    }
+  ]
+}

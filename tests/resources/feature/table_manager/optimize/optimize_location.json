@@ -1,0 +1,6 @@
+{
+  "function": "optimize",
+  "path": "file:///app/tests/lakehouse/out/feature/table_manager/dummy_table_bronze/data",
+  "where_clause": "year >= 2021 and month >= 09 and day > 01",
+  "optimize_zorder_col_list": "col1,col2"
+}

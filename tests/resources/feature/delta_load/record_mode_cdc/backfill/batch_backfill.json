@@ -1,0 +1,87 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "inferSchema": true
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/record_mode_cdc/backfill/data"
+    },
+    {
+      "spec_id": "sales_bronze",
+      "read_type": "batch",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/record_mode_cdc/backfill/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "max_sales_bronze_timestamp",
+      "input_id": "sales_bronze",
+      "transformers": [
+        {
+          "function": "get_max_value",
+          "args": {
+            "input_col": "actrequest_timestamp"
+          }
+        }
+      ]
+    },
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "incremental_filter",
+          "args": {
+            "input_col": "actrequest_timestamp",
+            "increment_value": "20180110120052t",
+            "greater_or_equal": true
+          }
+        },
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "extraction_timestamp",
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "condensed_sales",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/record_mode_cdc/backfill/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date",
+        "delete_predicate": "new.recordmode in ('R','D','X')",
+        "insert_predicate": "new.recordmode is null or new.recordmode not in ('R','D','X')"
+      }
+    }
+  ]
+}

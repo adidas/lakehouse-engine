@@ -1,0 +1,4 @@
+{
+  "function": "create_table",
+  "path": "file:///app/tests/resources/feature/materialize_cdf/data/table/streaming_with_cdf.sql"
+}

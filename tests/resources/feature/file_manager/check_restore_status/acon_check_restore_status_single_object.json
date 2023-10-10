@@ -1,0 +1,5 @@
+{
+  "function": "check_restore_status",
+  "bucket": "test_bucket",
+  "source_object": "test_single_file.json"
+}

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<data xmlns="http://example.com">
+    <row>
+        <name>userOne</name>
+        <age>50</age>
+        <city>CityTest</city>
+    </row>
+    <row>
+        <name>userTwo</name>
+        <age>40</age>
+        <city>CityTest2</city>
+    </row>
+    <row>
+        <name>userThree</name>
+        <age>30</age>
+        <city>CityTest3</city>
+    </row>
+</data>

@@ -1,0 +1,36 @@
+[build-system]
+requires = [
+    "setuptools>=62.4.0",
+    "wheel>=0.37.1"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    # coming from GX and also on their pyproject ignores
+    "ignore: Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning", #1 warning
+    # We are defining result_format at the Checkpoint level (which is the right one), but GX is wrongly
+    # triggering the warning, because it is also considering the defaults of the expectations for triggering the warning.
+    # Only place where we are not defining at Checkpoint level is for custom expectation local test, as we don't
+    # need checkpoint for the test.
+    "ignore:`result_format` configured at the Validator-level will not be persisted:UserWarning", # 12 warnings
+    "ignore:`result_format` configured at the Expectation-level will not be persisted:UserWarning", # 12 warnings
+    "ignore: In a future version, object-dtype columns with all-bool values will not be included:FutureWarning", # 60 warnings,
+    "ignore: jsonschema.RefResolver is deprecated as of v4.18.0:DeprecationWarning", #1985 warnings come from this one
+    "ignore: 'contextfilter' is renamed to 'pass_context', the old name will be removed in Jinja 3.1:DeprecationWarning", # 4 warnings
+    "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:DeprecationWarning",
+    "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:FutureWarning",
+    # Warning coming from ipywidgets (transitive dependency from GX), occuring in the assistant tests
+    "ignore: `ipykernel.pylab.backend_inline` is deprecated, directly use `matplotlib_inline.backend_inline`:DeprecationWarning",
+    # Warning coming from pandas used in Assistant and SFTP test. No direct usage of iteritems on our side.
+    "ignore: iteritems is deprecated and will be removed in a future version: FutureWarning",
+    # Warning on scipy (transitive dependency from GX) when running test_dq_validator.py::test_dq_assistant
+    "ignore: The input array could not be properly checked for nan values. nan values will be ignored.:RuntimeWarning",
+    # Warning about host keys on local ftp tests with paramiko
+    "ignore: Unknown ssh-rsa host key for : UserWarning",
+    # expect_multicolumn_sum_to_equal from GX is generating this warning
+    "ignore: V2 API style custom rendering is deprecated as of v0.13.28 and is not fully supported anymore:DeprecationWarning"
+]

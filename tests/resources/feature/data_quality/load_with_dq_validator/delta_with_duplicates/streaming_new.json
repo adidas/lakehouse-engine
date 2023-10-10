@@ -1,0 +1,94 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/data_quality/load_with_dq_validator/delta_with_duplicates/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "dq_specs": [
+    {
+      "spec_id": "dq_validator",
+      "input_id": "condensed_sales",
+      "dq_type": "validator",
+      "cache_df": true,
+      "store_backend": "file_system",
+      "local_fs_root_dir": "/app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates/dq",
+      "result_sink_db_table": "test_db.validator_delta_with_duplicates",
+      "result_sink_format": "json",
+      "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
+      "source": "condensed_sales",
+      "dq_functions": [
+        {
+          "function": "expect_table_row_count_to_be_between",
+          "args":{
+            "min_value": 9,
+            "max_value": 9
+          }
+        },
+        {
+          "function": "expect_table_column_count_to_be_between",
+          "args":{
+            "min_value": 12,
+            "max_value": 12
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "dq_validator",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date",
+        "delete_predicate": "new.recordmode in ('R','D','X')"
+      },
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates/checkpoint"
+      }
+    }
+  ],
+  "exec_env": {
+    "spark.sql.streaming.schemaInference": true
+  }
+}

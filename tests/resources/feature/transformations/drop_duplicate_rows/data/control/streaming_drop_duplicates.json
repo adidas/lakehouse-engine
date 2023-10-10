@@ -1,0 +1,122 @@
+[
+  {
+    "order_number": 1,
+    "item_number": 1,
+    "article_number": "article1",
+    "amount": 10,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 1,
+    "item_number": 2,
+    "article_number": "article2",
+    "amount": 20,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 1,
+    "item_number": 3,
+    "article_number": "article3",
+    "amount": 120,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 1,
+    "item_number": 4,
+    "article_number": "article3",
+    "amount": 120,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  }, 
+  {
+    "order_number": 2,
+    "item_number": 1,
+    "article_number": "article1",
+    "amount": 3,
+    "date": 20220102,
+    "customer_number": "customer2",
+    "country": "germany",
+    "city": "nuremberg"
+  },
+  {
+    "order_number": 2,
+    "item_number": 2,
+    "article_number": "article2",
+    "amount": 300,
+    "date": 20220102,
+    "customer_number": "customer2",
+    "country": "germany",
+    "city": "nuremberg"
+  },
+  {
+    "order_number": 2,
+    "item_number": 3,
+    "article_number": "article3",
+    "amount": 200,
+    "date": 20220102,
+    "customer_number": "customer2",
+    "country": "germany",
+    "city": "nuremberg"
+  },
+  {
+    "order_number": 3,
+    "item_number": 1,
+    "article_number": "article1",
+    "amount": 10,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 3,
+    "item_number": 2,
+    "article_number": "article2",
+    "amount": 15,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 4,
+    "item_number": 1,
+    "article_number": "article3",
+    "amount": 350,
+    "date": 20220101,
+    "customer_number": "customer1",
+    "country": "portugal",
+    "city": "porto"
+  },
+  {
+    "order_number": 5,
+    "item_number": 1,
+    "article_number": "article1",
+    "amount": 3,
+    "date": 20220102,
+    "customer_number": "customer2",
+    "country": "germany",
+    "city": "nuremberg"
+  },
+  {
+    "order_number": 5,
+    "item_number": 2,
+    "article_number": "article4",
+    "amount": 10,
+    "date": 20220102,
+    "customer_number": "customer2",
+    "country": "spain",
+    "city": "madrid"
+  }
+]

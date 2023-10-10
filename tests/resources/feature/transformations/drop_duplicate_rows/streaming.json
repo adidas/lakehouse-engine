@@ -1,0 +1,86 @@
+{
+    "input_specs": [
+      {
+        "spec_id": "orders_source",
+        "read_type": "streaming",
+        "data_format": "csv",
+        "options": {
+          "mode": "FAILFAST",
+          "header": true,
+          "delimiter": "|"
+        },
+        "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/drop_duplicate_rows/source_schema.json",
+        "location": "file:///app/tests/lakehouse/in/feature/transformations/drop_duplicate_rows/data"
+      }
+    ],
+    "transform_specs": [
+      {
+        "spec_id": "orders_duplicate_no_args",
+        "input_id": "orders_source",
+        "transformers": [
+          {
+            "function": "drop_duplicate_rows"
+          }
+        ]
+      },
+      {
+        "spec_id": "orders_duplicate_empty",
+        "input_id": "orders_source",
+        "transformers": [
+          {
+            "function": "drop_duplicate_rows",
+            "args": {
+              "cols": []
+            }
+          }
+        ]
+      },
+      {
+        "spec_id": "orders_duplicate",
+        "input_id": "orders_source",
+        "transformers": [
+          {
+            "function": "drop_duplicate_rows",
+            "args": {
+              "cols": ["order_number","item_number"]
+            }
+          }
+        ]
+      }
+    ],
+    "output_specs": [
+      {
+        "spec_id": "orders_duplicate_no_args_write",
+        "input_id": "orders_duplicate_no_args",
+        "write_type": "append",
+        "data_format": "delta",
+        "partitions": ["date"],
+        "options": {
+          "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/orders_duplicate_no_args/checkpoint"
+        },
+        "location": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/orders_duplicate_no_args/data"
+      },
+      {
+        "spec_id": "orders_duplicate_empty_write",
+        "input_id": "orders_duplicate_empty",
+        "write_type": "append",
+        "data_format": "delta",
+        "partitions": ["date"],
+        "options": {
+          "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/orders_duplicate_empty/checkpoint"
+        },
+        "location": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/orders_duplicate_empty/data"
+      },
+      {
+        "spec_id": "orders_duplicate_write",
+        "input_id": "orders_duplicate",
+        "write_type": "append",
+        "data_format": "delta",
+        "partitions": ["date"],
+        "options": {
+          "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/columns/checkpoint"
+        },
+        "location": "file:///app/tests/lakehouse/out/feature/transformations/drop_duplicate_rows/streaming/columns/data"
+      }
+    ]
+  }

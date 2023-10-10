@@ -1,0 +1,66 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_historical",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/unions/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/unions/data/sales/sales_historical/sales-historical-part-01.csv"
+    },
+    {
+      "spec_id": "sales_new",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/unions/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/unions/data/sales/sales_new/sales-new-part-01.csv"
+    },
+    {
+      "spec_id": "sales_shipment",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/unions/sales_shipment_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/unions/data/sales/sales_shipment/sales-shipment-part-01.csv"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "union_dataframes",
+      "input_id": "sales_historical",
+      "transformers": [
+        {
+          "function": "union_by_name",
+          "args": {
+            "union_with": ["sales_new", "sales_shipment"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales",
+      "input_id": "union_dataframes",
+      "write_type": "append",
+      "data_format": "delta",
+      "partitions": [
+        "date"
+      ],
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/unions/batch_unionByName_diff_schema/data"
+    }
+  ]
+}

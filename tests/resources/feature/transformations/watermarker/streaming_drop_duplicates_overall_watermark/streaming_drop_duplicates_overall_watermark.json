@@ -1,0 +1,56 @@
+{
+    "input_specs": [
+      {
+        "spec_id": "orders_source",
+        "read_type": "streaming",
+        "data_format": "csv",
+        "options": {
+          "mode": "FAILFAST",
+          "header": true,
+          "delimiter": "|"
+        },
+        "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_drop_duplicates_overall_watermark/source_schema.json",
+        "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_drop_duplicates_overall_watermark/data"
+      }
+    ],
+    "transform_specs": [
+      {
+        "spec_id": "watermarking_orders",
+        "input_id": "orders_source",
+        "transformers": [
+          {
+            "function": "with_watermark",
+            "args" : {"watermarker_column": "date", "watermarker_time":"2 days"}
+          },
+          {"function":"drop_duplicate_rows"},
+          {
+            "function": "group_and_rank",
+            "args": {
+              "group_key": [
+                "order_number",
+                "item_number",
+                "customer_number",
+                "city"
+              ],
+              "ranking_key": [
+                "date"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "output_specs": [
+      {
+        "spec_id": "orders_duplicate_no_args_write",
+        "input_id": "watermarking_orders",
+        "write_type": "append",
+        "data_format": "delta",
+        "partitions": ["date"],
+        "options": {
+          "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_drop_duplicates_overall_watermark/checkpoint"
+        },
+        "location": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_drop_duplicates_overall_watermark/data"
+      }
+    ]
+  }

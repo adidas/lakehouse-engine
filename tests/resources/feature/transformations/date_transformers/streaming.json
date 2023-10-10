@@ -1,0 +1,76 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/date_transformers/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/date_transformers/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "sales_with_new_dates",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "add_current_date",
+          "args": {
+            "output_col": "curr_date"
+          }
+        },
+        {
+          "function": "convert_to_date",
+          "args": {
+            "cols": ["order_date2"],
+            "source_format": "dd-MM-yyyy"
+          }
+        },
+        {
+          "function": "convert_to_date",
+          "args": {
+            "cols": ["order_date3"],
+            "source_format": "yyyyMMdd"
+          }
+        },
+        {
+          "function": "convert_to_timestamp",
+          "args": {
+            "cols": ["ship_date"],
+            "source_format": "yyyy-dd-MM HH:mm:ss"
+          }
+        },
+        {
+          "function": "format_date",
+          "args": {
+            "cols": ["order_date3", "ship_date"],
+            "target_format": "yy-d-M"
+          }
+        },
+        {
+          "function": "get_date_hierarchy",
+          "args": {
+            "cols": ["order_date2", "ship_date2"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_with_new_dates",
+      "write_type": "append",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/date_transformers/streaming/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/date_transformers/streaming/checkpoint"
+      }
+    }
+  ]
+}

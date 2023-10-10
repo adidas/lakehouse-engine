@@ -1,0 +1,50 @@
+[
+ {
+   "salesorder": 1,
+   "item": 1,
+   "article": "article1",
+   "amount": "1000",
+   "sample": "{\"field1\": \"value1\", \"field2\": \"value2\", \"field4\": {\"field1\": \"value1\", \"field2\": \"value2\"}}",
+   "date2": "20160601",
+   "customer2": "customer1",
+   "constant": "just a constant",
+   "length_customer2": 9,
+   "sample_json_field1": "value1",
+   "sample_json_field2": "value2",
+   "sample_json_field3": null,
+   "sample_json_field4": {"field1": "value1", "field2": "value2"},
+   "item_amount_json": "{\"item\":1,\"amount\":\"1000\"}"
+ },
+ {
+   "salesorder": 1,
+   "item": 2,
+   "article": "article2",
+   "amount": "2000",
+   "sample": "{\"field1\": \"value3\", \"field2\": \"value4\", \"field4\": {\"field1\": \"1value\", \"field2\": \"2value\"}}",
+   "date2": "20160601",
+   "customer2": "customer1",
+   "constant": "just a constant",
+   "length_customer2": 9,
+   "sample_json_field1": "value3",
+   "sample_json_field2": "value4",
+   "sample_json_field3": null,
+   "sample_json_field4": {"field1": "1value", "field2": "2value"},
+   "item_amount_json": "{\"item\":2,\"amount\":\"2000\"}"
+ },
+ {
+   "salesorder": 1,
+   "item": 3,
+   "article": "article3",
+   "amount": "500",
+   "sample": "{\"field1\": \"value5\", \"field3\": 6.25, \"field4\": {\"field1\": \"1value1\", \"field2\": \"2value2\"}}",
+   "date2": "20160601",
+   "customer2": "customer1",
+   "constant": "just a constant",
+   "length_customer2": 9,
+   "sample_json_field1": "value5",
+   "sample_json_field2": null,
+   "sample_json_field3": 6.25,
+   "sample_json_field4": {"field1": "1value1", "field2": "2value2"},
+   "item_amount_json": "{\"item\":3,\"amount\":\"500\"}"
+ }
+]

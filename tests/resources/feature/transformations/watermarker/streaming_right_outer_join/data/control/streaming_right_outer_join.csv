@@ -1,0 +1,12 @@
+salesorder|item|date|customer|article|amount|customer_name
+3|1|2017-05-12 01:01:01|customer1|article5|20000|Anna
+3|2|2017-05-12 01:01:01|customer1|article2|12000|Anna
+3|3|2017-05-12 01:01:01|customer1|article4|9000|Anna
+4|1|2017-05-12 01:01:01|customer3|article3|8000|Sarah
+2|1|2017-05-12 01:01:01|customer2|article4|1000|John
+2|2|2017-05-12 01:01:01|customer2|article6|5000|John
+2|3|2017-05-12 01:01:01|customer2|article1|3000|John
+1|1|2017-05-12 00:00:01|customer1|article1|1000|Anna
+1|2|2017-05-12 00:00:01|customer1|article2|2000|Anna
+1|3|2017-05-12 00:00:01|customer1|article3|500|Anna|
+||||||Fran|

@@ -1,0 +1,123 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/data_quality/load_with_dq_validator/delta_with_duplicates_tag/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "dq_specs": [
+    {
+      "spec_id": "dq_validator",
+      "input_id": "condensed_sales",
+      "dq_type": "validator",
+      "cache_df": true,
+      "store_backend": "file_system",
+      "local_fs_root_dir": "/app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates_tag/dq",
+      "result_sink_db_table": "test_db.validator_delta_with_duplicates_tag",
+      "result_sink_format": "delta",
+      "tag_source_data": true,
+      "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
+      "source": "condensed_sales",
+      "dq_functions": [
+        {
+          "function": "expect_table_row_count_to_be_between",
+          "args":{
+            "min_value": 9,
+            "max_value": 9
+          }
+        },
+        {
+          "function": "expect_table_column_count_to_be_between",
+          "args":{
+            "min_value": 12,
+            "max_value": 12
+          }
+        },
+        {
+          "function": "expect_column_values_to_be_in_set",
+          "args": {
+            "column": "salesorder",
+            "value_set": [1, 2, 3, 4, 5]
+          }
+        },
+        {
+          "function": "expect_column_value_lengths_to_be_between",
+          "args": {
+            "column": "amount",
+            "min_value": 3,
+            "max_value": 3
+          }
+        },
+        {
+          "function": "expect_column_to_exist",
+          "args": {
+            "column": "fake_column"
+          }
+        },
+        {
+          "function": "expect_column_pair_values_to_be_equal",
+          "args": {
+            "column_A": "datapakid",
+            "column_B": "partno"
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "dq_validator",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates_tag/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date",
+        "delete_predicate": "new.recordmode in ('R','D','X')"
+      },
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_validator/delta_with_duplicates_tag/checkpoint"
+      }
+    }
+  ],
+  "exec_env": {
+    "spark.sql.streaming.schemaInference": true
+  }
+}

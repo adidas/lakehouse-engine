@@ -1,0 +1,4 @@
+{"salesorder": 1,"item": 1,"date": 20220101,"customer":"customer1","article": "article1","amount": 1000, "sample": {"field1": "value1", "field2": "value2", "field4": {"field1": "value1", "field2": "value2"}}}
+{"salesorder": 1,"item": 2,"date": 20220102,"customer":"customer2","article": "article2","amount": 1000, "sample": {"field1": "value3", "field2": "value4", "field4": {"field1": "1value", "field2": "2value"}}}
+{"salesorder": 2,"item": 1,"date": 20220102,"customer":"customer3","article": "article3","amount": 1200, "sample": {"field1": "value5", "field3": 6.25, "field4": {"field1": "1value1", "field2": "2value2"}}}
+{"salesorder": 2,"item": 1,"date": 20220103,"customer":"customer2","article": "article4","amount": 1500, "sample": {"field1": "value5", "field3": 6.25, "field4": {"field1": "1value1", "field2": "2value2"}}}

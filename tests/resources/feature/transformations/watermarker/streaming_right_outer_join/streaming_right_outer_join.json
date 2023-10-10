@@ -1,0 +1,68 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_right_outer_join/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_right_outer_join/data/sales"
+    },
+    {
+      "spec_id": "customers",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_right_outer_join/customer_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_right_outer_join/data/customers"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "join_with_customers",
+      "input_id": "sales",
+      "transformers": [
+        {
+          "function": "join",
+          "args": {
+            "left_df_alias": "df",
+            "right_df_alias": "join_with",
+            "join_with": "customers",
+            "join_type": "right outer",
+            "join_condition": "df.customer = join_with.customer and join_with.date >= df.date AND join_with.date <= df.date + interval 1 days",
+            "select_cols": ["df.*", "join_with.name as customer_name"],
+            "watermarker": {"df":{"col": "date", "watermarking_time": "2 days"}, "join_with": {"col": "date", "watermarking_time": "2 days"}}
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales",
+      "input_id": "join_with_customers",
+      "write_type": "merge",
+      "db_table": "test_db.streaming_outer_join",
+      "data_format": "delta",
+      "partitions": [
+        "date"
+      ],
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_right_outer_join/checkpoint"
+      },
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.customer_name == new.customer_name",
+        "update_predicate": "new.date >= current.date"
+      },
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_right_outer_join/data"
+    }
+  ]
+}

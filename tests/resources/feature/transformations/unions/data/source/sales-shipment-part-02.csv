@@ -1,0 +1,5 @@
+salesorder|item|date|customer|article|amount|ship_date
+8|1|20190215|customer2|article4|1000|20190216
+8|2|20190215|customer2|article6|5000|20190216
+9|3|20190215|customer2|article1|3000|20190216
+9|1|20190215|customer1|article5|20000|20190216
