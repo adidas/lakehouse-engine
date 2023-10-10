@@ -1,0 +1,17 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "date",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "amount",
+      "type": "long",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

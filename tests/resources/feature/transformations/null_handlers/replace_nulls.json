@@ -1,0 +1,39 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/null_handlers/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/null_handlers/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "sales_without_nulls",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "replace_nulls"
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_without_nulls",
+      "write_type": "append",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/null_handlers/replace_nulls/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/null_handlers/replace_nulls/checkpoint"
+      }
+    }
+  ]
+}

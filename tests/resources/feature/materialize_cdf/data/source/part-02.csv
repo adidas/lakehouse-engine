@@ -1,0 +1,7 @@
+salesorder|item|date|customer|article|amount
+5|1|20180601|customer1|article1|1000
+5|2|20180601|customer1|article2|2000
+5|3|20180601|customer1|article3|500
+6|1|20190215|customer2|article4|1000
+6|2|20190215|customer2|article6|5000
+6|3|20190215|customer2|article1|3000

@@ -1,0 +1,78 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "example_bronze",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/delta_load/merge_options/insert_column_set/source_schema.json",
+      "with_filepath": true,
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/merge_options/insert_column_set/data"
+    },
+    {
+      "spec_id": "example_silver",
+      "read_type": "batch",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/merge_options/insert_column_set/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "max_sales_silver_timestamp",
+      "input_id": "example_silver",
+      "transformers": [
+        {
+          "function": "get_max_value",
+          "args": {
+            "input_col": "extraction_date"
+          }
+        }
+      ]
+    },
+    {
+      "spec_id": "example_transform",
+      "input_id": "example_bronze",
+      "transformers": [
+        {
+          "function": "with_regex_value",
+          "args": {
+            "input_col": "lhe_extraction_filepath",
+            "output_col": "extraction_date",
+            "drop_input_col": true,
+            "regex": ".*WE_SO_SCL_(\\d+).csv"
+          }
+        },
+        {
+          "function": "incremental_filter",
+          "args": {
+            "input_col": "extraction_date",
+            "increment_df": "max_sales_silver_timestamp"
+          }
+        },
+        {
+          "function": "with_auto_increment_id"
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "example_output",
+      "input_id": "example_transform",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/merge_options/insert_column_set/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item",
+        "insert_predicate": "new.event in ('shipped','cancelled')",
+        "insert_column_set": {"salesorder": "new.salesorder", "item": "new.item", "event": "new.event","changed_on": "new.changed_on",
+          "amount": "new.amount + 101", "lhe_row_id": "new.lhe_row_id", "extraction_date": "new.extraction_date"},
+        "delete_predicate": "new.extraction_date >= current.extraction_date and new.changed_on >= current.changed_on and new.event = 'deleted'"
+      }
+    }
+  ]
+}

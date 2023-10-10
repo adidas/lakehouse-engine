@@ -1,0 +1,8 @@
+{
+  "function": "copy_objects",
+  "bucket": "test_bucket",
+  "source_object": "test_single_file.json",
+  "destination_bucket": "destination_bucket",
+  "destination_object": "destination_single_file",
+  "dry_run": false
+}

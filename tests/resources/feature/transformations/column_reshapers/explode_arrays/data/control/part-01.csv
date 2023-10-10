@@ -1,0 +1,24 @@
+salesorder|item|article|amount|manufacturing_countries|sub_articles|date2|customer2|constant|length_customer2|item_amount_json
+1|1|article1|1000|Portugal|article101|20220101|customer1|just a constant|9|{"item":1,"amount":1000}
+1|1|article1|1000|Portugal|article102|20220101|customer1|just a constant|9|{"item":1,"amount":1000}
+1|1|article1|1000|Spain|article101|20220101|customer1|just a constant|9|{"item":1,"amount":1000}
+1|1|article1|1000|Spain|article102|20220101|customer1|just a constant|9|{"item":1,"amount":1000}
+1|2|article2|1000|Portugal|article201|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Portugal|article202|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Portugal|article203|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Algeria|article201|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Algeria|article202|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Algeria|article203|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Italy|article201|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Italy|article202|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+1|2|article2|1000|Italy|article203|20220102|customer2|just a constant|9|{"item":2,"amount":1000}
+2|1|article3|1200|Norway|article301|20220102|customer3|just a constant|9|{"item":1,"amount":1200}
+2|1|article4|1500|Portugal|article401|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Portugal|article402|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Portugal|article403|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Malaysia|article401|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Malaysia|article402|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Malaysia|article403|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Germany|article401|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Germany|article402|20220103|customer2|just a constant|9|{"item":1,"amount":1500}
+2|1|article4|1500|Germany|article403|20220103|customer2|just a constant|9|{"item":1,"amount":1500}

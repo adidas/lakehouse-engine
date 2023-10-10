@@ -1,0 +1,66 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_left_outer_join/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_left_outer_join/data/sales"
+    },
+    {
+      "spec_id": "customers",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_left_outer_join/customer_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/watermarker/streaming_left_outer_join/data/customers"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "join_with_customers",
+      "input_id": "sales",
+      "transformers": [
+        {
+          "function": "join",
+          "args": {
+            "left_df_alias": "df",
+            "right_df_alias": "join_with",
+            "join_with": "customers",
+            "join_type": "left outer",
+            "join_condition": "df.customerId = join_with.customerId and join_with.customerClickTime BETWEEN df.customerBuyTime AND df.customerBuyTime + INTERVAL 1 MINUTE",
+            "select_cols": ["df.*", "join_with.customerClickTime"],
+            "watermarker": {"df":{"col":  "customerBuyTime", "watermarking_time":  "10 seconds"}, "join_with": {"col":  "customerClickTime", "watermarking_time":  "20 seconds"}}
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales",
+      "input_id": "join_with_customers",
+      "write_type": "append",
+      "data_format": "delta",
+      "partitions": [
+        "customerId"
+      ],
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_left_outer_join/checkpoint"
+      },
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/watermarker/streaming_left_outer_join/data"
+    }
+  ],
+  "exec_env": {
+    "spark.sql.streaming.stateStore.stateSchemaCheck": false
+  }
+}

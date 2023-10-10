@@ -1,0 +1,96 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/schema_evolution/delta_load/source_delta_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/schema_evolution/delta_load/data"
+    },
+    {
+      "spec_id": "sales_bronze",
+      "read_type": "batch",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/schema_evolution/delta_load/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "max_sales_bronze_timestamp",
+      "input_id": "sales_bronze",
+      "transformers": [
+        {
+          "function": "get_max_value",
+          "args": {
+            "input_col": "actrequest_timestamp"
+          }
+        }
+      ]
+    },
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "rename",
+          "args": {
+            "cols": {
+              "ARTICLE": "article"
+            },
+            "escape_col_names": false
+          }
+        },
+        {
+          "function": "incremental_filter",
+          "args": {
+            "input_col": "actrequest_timestamp",
+            "increment_df": "max_sales_bronze_timestamp"
+          }
+        },
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "condensed_sales",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/schema_evolution/delta_load/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date",
+        "delete_predicate": "new.recordmode in ('R','D','X')"
+      }
+    }
+  ],
+  "exec_env": {
+    "spark.databricks.delta.schema.autoMerge.enabled": false
+  }
+}

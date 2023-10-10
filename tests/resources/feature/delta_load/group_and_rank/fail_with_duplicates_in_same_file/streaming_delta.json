@@ -1,0 +1,72 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/delta_load/group_and_rank/fail_with_duplicates_in_same_file/streaming/source_schema.json",
+      "with_filepath": true,
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/group_and_rank/fail_with_duplicates_in_same_file/streaming/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "sales_bronze_with_extraction_date",
+      "input_id": "sales_bronze",
+      "transformers": [
+        {
+          "function": "with_regex_value",
+          "args": {
+            "input_col": "lhe_extraction_filepath",
+            "output_col": "extraction_date",
+            "drop_input_col": true,
+            "regex": ".*WE_SO_SCL_(\\d+).csv"
+          }
+        },
+        {
+          "function": "with_auto_increment_id"
+        },
+        {
+          "function": "group_and_rank",
+          "args": {
+            "group_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key": [
+              "extraction_date",
+              "changed_on",
+              "lhe_row_id"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_silver",
+      "input_id": "sales_bronze_with_extraction_date",
+      "write_type": "merge",
+      "data_format": "delta",
+      "partitions": [
+        "date"
+      ],
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/group_and_rank/fail_with_duplicates_in_same_file/streaming/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/delta_load/group_and_rank/fail_with_duplicates_in_same_file/streaming/checkpoint"
+      },
+      "with_batch_id": true,
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item",
+        "update_predicate": "new.extraction_date >= current.extraction_date and new.changed_on >= current.changed_on",
+        "delete_predicate": "new.extraction_date >= current.extraction_date and new.changed_on >= current.changed_on and new.event = 'deleted'"
+      }
+    }
+  ]
+}

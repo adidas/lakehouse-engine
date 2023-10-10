@@ -1,0 +1,38 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "inferSchema": true
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/full_load/with_filter/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "filtered_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "expression_filter",
+          "args": {
+            "exp": "date like '2016%'"
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "filtered_sales",
+      "write_type": "overwrite",
+      "data_format": "parquet",
+      "location": "file:///app/tests/lakehouse/out/feature/full_load/with_filter/data"
+    }
+  ]
+}

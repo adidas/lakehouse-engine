@@ -1,0 +1,66 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "orders_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/multiple_transform/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/multiple_transform/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "orders_customer_cols",
+      "input_id": "orders_source",
+      "transformers": [
+        {
+          "function": "column_filter_exp",
+          "args": {
+            "exp": ["date", "country", "customer_number"]
+          }
+        }
+      ]
+    },
+    {
+      "spec_id": "orders_kpi_cols",
+      "input_id": "orders_source",
+      "transformers": [
+        {
+          "function": "column_filter_exp",
+          "args": {
+            "exp": ["date", "city", "amount"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "orders_bronze_customer_cols",
+      "input_id": "orders_customer_cols",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "partitions": ["date"],
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/multiple_transform/batch/orders_customer_cols/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/multiple_transform/batch/orders_customer_cols/checkpoint"
+      }
+    },
+    {
+      "spec_id": "orders_bronze_kpi_cols",
+      "input_id": "orders_kpi_cols",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "partitions": ["date"],
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/multiple_transform/batch/orders_kpi_cols/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/multiple_transform/batch/orders_kpi_cols/checkpoint"
+      }
+    }
+  ]
+}

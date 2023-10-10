@@ -1,0 +1,11 @@
+order_number|item_number|date|customer_number|country|city|article_number|amount
+3|1|20220101|customer1|portugal|porto|article1|10
+3|2|20220101|customer1|portugal|porto|article2|15
+3|2|20220103|customer3|portugal|porto|article2|220
+4|1|20220101|customer1|portugal|porto|article3|350
+4|1|20220101|customer1|portugal|porto|article3|350
+5|1|20220102|customer2|germany|nuremberg|article1|3
+5|1|20220102|customer2|germany|nuremberg|article2|300
+5|2|20220102|customer2|spain|madrid|article4|10
+5|2|20220102|customer2|spain|madrid|article4|10
+5|2|20220102|customer2|spain|madrid|article4|10

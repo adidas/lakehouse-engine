@@ -1,0 +1,15 @@
+salesorder|item|date|customer|article|amount
+0|1|20140601|customer1|article1|1000
+0|2|20140601|customer1|article2|2000
+0|3|20140601|customer1|article3|500
+1|1|20150601|customer1|article1|1000
+1|2|20150601|customer1|article2|2000
+1|3|20150601|customer1|article3|500
+2|1|20160215|customer2|article4|1000
+2|2|20160215|customer2|article6|5000
+2|3|20160215|customer2|article1|3000
+3|1|20160215|customer1|article5|20000
+6|1|20160218|customer3|article7|100
+6|2|20160218|customer3|article9|500
+6|3|20160218|customer3|article8|300
+7|1|20160218|customer5|article7|2000

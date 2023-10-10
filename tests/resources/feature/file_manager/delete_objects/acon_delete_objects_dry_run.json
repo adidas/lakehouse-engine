@@ -1,0 +1,6 @@
+{
+  "function": "delete_objects",
+  "bucket": "test_bucket",
+  "object_paths": ["test_single_file.json", "test_directory"],
+  "dry_run": true
+}

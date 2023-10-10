@@ -1,0 +1,59 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "inferSchema": true
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/record_mode_cdc/out_of_order_changes/batch/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "extraction_timestamp",
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "condensed_sales",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/record_mode_cdc/out_of_order_changes/batch/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date"
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "inferSchema": true
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/record_mode_cdc/direct_silver_load/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "extraction_timestamp",
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "partno"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/record_mode_cdc/direct_silver_load/bronze/data",
+      "merge_opts": {
+        "merge_predicate": "current.actrequest_timestamp = new.actrequest_timestamp and current.datapakid = new.datapakid and current.partno = new.partno and current.record = new.record and current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date"
+      }
+    },
+    {
+      "spec_id": "sales_silver",
+      "input_id": "condensed_sales",
+      "write_type": "merge",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/record_mode_cdc/direct_silver_load/silver/data",
+      "merge_opts": {
+        "merge_predicate": "current.salesorder = new.salesorder and current.item = new.item and current.date <=> new.date"
+      }
+    }
+  ]
+}

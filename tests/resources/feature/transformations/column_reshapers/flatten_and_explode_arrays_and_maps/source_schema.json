@@ -1,0 +1,72 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "salesorder",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "item",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "date",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "customer",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "article",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "amount",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "sub_articles",
+      "nullable": true,
+      "metadata": {},
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "sample",
+      "nullable": true,
+      "metadata": {},
+      "type": {
+        "containsNull": true,
+        "elementType": {
+          "keyType": "string",
+          "type": "map",
+          "valueContainsNull": true,
+          "valueType": "string"
+        },
+        "type": "array"
+      }
+    },
+    {
+      "name": "agg_fields",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

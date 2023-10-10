@@ -1,0 +1,54 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_historical",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/writers/schema/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST",
+        "maxFilesPerTrigger": "1"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/writers/source/sales_historical/"
+    },
+    {
+      "spec_id": "sales_new",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/writers/schema/sales_schema.json",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "FAILFAST",
+        "maxFilesPerTrigger": "1"
+      },
+    "location": "file:///app/tests/lakehouse/in/feature/writers/source/sales_new/"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "union_dataframes",
+      "input_id": "sales_historical",
+      "transformers": [
+        {
+          "function": "union",
+          "args": {
+            "union_with": ["sales_new"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales",
+      "input_id": "union_dataframes",
+      "data_format": "dataframe",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/writers/write_streaming_df_with_checkpoint/checkpoint"
+      }
+    }
+  ]
+}

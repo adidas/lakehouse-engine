@@ -1,0 +1,7 @@
+salesorder|item|event|changed_on|date|customer|article|amount
+7|1|cancelled|20200811|20180110|customer5|article2|120
+7|1|created|20200811|20180110|customer5|article2|120
+1|1|shipped|20200811|20160601|customer1|article1|150
+2|2|released|20200811|20170215|customer2|article2|50
+3|2|released|20200811|20170215|customer1|article2|120
+3|3|released|20200811|20170215|customer1|article4|90

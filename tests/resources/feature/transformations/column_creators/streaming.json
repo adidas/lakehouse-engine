@@ -1,0 +1,47 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/column_creators/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/column_creators/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "sales_source",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "with_literals",
+          "args": {
+            "literals": {
+              "dummy_string": "this is a string",
+              "dummy_int": 100,
+              "dummy_double": 10.2,
+              "dummy_boolean": true
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "append",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/column_creators/streaming/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/column_creators/streaming/checkpoint"
+      }
+    }
+  ]
+}

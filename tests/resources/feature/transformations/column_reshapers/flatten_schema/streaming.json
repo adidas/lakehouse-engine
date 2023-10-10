@@ -1,0 +1,116 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "json",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/column_reshapers/flatten_schema/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/column_reshapers/flatten_schema/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "sales_source",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "rename",
+          "args": {
+            "cols": {
+              "date": "date2",
+              "customer": "customer2"
+            }
+          }
+        },
+        {
+          "function": "with_expressions",
+          "args": {
+            "cols_and_exprs": {
+              "constant": "'just a constant'",
+              "length_customer2": "length(customer2)"
+            }
+          }
+        },
+        {
+          "function": "from_json",
+          "args": {
+            "input_col": "sample",
+            "schema": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "field1",
+                  "type": "string",
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "field2",
+                  "type": "string",
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "field3",
+                  "type": "double",
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "field4",
+                  "type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "field1",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      },
+                      {
+                        "name": "field2",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {}
+                }
+              ]
+            }
+          }
+        },
+        {
+          "function": "to_json",
+          "args": {
+            "in_cols": [
+              "item",
+              "amount"
+            ],
+            "out_col": "item_amount_json"
+          }
+        },
+        {
+          "function": "flatten_schema",
+          "args": {
+            "max_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "append",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/column_reshapers/flatten_schema/streaming/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/transformations/column_reshapers/flatten_schema/streaming/checkpoint"
+      }
+    }
+  ]
+}

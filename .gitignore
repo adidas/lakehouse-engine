@@ -157,3 +157,4 @@ cython_debug/
 /spark-warehouse/
 
 /artefacts/
+tmp_os/

@@ -1,0 +1,4 @@
+salesorder|order_date|order_date2|order_date3|ship_date|ship_date2|order_date2_day|order_date2_month|order_date2_week|order_date2_quarter|order_date2_year|ship_date2_day|ship_date2_month|ship_date2_week|ship_date2_quarter|ship_date2_year|
+1|2016-06-01|2016-06-01|16-1-6|16-6-2|2016-02-06 23:40:43|1|6|22|2|2016|6|2|5|1|2016|
+2|2016-07-03|2016-07-03|16-3-7|16-22-5|2016-05-22 22:12:54|3|7|26|3|2016|22|5|20|2|2016|
+3|2017-01-02|2017-01-02|17-2-1|17-1-3|2017-03-01 07:43:11|2|1|1|1|2017|1|3|9|1|2017|

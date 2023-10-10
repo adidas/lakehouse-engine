@@ -1,0 +1,15 @@
+order_number|orders_duplicate_no_args|date|customer_number|country|city|article_number|amount
+3|1|2017-05-12 01:01:01.000|customer1|portugal|porto|article1|10
+3|2|2017-05-12 01:01:01.000|customer1|portugal|porto|article2|15
+3|2|2017-05-12 01:01:01.000|customer3|portugal|porto|article2|220
+4|1|2017-05-12 01:01:01.000|customer1|portugal|porto|article3|350
+4|1|2017-05-12 01:01:01.000|customer1|portugal|porto|article3|350
+5|1|2017-05-12 01:01:01.000|customer2|germany|nuremberg|article1|3
+5|1|2017-05-12 01:01:01.000|customer2|germany|nuremberg|article2|300
+5|2|2017-05-12 01:01:01.000|customer2|spain|madrid|article4|10
+5|2|2017-05-12 01:01:01.000|customer2|spain|madrid|article4|10
+5|2|2017-05-12 01:01:02.000|customer2|spain|madrid|article4|10
+5|2|2017-05-12 01:01:03.000|customer2|spain|madrid|article4|10
+5|2|2017-05-06 10:01:12.000|customer23|spain|madrid|article4|10
+5|2|2017-05-04 10:01:12.000|customer22|spain|madrid|article4|1000
+1|1|2017-05-10 01:01:01.000|customer1|portugal|porto|article1|10

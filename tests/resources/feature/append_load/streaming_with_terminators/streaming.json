@@ -1,0 +1,81 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|",
+        "mode": "DROPMALFORMED"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/append_load/streaming_with_terminators/data",
+      "schema": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "salesorder",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "item",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "date",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "customer",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "article",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "amount",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      }
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "append",
+      "db_table": "test_db.streaming_with_terminators_table",
+      "data_format": "delta",
+      "partitions": [
+        "date"
+      ],
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/append_load/streaming_with_terminators/checkpoint"
+      },
+      "location": "file:///app/tests/lakehouse/out/feature/append_load/streaming_with_terminators/data"
+    }
+  ],
+  "terminate_specs": [
+    {
+      "function": "optimize_dataset",
+      "args": {
+        "db_table": "test_db.streaming_with_terminators_table",
+        "debug": true
+      }
+    }
+  ]
+}

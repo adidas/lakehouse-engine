@@ -1,0 +1,46 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "example_input",
+      "read_type": "batch",
+      "data_format": "csv",
+      "schema_path": "file:///app/tests/lakehouse/in/feature/delta_load/merge_options/update_all/source_schema.json",
+      "with_filepath": true,
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/delta_load/merge_options/update_all/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "example_transform",
+      "input_id": "example_input",
+      "transformers": [
+        {
+          "function": "with_auto_increment_id"
+        },
+        {
+          "function": "with_regex_value",
+          "args": {
+            "input_col": "lhe_extraction_filepath",
+            "output_col": "extraction_date",
+            "drop_input_col": true,
+            "regex": ".*WE_SO_SCL_(\\d+).csv"
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "example_bronze",
+      "input_id": "example_transform",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/delta_load/merge_options/update_all/data"
+    }
+  ]
+}

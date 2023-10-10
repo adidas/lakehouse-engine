@@ -1,0 +1,39 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "mode": "FAILFAST",
+        "header": true,
+        "delimiter": "|"
+      },
+      "schema_path": "file:///app/tests/lakehouse/in/feature/transformations/data_maskers/source_schema.json",
+      "location": "file:///app/tests/lakehouse/in/feature/transformations/data_maskers/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "masked_data",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "column_dropper",
+          "args": {
+            "cols": ["customer", "article"]
+          }
+        }
+      ]
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "masked_data",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/transformations/data_maskers/drop_columns/data"
+    }
+  ]
+}

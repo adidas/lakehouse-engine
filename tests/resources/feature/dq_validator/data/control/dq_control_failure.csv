@@ -1,0 +1,2 @@
+checkpoint_config|run_id|run_results|success|spec_id|input_id
+checkpoint configs|{20220729-143444-dq_sales-sales_source-checkpoint, 2022-07-29T14:34:44.852796+00:00}|run_results_for_all_expectations|false|dq_sales|sales_source

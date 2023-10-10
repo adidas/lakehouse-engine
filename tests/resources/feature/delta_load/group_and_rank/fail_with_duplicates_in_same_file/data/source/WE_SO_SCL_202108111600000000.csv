@@ -1,0 +1,6 @@
+salesorder|item|event|changed_on|date|customer|article|amount
+2|2|shipped|20200811|20170215|customer2|article2|50
+4|1|cancelled|20200811|20170430|customer3|article3|100
+4|2|released|20200811|20170430|customer3|article7|80
+4|3|deleted|20200811|20170430|customer3|article1|30
+4|4|released|20200811|20170430|customer3|article2|60

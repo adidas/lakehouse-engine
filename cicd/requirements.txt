@@ -1,0 +1,12 @@
+#
+# ! Dont forget running `make build-lock-files` after updating dependency list !
+#
+great-expectations==0.17.11
+ydata-profiling==4.5.1
+paramiko==2.12.0
+boto3==1.21.32
+types-paramiko==2.12.0
+msgraph-sdk==1.0.0a13
+Jinja2==3.0.3
+nest_asyncio==1.5.6
+pyyaml==6.0.1

@@ -1,0 +1,17 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "customerId",
+      "type": "integer",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "customerClickTime",
+      "type": "timestamp",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

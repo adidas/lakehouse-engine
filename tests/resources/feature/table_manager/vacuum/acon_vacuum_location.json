@@ -1,0 +1,5 @@
+{
+  "function": "vacuum",
+  "path": "file:///app/tests/lakehouse/out/feature/table_manager/dummy_table_bronze/data",
+  "vacuum_hours": 185
+}

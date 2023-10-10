@@ -1,0 +1,57 @@
+{#
+On this Jinja template we're extending a pre-existing template,
+copying the block on which we would like to make changes and
+adding both the "View Example" summary tag and the "View Full Acon" button.
+#}
+{% extends "default/module.html.jinja2" %}
+{% block module_contents %}
+    {% for m in module.flattened_own_members if is_public(m) | trim %}
+        <section id="{{ m.qualname or m.name }}">
+            {{ member(m) }}
+            {% if m.type == "class" %}
+                {% for m in m.own_members if m.type != "class" and is_public(m) | trim %}
+                    <div id="{{ m.qualname }}" class="classattr">
+                        {{ member(m) }}
+                        {% if m.fullname | highlight_examples %}
+                            {{ view_example(m.fullname) }}
+                        {% endif %}
+                        {% if m.fullname | link_example %}
+                            {{ view_full_acon(m.fullname) }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% set inherited_members = inherited(m) | trim %}
+                {% if inherited_members %}
+                    <div class="inherited">
+                        <h5>Inherited Members</h5>
+                        <dl>
+                            {{ inherited_members }}
+                        </dl>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </section>
+    {% endfor %}
+{% endblock %}
+
+{#
+On this macro we're creating the "View Example" structure.
+#}
+{% defaultmacro view_example(doc) %}
+    <details>
+    <summary>View Example</summary>
+    {{ doc | highlight_examples }}
+    </details>
+{% enddefaultmacro %}
+
+{#
+On this macro we're creating the "View Full Acon" structure.
+#}
+{% defaultmacro view_full_acon(doc) %}
+    <section>
+        {% set edit_text = "View Full Acon" %}
+        <a class="pdoc-button git-button" href="{{ doc | link_example }}" target="_blank">{{ edit_text }}</a>
+    </section>
+    </br>
+    </br>
+{% enddefaultmacro %}

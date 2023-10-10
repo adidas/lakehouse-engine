@@ -1,0 +1,4 @@
+salesorder|customer|amount
+1|customer1|-999
+|customer2|200.5
+3||100.0
