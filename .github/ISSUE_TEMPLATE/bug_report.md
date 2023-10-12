@@ -15,7 +15,7 @@ A clear and concise description of what the bug is.
 - Environment where you are using the Lakehouse Engine (Ex. Databricks 13.3LTS)
 
 **To Reproduce**
-Please include all the necessary details to reproduce the problem, including the full ACON or functions that are being used and at what point is the problem occurring. 
+Please include all the necessary details to reproduce the problem, including the full ACON or functions that are being used and at what point the problem is occurring. 
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
