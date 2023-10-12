@@ -33,7 +33,7 @@ class SensorControlTableManager(object):
         """Check if sensor has acquired new data.
 
         Args:
-            sensor_id: sendor id.
+            sensor_id: sensor id.
             control_db_table_name: db.table to control sensor runs.
 
         Returns:
@@ -158,8 +158,8 @@ class SensorControlTableManager(object):
                 "status": status,
                 "status_change_timestamp": status_change_timestamp,
                 "checkpoint_location": spec.checkpoint_location,
-                "upstream_key": upstream_key,
-                "upstream_value": upstream_value,
+                "upstream_key": str(upstream_key),
+                "upstream_value": str(upstream_value),
             }
         ]
 
@@ -195,7 +195,7 @@ class SensorControlTableManager(object):
 
         Args:
             sensor_id: sensor id. If this parameter is defined search occurs
-                only considering this parameter. Otherwise it considers sensor
+                only considering this parameter. Otherwise, it considers sensor
                 assets and checkpoint location.
             control_db_table_name: db.table to control sensor runs.
             assets: list of assets that are fueled by the pipeline
@@ -333,7 +333,7 @@ class SensorUpstreamManager(object):
             sensor_spec: sensor spec containing all sensor information.
 
         Return:
-            An empty dataframe if doesn't have new data otherwise the new data
+            An empty dataframe if it doesn't have new data otherwise the new data
         """
         new_data_df = ReaderFactory.get_data(sensor_spec.input_spec)
 

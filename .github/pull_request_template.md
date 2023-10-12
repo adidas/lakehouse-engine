@@ -1,13 +1,13 @@
 - [ ] Description of PR changes above includes a link to [an existing GitHub issue](https://github.com/adidas/lakehouse-engine/issues)
 - [ ] PR title is prefixed with one of: [BUGFIX], [FEATURE]
-- [ ] Code is linted and tests - 
+- [ ] Appropriate tests and docs have been updated
+- [ ] Code is linted and tested -
 ```
   make style
   make lint
   make test
   make test-security
 ```
-- [ ] Appropriate tests and docs have been updated
 
 For more information about contributing, see [Contribute](https://github.com/adidas/lakehouse-engine/blob/master/CONTRIBUTING.md).
 

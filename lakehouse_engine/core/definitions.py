@@ -703,6 +703,14 @@ SENSOR_UPDATE_SET: dict = {
     "sensors.status_change_timestamp": "updates.status_change_timestamp",
 }
 
+SENSOR_ALLOWED_DATA_FORMATS = {
+    ReadType.STREAMING.value: [InputFormat.KAFKA.value, *FILE_INPUT_FORMATS],
+    ReadType.BATCH.value: [
+        InputFormat.DELTAFILES.value,
+        InputFormat.JDBC.value,
+    ],
+}
+
 
 class SAPLogchain(Enum):
     """Defaults used on consuming data from SAP Logchain."""

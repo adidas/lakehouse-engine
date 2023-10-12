@@ -34,7 +34,7 @@ class DataLoader(Algorithm):
     steps and configurations through a dict based configuration, which we name ACON
     in our framework.
 
-    Since an ACON is a dict you can pass a custom transformer trough a python function
+    Since an ACON is a dict you can pass a custom transformer through a python function
     and, therefore, the DataLoader can also be used to load data with custom
     transformations not provided in our transformers package.
 
@@ -248,7 +248,7 @@ class DataLoader(Algorithm):
         in the same order that they appear in the list of transformations. This means
         that other supported transformations that appear after an
         unsupported one continue to stay one the normal execution plan,
-        i.e., outside the foreachBatch function. Therefore this may
+        i.e., outside the foreachBatch function. Therefore, this may
         make your algorithm to execute a different logic than the one you
         originally intended. For this reason:
             1) ALWAYS PLACE UNSUPPORTED STREAMING TRANSFORMATIONS AT LAST;

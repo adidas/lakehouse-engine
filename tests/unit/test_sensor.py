@@ -346,7 +346,6 @@ class TestExecuteSensor:
                         "read_type": ReadType.BATCH.value,
                         "data_format": InputFormat.JDBC.value,
                     },
-                    "base_checkpoint_location": "s3://dummy-bucket",
                 },
                 "expected_result": True,
             },
@@ -403,8 +402,12 @@ class TestExecuteSensor:
                     },
                     "base_checkpoint_location": "s3://dummy-bucket",
                 },
-                "expected_result": "A sensor has not been "
-                "implemented yet for this data format.",
+                "expected_result": "A sensor has not been implemented yet for "
+                "this data format or, this data format is not available for "
+                "the read_type batch. Check the allowed combinations of "
+                "read_type and data_formats: {'streaming': ['kafka', 'avro', "
+                "'json', 'parquet', 'csv', 'delta', "
+                "'cloudfiles'], 'batch': ['delta', 'jdbc']}",
             },
             {
                 "scenario_name": "raise_exception_sensor_"
@@ -447,7 +450,6 @@ class TestExecuteSensor:
                 "sensor_data": {
                     "sensor_id": "sensor_id_1",
                     "assets": ["asset_1"],
-                    "control_db_table_name": "control_sensor_table_name",
                     "control_db_table_name": "control_sensor_table_name",
                     "input_spec": {
                         "spec_id": "input_spec",

@@ -8,7 +8,7 @@
 
 💡 Do you have ideas for new features? Open a feature request on [GitHub](https://github.com/adidas/lakehouse-engine/issues).
 
-🚀 Want to find the available releases? Check our release notes on [GitHub](https://github.com/adidas/lakehouse-engine/releases) and [PyPi](https://fill_later).
+🚀 Want to find the available releases? Check our release notes on [GitHub](https://github.com/adidas/lakehouse-engine/releases) and [PyPi](https://pypi.org/project/lakehouse-engine/).
 
 ## Prerequisites
 

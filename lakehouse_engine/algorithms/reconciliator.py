@@ -54,14 +54,14 @@ class Reconciliator(Executable):
     Finally, it aggregates the differences, using the supplied aggregation function
     (e.g., sum, avg, min, max, etc).
 
-    All of this configurations are passed via the ACON to instantiate a
+    All of these configurations are passed via the ACON to instantiate a
     ReconciliatorSpec object.
 
     Notes:
         - It is crucial that both the current and truth datasets have exactly the same
             structure.
         - You should not use 0 as yellow or red threshold, as the algorithm will verify
-            if the difference between the truth and current values is bigger or bigger
+            if the difference between the truth and current values is bigger
             or equal than those thresholds.
         - The reconciliation does not produce any negative values or percentages, as we
             use the absolute value of the differences. This means that the recon result
@@ -135,7 +135,7 @@ class Reconciliator(Executable):
         status = "green"
 
         # if ignore_empty_df is true, run empty check on truth_df and current_results_df
-        # if both the dataframe is empty then exit with green
+        # if both the dataframes are empty then exit with green
         if (
             self.spec.ignore_empty_df
             and truth_df.isEmpty()

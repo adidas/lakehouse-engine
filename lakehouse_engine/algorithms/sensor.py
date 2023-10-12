@@ -7,8 +7,9 @@ from lakehouse_engine.algorithms.exceptions import (
     SensorAlreadyExistsException,
 )
 from lakehouse_engine.core.definitions import (
-    FILE_INPUT_FORMATS,
+    SENSOR_ALLOWED_DATA_FORMATS,
     InputFormat,
+    ReadType,
     SensorSpec,
     SensorStatus,
 )
@@ -31,6 +32,7 @@ class Sensor(Algorithm):
             acon: algorithm configuration.
         """
         self.spec: SensorSpec = SensorSpec.create_from_acon(acon=acon)
+        self._validate_sensor_spec()
 
         if self._check_if_sensor_already_exists():
             raise SensorAlreadyExistsException(
@@ -41,31 +43,13 @@ class Sensor(Algorithm):
         """Execute the sensor."""
         self._LOGGER.info(f"Starting {self.spec.input_spec.data_format} sensor...")
 
-        if InputFormat.exists(self.spec.input_spec.data_format):
-            new_data_df = SensorUpstreamManager.read_new_data(sensor_spec=self.spec)
-            if (
-                self.spec.input_spec.data_format == InputFormat.KAFKA.value
-                or self.spec.input_spec.data_format in FILE_INPUT_FORMATS
-                or (
-                    self.spec.input_spec.db_table is not None
-                    and self.spec.input_spec.data_format != InputFormat.JDBC.value
-                )
-            ):
-                Sensor._run_streaming_sensor(
-                    sensor_spec=self.spec, new_data_df=new_data_df
-                )
-            elif self.spec.input_spec.data_format == InputFormat.JDBC.value:
-                Sensor._run_batch_sensor(
-                    sensor_spec=self.spec,
-                    new_data_df=new_data_df,
-                )
-            else:
-                raise NotImplementedError(
-                    "A sensor has not been implemented yet for this data format."
-                )
-        else:
-            raise NotImplementedError(
-                f"Data format {self.spec.input_spec.data_format} isn't implemented yet."
+        new_data_df = SensorUpstreamManager.read_new_data(sensor_spec=self.spec)
+        if self.spec.input_spec.read_type == ReadType.STREAMING.value:
+            Sensor._run_streaming_sensor(sensor_spec=self.spec, new_data_df=new_data_df)
+        elif self.spec.input_spec.read_type == ReadType.BATCH.value:
+            Sensor._run_batch_sensor(
+                sensor_spec=self.spec,
+                new_data_df=new_data_df,
             )
 
         has_new_data = SensorControlTableManager.check_if_sensor_has_acquired_data(
@@ -106,13 +90,6 @@ class Sensor(Algorithm):
         cls, sensor_spec: SensorSpec, new_data_df: DataFrame
     ) -> None:
         """Run sensor in streaming mode (internally runs in batch mode)."""
-        if not new_data_df.isStreaming:
-            raise RuntimeError(
-                f"The sensor {sensor_spec.sensor_id} for the requested data "
-                "format needs to be executed "
-                "in streaming mode! Please change the read type of the input "
-                "spec."
-            )
 
         def foreach_batch_check_new_data(df: DataFrame, batch_id: int) -> None:
             Sensor._run_batch_sensor(
@@ -161,4 +138,23 @@ class Sensor(Algorithm):
             cls._LOGGER.info(
                 f"Successfully updated sensor status for sensor "
                 f"{sensor_spec.sensor_id}..."
+            )
+
+    def _validate_sensor_spec(self) -> None:
+        """Validate if sensor spec Read Type is allowed for the selected Data Format."""
+        if InputFormat.exists(self.spec.input_spec.data_format):
+            if (
+                self.spec.input_spec.data_format
+                not in SENSOR_ALLOWED_DATA_FORMATS[self.spec.input_spec.read_type]
+            ):
+                raise NotImplementedError(
+                    f"A sensor has not been implemented yet for this data format or, "
+                    f"this data format is not available for the read_type"
+                    f" {self.spec.input_spec.read_type}. "
+                    f"Check the allowed combinations of read_type and data_formats:"
+                    f" {SENSOR_ALLOWED_DATA_FORMATS}"
+                )
+        else:
+            raise NotImplementedError(
+                f"Data format {self.spec.input_spec.data_format} isn't implemented yet."
             )
