@@ -30,11 +30,18 @@ def test_file_manager(caplog: Any) -> None:
         # Creating test files/folders in S3
         # 2000 files are created to test the pagination is being correctly performed
         s3_cli.put_object(Bucket="test_bucket", Key="test_single_file.json", Body="")
-        s3_cli.put_object(Bucket="test_bucket", Key="test_directory", Body="")
+        s3_cli.put_object(Bucket="test_bucket", Key="test_directory/", Body="")
         for x in range(0, 2000):
             s3_cli.put_object(
                 Bucket="test_bucket",
                 Key=f"test_directory/test_recursive_file{x}.json",
+                Body="",
+            )
+        s3_cli.put_object(Bucket="test_bucket", Key="test_directory_test/", Body="")
+        for x in range(0, 2000):
+            s3_cli.put_object(
+                Bucket="test_bucket",
+                Key=f"test_directory_test/test_recursive_file{x}.json",
                 Body="",
             )
 
@@ -82,13 +89,16 @@ def _test_file_manager_delete(caplog: Any, s3_cli: Any) -> None:
     )
     assert (
         "{'test_single_file.json': ['test_single_file.json'], "
-        "'test_directory': ['test_directory'," in caplog.text
+        "'test_directory/': ['test_directory/'" in caplog.text
     )
     for x in range(0, 2000):
         assert f"test_directory/test_recursive_file{x}.json" in caplog.text
 
     manage_files(f"file://{TEST_RESOURCES}/delete_objects/acon_delete_objects.json")
-    assert "'KeyCount': 0" in str(s3_cli.list_objects_v2(Bucket="test_bucket"))
+
+    assert "'KeyCount': 2001" in str(
+        s3_cli.list_objects_v2(Bucket="test_bucket", MaxKeys=100000)
+    )
 
 
 @mock_s3
@@ -227,7 +237,7 @@ def test_file_manager_restore_sync(scenario: dict, caplog: Any) -> None:
             Body="",
             StorageClass=scenario.get("storage_class"),
         )
-        s3_cli.put_object(Bucket="test_bucket", Key="test_directory", Body="")
+        s3_cli.put_object(Bucket="test_bucket", Key="test_directory/", Body="")
         for x in range(0, 3):
             s3_cli.put_object(
                 Bucket="test_bucket",

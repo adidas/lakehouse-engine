@@ -2,7 +2,7 @@
 # ! Dont forget running `make build-lock-files` after updating dependency list !
 #
 great-expectations==0.17.11
-ydata-profiling==4.5.1
+ydata-profiling==4.6.0
 paramiko==2.12.0
 boto3==1.21.32
 types-paramiko==2.12.0

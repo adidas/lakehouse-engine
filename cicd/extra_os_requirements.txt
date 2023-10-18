@@ -1,4 +1,4 @@
 # The extra requirements for open-source 'lakehouse-engine' product version.
 # The extra requirements are also considered in the requirements_cicd as they are needed for the tests.
-pyspark==3.3.2
-delta-spark==2.2.0
+pyspark==3.4.1
+delta-spark==2.4.0

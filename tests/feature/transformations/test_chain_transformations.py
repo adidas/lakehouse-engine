@@ -58,7 +58,10 @@ def test_chain_transformations(scenario: dict, caplog: Any) -> None:
         ):
             load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
 
-        assert "Column 'sample_json_field1' does not exist" in caplog.text
+        assert (
+            "A column or function parameter with name `sample_json_field1` "
+            "cannot be resolved." in caplog.text
+        )
     else:
         load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
 

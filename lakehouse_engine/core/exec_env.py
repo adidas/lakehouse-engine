@@ -1,7 +1,6 @@
 """Module to take care of creating a singleton of the execution environment class."""
 import os
 
-from pyspark import SparkConf
 from pyspark.sql import SparkSession
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -51,11 +50,19 @@ class ExecEnv(object):
         if session:
             cls.SESSION = session
         else:
+            # with active session we do not need app name
+            if SparkSession.getActiveSession():
+                app_name = SparkSession.getActiveSession().sparkContext.appName
+                cls._LOGGER.info(f"Detected active session: {app_name}")
+            elif not SparkSession.getActiveSession() and not app_name:
+                cls._LOGGER.info("No active session or appname detected")
+                app_name = "lakehouse_engine"
+            # we will still add this part to set configs
             session_builder = SparkSession.builder.appName(app_name)
             if config:
-                session_builder = session_builder.config(
-                    conf=SparkConf().setAll(final_config.items())  # type: ignore
-                )
+                for k, v in final_config.items():
+                    session_builder.config(k, v)
+
             if enable_hive_support:
                 session_builder = session_builder.enableHiveSupport()
             cls.SESSION = session_builder.getOrCreate()

@@ -227,7 +227,7 @@ def test_schema_evolution_delta_load(scenario: str) -> None:
         else:
             with pytest.raises(
                 AnalysisException,
-                match=f".*cannot resolve {scenario[4]} in UPDATE clause.*",
+                match=f".*Cannot resolve {scenario[4]} in UPDATE clause given.*",
             ):
                 load_data(f"file://{TEST_RESOURCES}/delta_load/{scenario[2]}.json")
 

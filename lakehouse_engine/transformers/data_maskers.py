@@ -44,9 +44,6 @@ class DataMaskers(object):
                 else:
                     raise WrongArgumentsException("Hashing approach is not supported.")
 
-                if suffix and suffix != "":
-                    masked_df = masked_df.drop(col)
-
             return masked_df
 
         return inner

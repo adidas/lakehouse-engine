@@ -15,7 +15,7 @@ engine_os_conf_file := lakehouse_engine/configs/engine_os.yaml
 remove_files_from_os := $(engine_conf_file) $(meta_conf_file) CODEOWNERS sonar-project.properties CONTRIBUTING.md CHANGELOG.md assets/img/os_strategy.png
 last_commit_msg := "$(shell git log -1 --pretty=%B)"
 git_tag := $(shell git describe --tags --abbrev=0)
-commits_url := $(shell cat $(meta_conf_file) | grep commidddts_url | cut -f 2 -d " ")
+commits_url := $(shell cat $(meta_conf_file) | grep commits_url | cut -f 2 -d " ")
 
 ifeq ($(deploy_env), dev)
 deploy_bucket := $(shell cat $(meta_conf_file) | grep dev_deploy_bucket | cut -f 2 -d " ")

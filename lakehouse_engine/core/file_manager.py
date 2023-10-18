@@ -1,6 +1,6 @@
 """File manager module."""
 import time
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import boto3
 
@@ -12,6 +12,19 @@ from lakehouse_engine.core.definitions import (
     RestoreType,
 )
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+
+
+def _process_directory_path(path: str) -> str:
+    """Add '/' to the end of the path of a directory.
+
+    Args:
+        path: directory to be processed
+
+    Returns:
+        Directory path stripped and with '/' at the end.
+    """
+    path = path.strip()
+    return path if path[-1] == "/" else path + "/"
 
 
 def _dry_run(bucket: str, object_paths: list) -> dict:
@@ -27,7 +40,9 @@ def _dry_run(bucket: str, object_paths: list) -> dict:
     response = {}
 
     for path in object_paths:
-        path = path.strip()
+        if _check_directory(bucket, path):
+            path = _process_directory_path(path)
+
         res = _list_objects_recursively(bucket=bucket, path=path)
 
         if res:
@@ -36,6 +51,42 @@ def _dry_run(bucket: str, object_paths: list) -> dict:
             response[path] = ["No such key"]
 
     return response
+
+
+def _list_objects(
+    s3_client: Any, bucket: str, path: str, paginator: str = ""
+) -> Tuple[list, str]:
+    """List 1000 objects in a bucket given a prefix and paginator in s3.
+
+    Args:
+        bucket: name of bucket to perform the list.
+        path: path to be used as a prefix.
+        paginator: paginator token to be used.
+
+    Returns:
+         A list of object names.
+    """
+    object_list = []
+
+    if not paginator:
+        list_response = s3_client.list_objects_v2(Bucket=bucket, Prefix=path)
+    else:
+        list_response = s3_client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=path,
+            ContinuationToken=paginator,
+        )
+
+    if FileManagerAPIKeys.CONTENTS.value in list_response:
+        for obj in list_response[FileManagerAPIKeys.CONTENTS.value]:
+            object_list.append(obj[FileManagerAPIKeys.KEY.value])
+
+    if FileManagerAPIKeys.CONTINUATION.value in list_response:
+        pagination = list_response[FileManagerAPIKeys.CONTINUATION.value]
+    else:
+        pagination = ""
+
+    return object_list, pagination
 
 
 def _list_objects_recursively(bucket: str, path: str) -> list:
@@ -50,30 +101,34 @@ def _list_objects_recursively(bucket: str, path: str) -> list:
     """
     object_list = []
     more_objects = True
-    pagination = ""
+    paginator = ""
 
     s3 = boto3.client("s3")
 
     while more_objects:
-        if not pagination:
-            list_response = s3.list_objects_v2(Bucket=bucket, Prefix=path)
-        else:
-            list_response = s3.list_objects_v2(
-                Bucket=bucket,
-                Prefix=path,
-                ContinuationToken=pagination,
-            )
+        temp_list, paginator = _list_objects(s3, bucket, path, paginator)
 
-        if FileManagerAPIKeys.CONTENTS.value in list_response:
-            for obj in list_response[FileManagerAPIKeys.CONTENTS.value]:
-                object_list.append(obj[FileManagerAPIKeys.KEY.value])
+        object_list.extend(temp_list)
 
-        if FileManagerAPIKeys.CONTINUATION.value in list_response:
-            pagination = list_response[FileManagerAPIKeys.CONTINUATION.value]
-        else:
+        if not paginator:
             more_objects = False
 
     return object_list
+
+
+def _check_directory(bucket: str, path: str) -> bool:
+    """Checks if the object is a 'directory' in s3.
+
+    Args:
+        bucket: name of bucket to perform the check.
+        path: path to be used as a prefix.
+
+    Returns:
+        If path represents a 'directory'.
+    """
+    s3 = boto3.client("s3")
+    objects, _ = _list_objects(s3, bucket, path)
+    return len(objects) > 1
 
 
 class FileManager(object):
@@ -111,6 +166,42 @@ class FileManager(object):
                 f"The requested function {self.function} is not implemented."
             )
 
+    def _delete_objects(self, bucket: str, objects_paths: list) -> None:
+        """Delete objects recursively in s3.
+
+        Params:
+            bucket: name of bucket to perform the delete operation.
+            objects_paths: objects to be deleted.
+        """
+        s3 = boto3.client("s3")
+
+        for path in objects_paths:
+            if _check_directory(bucket, path):
+                path = _process_directory_path(path)
+            else:
+                path = path.strip()
+
+            more_objects = True
+            paginator = ""
+            objects_to_delete = []
+
+            while more_objects:
+                objects_found, paginator = _list_objects(
+                    s3_client=s3, bucket=bucket, path=path, paginator=paginator
+                )
+                for obj in objects_found:
+                    objects_to_delete.append({FileManagerAPIKeys.KEY.value: obj})
+
+                if not paginator:
+                    more_objects = False
+
+                response = s3.delete_objects(
+                    Bucket=bucket,
+                    Delete={FileManagerAPIKeys.OBJECTS.value: objects_to_delete},
+                )
+                self._logger.info(response)
+                objects_to_delete = []
+
     def delete_objects(self) -> None:
         """Delete objects and 'directories' in s3.
 
@@ -121,24 +212,13 @@ class FileManager(object):
         objects_paths = self.configs["object_paths"]
         dry_run = self.configs["dry_run"]
 
-        s3 = boto3.client("s3")
-
         if dry_run:
             response = _dry_run(bucket=bucket, object_paths=objects_paths)
 
             self._logger.info("Paths that would be deleted:")
+            self._logger.info(response)
         else:
-            objects_to_delete = []
-            for path in objects_paths:
-                for obj in _list_objects_recursively(bucket=bucket, path=path):
-                    objects_to_delete.append({FileManagerAPIKeys.KEY.value: obj})
-
-            response = s3.delete_objects(
-                Bucket=bucket,
-                Delete={FileManagerAPIKeys.OBJECTS.value: objects_to_delete},
-            )
-
-        self._logger.info(response)
+            self._delete_objects(bucket, objects_paths)
 
     def copy_objects(self) -> None:
         """Copies objects and 'directories' in s3."""
@@ -257,23 +337,15 @@ class FileManager(object):
             FileManager._logger.info("Paths that would be copied:")
             FileManager._logger.info(response)
         else:
-            copy_object = _list_objects_recursively(
-                bucket=source_bucket, path=source_object
-            )
+            original_object_name = source_object.split("/")[-1]
 
-            if len(copy_object) == 1:
-                FileManager._logger.info(f"Copying obj: {source_object}")
+            if _check_directory(source_bucket, source_object):
+                source_object = _process_directory_path(source_object)
 
-                response = s3.copy_object(
-                    Bucket=destination_bucket,
-                    CopySource={
-                        FileManagerAPIKeys.BUCKET.value: source_bucket,
-                        FileManagerAPIKeys.KEY.value: source_object,
-                    },
-                    Key=f"""{destination_object}/{copy_object[0].split("/")[-1]}""",
+                copy_object = _list_objects_recursively(
+                    bucket=source_bucket, path=source_object
                 )
-                FileManager._logger.info(response)
-            else:
+
                 for obj in copy_object:
                     FileManager._logger.info(f"Copying obj: {obj}")
 
@@ -285,9 +357,21 @@ class FileManager(object):
                             FileManagerAPIKeys.BUCKET.value: source_bucket,
                             FileManagerAPIKeys.KEY.value: obj,
                         },
-                        Key=f"{destination_object}{final_path}",
+                        Key=f"{destination_object}/{original_object_name}/{final_path}",
                     )
                     FileManager._logger.info(response)
+            else:
+                FileManager._logger.info(f"Copying obj: {source_object}")
+
+                response = s3.copy_object(
+                    Bucket=destination_bucket,
+                    CopySource={
+                        FileManagerAPIKeys.BUCKET.value: source_bucket,
+                        FileManagerAPIKeys.KEY.value: source_object,
+                    },
+                    Key=f"""{destination_object}/{original_object_name}""",
+                )
+                FileManager._logger.info(response)
 
 
 class ArchiveFileManager(object):
@@ -360,6 +444,9 @@ class ArchiveFileManager(object):
         restored_objects = 0
         total_objects = 0
 
+        if _check_directory(source_bucket, source_object):
+            source_object = _process_directory_path(source_object)
+
         objects_to_restore = _list_objects_recursively(
             bucket=source_bucket, path=source_object
         )
@@ -413,6 +500,9 @@ class ArchiveFileManager(object):
                 f"Restore type {retrieval_tier} not supported."
             )
 
+        if _check_directory(bucket, object_key):
+            object_key = _process_directory_path(object_key)
+
         archived_object = ArchiveFileManager._get_archived_object(bucket, object_key)
 
         if archived_object and archived_object.restore is None:
@@ -447,6 +537,9 @@ class ArchiveFileManager(object):
             dry_run: if dry_run is set to True the function will print a dict with
                 all the paths that would be deleted based on the given keys.
         """
+        if _check_directory(source_bucket, source_object):
+            source_object = _process_directory_path(source_object)
+
         if dry_run:
             response = _dry_run(bucket=source_bucket, object_paths=[source_object])
 

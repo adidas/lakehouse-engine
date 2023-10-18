@@ -35,7 +35,7 @@
           "args": {
             "join_with": "customers",
             "join_type": "inner",
-            "join_condition": "a.customer = b.customer",
+            "join_condition": "a.customer = b.customer and a.date between b.date and b.date + interval 4 days",
             "select_cols": ["a.*", "b.name as customer_name"],
             "watermarker": {"a":{"col":  "date", "watermarking_time":  "2 days"}, "b": {"col":  "date", "watermarking_time":  "2 days"}}
           }

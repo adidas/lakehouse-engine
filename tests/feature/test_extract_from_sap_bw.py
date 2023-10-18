@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 import pytest
 from _pytest.logging import LogCaptureFixture
 from pyspark.sql import DataFrame
-from pyspark.sql.utils import ParseException
 
 from lakehouse_engine.core.definitions import OutputFormat
 from lakehouse_engine.engine import load_data
@@ -56,9 +55,6 @@ DB_TABLE = "dummy_table"
         table instead of assuming a given timestamp.
     fail_calc_upper_bound - empty partition of type date to force failure on
         the upper bound calculation.
-    pushed_down_filter_with_slash - no strategy to split the
-        extraction. Moreover, test applying pushed down filter to a column with
-        slashes.
     no_part_col_join_condition - no strategy to split the extraction. Test to
         validate custom join condition on activation table.
 """
@@ -193,19 +189,6 @@ TEST_SCENARIOS = [
         "act_req_join_condition": None,
     },
     {
-        "scenario_name": "pushed_down_filter_with_slash",
-        "calculate_upper_bound": False,
-        "calculate_upper_bound_schema": None,
-        "part_col": None,
-        "lower_bound": None,
-        "upper_bound": None,
-        "min_timestamp": None,
-        "generate_predicates": False,
-        "predicates_list": None,
-        "extra_cols_act_request": "act_req.request as activation_request",
-        "act_req_join_condition": None,
-    },
-    {
         "scenario_name": "no_part_col_join_condition",
         "calculate_upper_bound": False,
         "calculate_upper_bound_schema": None,
@@ -286,13 +269,6 @@ def _execute_and_validate(
         with pytest.raises(
             AttributeError, match="Not able to get the extraction query"
         ):
-            _execute_load(
-                scenario=scenario, extraction_type="init", extra_params=extra_params
-            )
-    elif scenario["scenario_name"] == "pushed_down_filter_with_slash":
-        with pytest.raises(ParseException, match=".*Syntax error at or near '/'*"):
-            # should fail on spark version 3.3.0
-            # pushed filters for columns with '/' aren't working.
             _execute_load(
                 scenario=scenario, extraction_type="init", extra_params=extra_params
             )
@@ -446,9 +422,7 @@ def _get_test_acon(
         "output_specs": [
             {
                 "spec_id": "sales_bronze",
-                "input_id": "filtered_sales"
-                if scenario["scenario_name"] == "pushed_down_filter_with_slash"
-                else "sales_source",
+                "input_id": "sales_source",
                 "write_type": write_type,
                 "data_format": "delta",
                 "partitions": ["actrequest_timestamp"],

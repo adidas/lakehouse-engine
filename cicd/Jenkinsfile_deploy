@@ -8,7 +8,7 @@ pipeline {
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '100', artifactNumToKeepStr: '30'))
-        timeout(time: 1, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
         disableConcurrentBuilds()
         skipDefaultCheckout(true)
         ansiColor('xterm')
@@ -105,7 +105,7 @@ pipeline {
         stage('Open Source Deployment') {
             when {
                 expression {
-                    (params.BRANCH == 'master' && env.DEPLOY_ENV == 'prod' && !params.SKIP_OS_DEPLOYMENT) || (params.BRANCH == 'feature/os-enhancements' && env.DEPLOY_ENV == 'dev' && !params.SKIP_OS_DEPLOYMENT)
+                    (params.BRANCH == 'master' && env.DEPLOY_ENV == 'prod' && !params.SKIP_OS_DEPLOYMENT)
                 }
             }
             stages {

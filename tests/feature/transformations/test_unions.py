@@ -79,7 +79,7 @@ def test_unions(scenario: List[str]) -> None:
     if "union_diff_schema" in scenario[1] or "error" in scenario[1]:
         with pytest.raises(
             AnalysisException,
-            match=".*Union can only be performed on tables with the same number.*",
+            match=".*UNION can only be performed on inputs with the same number.*",
         ):
             load_data(f"file://{TEST_RESOURCES}/{scenario[0]}_{scenario[1]}.json")
 
