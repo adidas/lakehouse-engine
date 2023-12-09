@@ -268,4 +268,22 @@ push-release:
 delete-tag:
 	git push --delete origin $(tag)
 
+
+clean: clean_pyc ## Clean all PYC in the system
+
+clean_pyc: ## Cleans all *.pyc in the system
+	find . -type f -name "*.pyc" -delete || true
+
+clean_pycache: ## Removes the __pycaches__
+	find . -type d -name "*__pycache__*" -delete
+
+requirements-local: ## Install the requirements in a local virtual environment.
+	pip install -r cicd/requirements.txt && pip install -r cicd/requirements_cicd.txt
+
+serve-mkdocs: ## Serves the documentation with mkdocs-material
+	mkdocs serve
+
+build-docs: ## Runs the local mkdocs-material
+	mkdocs build
+
 .PHONY: $(MAKECMDGOALS)

@@ -1,13 +1,17 @@
 <img align="right" src="assets/img/lakehouse_engine_logo_no_bg_160.png" alt="Lakehouse Engine Logo">
 
 # Lakehouse Engine
+
 A configuration driven Spark framework, written in Python, serving as a scalable and distributed engine for several lakehouse algorithms, data flows and utilities for Data Products.
-> **Note:** whenever you read Data Product or Data Product team, we want to refer to Teams and use cases, whose main focus is on 
-leveraging the power of data, on a particular topic, end-to-end (ingestion, consumption...) to achieve insights, supporting faster and better decisions, 
+
+> **Note:** whenever you read Data Product or Data Product team, we want to refer to Teams and use cases, whose main focus is on
+leveraging the power of data, on a particular topic, end-to-end (ingestion, consumption...) to achieve insights, supporting faster and better decisions,
 which generate value for their businesses. These Teams should not be focusing on building reusable frameworks, but on re-using the existing frameworks to achieve their goals.
 
 ## Main Goals
+
 The goal of the Lakehouse Engine is to bring some advantages, such as:
+
 - offer cutting-edge, standard, governed and battle-tested foundations that several Data Product teams can benefit from;
 - avoid that Data Product teams develop siloed solutions, reducing technical debts and high operating costs (redundant developments across teams);
 - allow Data Product teams to focus mostly on data-related tasks, avoiding wasting time & resources on developing the same code for different use cases;
@@ -18,10 +22,11 @@ The goal of the Lakehouse Engine is to bring some advantages, such as:
   > **Note**: even though you will see a focus on AWS and Databricks, this is just due to the lack of use cases for other technologies like GCP and Azure, but we are open for contribution.
 
 ## Key Features
-⭐ **Data Loads:** perform data loads from disparate source types and apply transformations and data quality validations, 
-ensuring trustworthy data, before integrating it into disparate target types. Additionally, people can also define termination 
+
+⭐ **Data Loads:** perform data loads from disparate source types and apply transformations and data quality validations,
+ensuring trustworthy data, before integrating it into disparate target types. Additionally, people can also define termination
 actions like optimisations or notifications. [On the usage section](#load-data-usage-example) you will find an example using all the supported keywords for data loads.
-> **Note:** The Lakehouse 
+> **Note:** The Lakehouse
 Engine supports different types of sources and targets, such as, kafka, jdbc, dataframes, files (csv, parquet, json, delta...), sftp, sap bw, sap b4...
 
 ⭐ **Transformations:** configuration driven transformations without the need to write any code. Transformations can be applied by using the `transform_specs` in the Data Loads.
@@ -31,7 +36,7 @@ Engine supports different types of sources and targets, such as, kafka, jdbc, da
 details by offering people the capability to specify what validations to apply on the data, solely using dict/json based configurations.
 The Data Quality validations can be applied on:
 - post-mortem (static) data, using the DQ Validator algorithm (`execute_dq_validation`)
-- data in-motion, using the `dq_specs` keyword in the Data Loads, to add it as one more step while loading data. 
+- data in-motion, using the `dq_specs` keyword in the Data Loads, to add it as one more step while loading data.
 [On the usage section](#usage) you will find an example using this type of Data Quality validations.
 
 ⭐ **Reconciliation:** useful algorithm two compare two source of data, by defining one version of the `truth` to compare
@@ -39,14 +44,14 @@ against the `current` version of the data. It can be particularly useful during 
 and ensure the new version of a table (`current`), for example, delivers the same vision of the data as the old one (`truth`).
 Find usage examples [here](tests/feature/test_reconciliation.py).
 
-⭐ **Sensors:** an abstraction to otherwise complex spark code that can be executed in very small single-node clusters 
-to check if an upstream system or Data Product contains new data since the last execution. With this feature, people can 
-trigger jobs to run in more frequent intervals and if the upstream does not contain new data, then the rest of the job 
+⭐ **Sensors:** an abstraction to otherwise complex spark code that can be executed in very small single-node clusters
+to check if an upstream system or Data Product contains new data since the last execution. With this feature, people can
+trigger jobs to run in more frequent intervals and if the upstream does not contain new data, then the rest of the job
 exits without creating bigger clusters to execute more intensive data ETL (Extraction, Transformation, and Loading).
 Find usage examples [here](tests/feature/test_sensors.py).
 
-⭐ **Terminators:** this feature allow people to specify what to do as a last action, before finishing a Data Load. 
-Some examples of actions are: optimising target table, vacuum, compute stats, expose change data feed to external location 
+⭐ **Terminators:** this feature allow people to specify what to do as a last action, before finishing a Data Load.
+Some examples of actions are: optimising target table, vacuum, compute stats, expose change data feed to external location
 or even send e-mail notifications. Thus, it is specifically used in Data Loads, using the `terminate_specs` keyword.
 [On the usage section](#usage) you will find an example using terminators.
 
@@ -74,6 +79,7 @@ or even send e-mail notifications. Thus, it is specifically used in Data Loads, 
 📖 In case you want to check further details you can check the documentation of the [Lakehouse Engine facade](https://adidas.github.io/lakehouse-engine-docs/lakehouse_engine/engine.html).
 
 ## Installation
+
 As the Lakehouse Engine is built as wheel (look into our **build** and **deploy** make targets) you can install it as any other python package using **pip**.
 
 ```
@@ -89,25 +95,26 @@ In case you don't want to be so conservative, you can pin to a major version, wh
 ## How Data Products use the Lakehouse Engine Framework?
 ![Lakehouse Data Product](assets/img/lakehouse_dp_usage.drawio.png)
 
-The Lakehouse Engine is a configuration-first Data Engineering framework, using the concept of ACONs to configure algorithms. 
-An ACON, stands for Algorithm Configuration and is a JSON representation, as the [Load Data Usage Example](#load-data-usage-example) demonstrates. 
+The Lakehouse Engine is a configuration-first Data Engineering framework, using the concept of ACONs to configure algorithms.
+An ACON, stands for Algorithm Configuration and is a JSON representation, as the [Load Data Usage Example](#load-data-usage-example) demonstrates.
 
 Below you find described the main keywords you can use to configure and ACON for a Data Load.
-> **Note:** the usage logic for the other [algorithms/features presented](#key-features) will always be similar, but using different keywords, 
+> **Note:** the usage logic for the other [algorithms/features presented](#key-features) will always be similar, but using different keywords,
 which you can search for in the examples and documentation provided in the [Key Features](#key-features) and [Community Support and Contributing](#community-support-and-contributing) sections.
 
-- **Input specifications (input_specs):** specify how to read data. This is a **mandatory** keyword; 
-- **Transform specifications (transform_specs):** specify how to transform data; 
-- **Data quality specifications (dq_specs):** specify how to execute the data quality process. 
-- **Output specifications (output_specs):** specify how to write data to the target. This is a **mandatory** keyword; 
-- **Terminate specifications (terminate_specs):** specify what to do after writing into the target (e.g., optimising target table, vacuum, compute stats, expose change data feed to external location, etc). 
+- **Input specifications (input_specs):** specify how to read data. This is a **mandatory** keyword;
+- **Transform specifications (transform_specs):** specify how to transform data;
+- **Data quality specifications (dq_specs):** specify how to execute the data quality process.
+- **Output specifications (output_specs):** specify how to write data to the target. This is a **mandatory** keyword;
+- **Terminate specifications (terminate_specs):** specify what to do after writing into the target (e.g., optimising target table, vacuum, compute stats, expose change data feed to external location, etc).
 - **Execution environment (exec_env):** custom Spark session configurations to be provided for your algorithm (configurations can also be provided from your job/cluster configuration, which we highly advise you to do instead of passing performance related configs here for example).
 
 ## Load Data Usage Example
 
 You can use the Lakehouse Engine in a **pyspark script** or **notebook**.
+
 Below you can find an example on how to execute a Data Load using the Lakehouse Engine, which is doing the following:
-1. Read CSV files, from a specified location, in a streaming fashion and providing a specific schema and some additional 
+1. Read CSV files, from a specified location, in a streaming fashion and providing a specific schema and some additional
 options for properly read the files (e.g. header, delimiter...);
 2. Apply two transformations on the input data:
    1. Add a new column having the Row ID;
@@ -120,7 +127,7 @@ options for properly read the files (e.g. header, delimiter...);
    5. Check if the mean of the values for the column `coupon_code` is between 15 and 20.
 4. Write the output into the table `your_database.order_events_with_dq` in a delta format, partitioned by `order_date_header`
 and applying a merge predicate condition, ensuring the data is only inserted into the table if it does not match the predicate
-(meaning the data is not yet available in the table). Moreover, the `insert_only` flag is used to specify that there should not 
+(meaning the data is not yet available in the table). Moreover, the `insert_only` flag is used to specify that there should not
 be any updates or deletes in the target table, only inserts;
 5. Optimize the Delta Table that we just wrote in (e.g. z-ordering);
 6. Specify 3 custom Spark Session configurations.
@@ -174,7 +181,7 @@ acon = {
             "fail_on_error": False,
             "dq_functions": [
                 {
-                  "dq_function": "expect_column_values_to_not_be_null", 
+                  "dq_function": "expect_column_values_to_not_be_null",
                   "args": {
                     "column": "omnihub_locale_code"
                   }
@@ -182,32 +189,32 @@ acon = {
                 {
                     "dq_function": "expect_column_unique_value_count_to_be_between",
                     "args": {
-                      "column": "product_division", 
+                      "column": "product_division",
                       "min_value": 10,
                       "max_value": 100
                     },
                 },
                 {
-                    "dq_function": "expect_column_max_to_be_between", 
+                    "dq_function": "expect_column_max_to_be_between",
                     "args": {
-                      "column": "so_net_value", 
-                      "min_value": 10, 
+                      "column": "so_net_value",
+                      "min_value": 10,
                       "max_value": 1000
                     }
                 },
                 {
                     "dq_function": "expect_column_value_lengths_to_be_between",
                     "args": {
-                      "column": "omnihub_locale_code", 
-                      "min_value": 1, 
+                      "column": "omnihub_locale_code",
+                      "min_value": 1,
                       "max_value": 10
                     },
                 },
                 {
-                  "dq_function": "expect_column_mean_to_be_between", 
+                  "dq_function": "expect_column_mean_to_be_between",
                   "args": {
-                    "column": "coupon_code", 
-                    "min_value": 15, 
+                    "column": "coupon_code",
+                    "min_value": 15,
                     "max_value": 20
                   }
                 },
@@ -258,15 +265,15 @@ acon = {
 load_data(acon=acon)
 ```
 
-> **Note:** Although it is possible to interact with the Lakehouse Engine functions directly from your python code, 
-instead of relying on creating an ACON dict and use the engine api, we do not ensure the stability across new 
+> **Note:** Although it is possible to interact with the Lakehouse Engine functions directly from your python code,
+instead of relying on creating an ACON dict and use the engine api, we do not ensure the stability across new
 Lakehouse Engine releases when calling internal functions (not exposed in the facade) directly.
 
-> **Note:** ACON structure might change across releases, please test your Data Product first before updating to a 
+> **Note:** ACON structure might change across releases, please test your Data Product first before updating to a
 new version of the Lakehouse Engine in your Production environment.
 
 ## Who maintains the Lakehouse Engine?
-The Lakehouse Engine is under active development and production usage by the Adidas Lakehouse Foundations Engineering team. 
+The Lakehouse Engine is under active development and production usage by the Adidas Lakehouse Foundations Engineering team.
 
 ## Community Support and Contributing
 
@@ -276,13 +283,13 @@ The Lakehouse Engine is under active development and production usage by the Adi
 
 © adidas AG
 
-adidas AG publishes this software and accompanied documentation (if any) subject to the terms of the [license](LICENSE.txt) 
-with the aim of helping the community with our tools and libraries which we think can be also useful for other people. 
-You will find a copy of the [license](LICENSE.txt) in the root folder of this package. All rights not explicitly granted 
+adidas AG publishes this software and accompanied documentation (if any) subject to the terms of the [license](LICENSE.txt)
+with the aim of helping the community with our tools and libraries which we think can be also useful for other people.
+You will find a copy of the [license](LICENSE.txt) in the root folder of this package. All rights not explicitly granted
 to you under the [license](LICENSE.txt) remain the sole and exclusive property of adidas AG.
 
-NOTICE: The software has been designed solely for the purposes described in this ReadMe file. The software is NOT designed, 
-tested or verified for productive use whatsoever, nor or for any use related to high risk environments, such as health care, 
+NOTICE: The software has been designed solely for the purposes described in this ReadMe file. The software is NOT designed,
+tested or verified for productive use whatsoever, nor or for any use related to high risk environments, such as health care,
 highly or fully autonomous driving, power plants, or other critical infrastructures or services.
 
 If you want to contact adidas regarding the software, you can mail us at _software.engineering@adidas.com_.
