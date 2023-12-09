@@ -29,6 +29,14 @@ pip-tools==6.13.0
 
 # docs
 pdoc==13.1.1
+griffe-typingdoc>=0.2.2,<1.0
+mkautodoc>=0.2.0,<0.3.0
+mkdocs>=1.1.2,<2.0.0
+mkdocs-material>=9.4.4,<10.0.0
+mdx-include>=1.4.2,<2.0.0
+mkdocs-markdownextradata-plugin>=0.2.5,<0.3.0
+mkdocs-meta-descriptions-plugin>=2.3.0
+mkdocstrings[python]>=0.23.0,<0.30.0
 
 # types
 types-boto3==1.0.2

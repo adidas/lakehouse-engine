@@ -69,6 +69,7 @@ babel==2.13.0
     # via
     #   -r cicd/requirements.lock
     #   jupyterlab-server
+    #   mkdocs-material
 backcall==0.2.0
     # via
     #   -r cicd/requirements.lock
@@ -82,6 +83,7 @@ bcrypt==4.0.1
 beautifulsoup4==4.12.2
     # via
     #   -r cicd/requirements.lock
+    #   mkdocs-meta-descriptions-plugin
     #   nbconvert
 black==23.3.0
     # via
@@ -133,6 +135,8 @@ click==8.1.7
     #   -r cicd/requirements.lock
     #   black
     #   great-expectations
+    #   mkdocs
+    #   mkdocstrings
     #   pip-tools
 cognitive-complexity==1.3.0
     # via flake8-cognitive-complexity
@@ -140,6 +144,8 @@ colorama==0.4.6
     # via
     #   -r cicd/requirements.lock
     #   great-expectations
+    #   griffe
+    #   mkdocs-material
 comm==0.1.4
     # via
     #   -r cicd/requirements.lock
@@ -163,6 +169,8 @@ cycler==0.12.1
     # via
     #   -r cicd/requirements.lock
     #   matplotlib
+cyclic==1.0.0
+    # via mdx-include
 dacite==1.8.1
     # via
     #   -r cicd/requirements.lock
@@ -255,12 +263,20 @@ frozenlist==1.4.0
     #   -r cicd/requirements.lock
     #   aiohttp
     #   aiosignal
+ghp-import==2.1.0
+    # via mkdocs
 gitdb==4.0.10
     # via gitpython
 gitpython==3.1.37
     # via bandit
 great-expectations==0.17.11
     # via -r cicd/requirements.lock
+griffe==0.38.1
+    # via
+    #   griffe-typingdoc
+    #   mkdocstrings-python
+griffe-typingdoc==0.2.4
+    # via -r cicd/requirements_cicd.txt
 h11==0.14.0
     # via
     #   -r cicd/requirements.lock
@@ -312,6 +328,9 @@ importlib-metadata==6.8.0
     #   jupyterlab
     #   jupyterlab-server
     #   keyring
+    #   markdown
+    #   mkdocs
+    #   mkdocstrings
     #   nbconvert
     #   opentelemetry-api
     #   twine
@@ -358,6 +377,9 @@ jinja2==3.0.3
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
+    #   mkdocs
+    #   mkdocs-material
+    #   mkdocstrings
     #   moto
     #   nbconvert
     #   pdoc
@@ -466,12 +488,23 @@ makefun==1.15.1
     # via
     #   -r cicd/requirements.lock
     #   great-expectations
+markdown==3.5.1
+    # via
+    #   mdx-include
+    #   mkautodoc
+    #   mkdocs
+    #   mkdocs-autorefs
+    #   mkdocs-material
+    #   mkdocstrings
+    #   pymdown-extensions
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.3
     # via
     #   -r cicd/requirements.lock
     #   jinja2
+    #   mkdocs
+    #   mkdocstrings
     #   nbconvert
     #   pdoc
     #   werkzeug
@@ -495,6 +528,10 @@ mccabe==0.7.0
     # via flake8
 mdurl==0.1.2
     # via markdown-it-py
+mdx-include==1.4.2
+    # via -r cicd/requirements_cicd.txt
+mergedeep==1.3.4
+    # via mkdocs
 microsoft-kiota-abstractions==0.8.7
     # via
     #   -r cicd/requirements.lock
@@ -525,6 +562,33 @@ mistune==3.0.2
     #   -r cicd/requirements.lock
     #   great-expectations
     #   nbconvert
+mkautodoc==0.2.0
+    # via -r cicd/requirements_cicd.txt
+mkdocs==1.5.3
+    # via
+    #   -r cicd/requirements_cicd.txt
+    #   mkdocs-autorefs
+    #   mkdocs-markdownextradata-plugin
+    #   mkdocs-material
+    #   mkdocs-meta-descriptions-plugin
+    #   mkdocstrings
+mkdocs-autorefs==0.5.0
+    # via mkdocstrings
+mkdocs-markdownextradata-plugin==0.2.5
+    # via -r cicd/requirements_cicd.txt
+mkdocs-material==9.5.1
+    # via -r cicd/requirements_cicd.txt
+mkdocs-material-extensions==1.3.1
+    # via mkdocs-material
+mkdocs-meta-descriptions-plugin==3.0.0
+    # via -r cicd/requirements_cicd.txt
+mkdocstrings[python]==0.24.0
+    # via
+    #   -r cicd/requirements_cicd.txt
+    #   mkdocstrings
+    #   mkdocstrings-python
+mkdocstrings-python==1.7.5
+    # via mkdocstrings
 more-itertools==10.1.0
     # via jaraco-classes
 moto==4.1.10
@@ -647,9 +711,13 @@ packaging==23.2
     #   jupyterlab-server
     #   marshmallow
     #   matplotlib
+    #   mkdocs
+    #   mkdocs-meta-descriptions-plugin
     #   nbconvert
     #   pytest
     #   statsmodels
+paginate==0.5.6
+    # via mkdocs-material
 pandas==2.0.3
     # via
     #   -r cicd/requirements.lock
@@ -673,7 +741,9 @@ parso==0.8.3
     #   -r cicd/requirements.lock
     #   jedi
 pathspec==0.11.2
-    # via black
+    # via
+    #   black
+    #   mkdocs
 patsy==0.5.3
     # via
     #   -r cicd/requirements.lock
@@ -713,6 +783,8 @@ platformdirs==3.11.0
     #   -r cicd/requirements.lock
     #   black
     #   jupyter-core
+    #   mkdocs
+    #   mkdocstrings
 pluggy==1.3.0
     # via pytest
 portalocker==2.8.2
@@ -761,6 +833,7 @@ pygments==2.16.1
     # via
     #   -r cicd/requirements.lock
     #   ipython
+    #   mkdocs-material
     #   nbconvert
     #   pdoc
     #   readme-renderer
@@ -770,6 +843,11 @@ pyjwt[crypto]==2.8.0
     #   -r cicd/requirements.lock
     #   msal
     #   pyjwt
+pymdown-extensions==10.5
+    # via
+    #   mkdocs-material
+    #   mkdocs-meta-descriptions-plugin
+    #   mkdocstrings
 pynacl==1.5.0
     # via
     #   -r cicd/requirements.lock
@@ -798,6 +876,7 @@ python-dateutil==2.8.2
     #   -r cicd/requirements.lock
     #   arrow
     #   botocore
+    #   ghp-import
     #   great-expectations
     #   jupyter-client
     #   matplotlib
@@ -827,14 +906,22 @@ pyyaml==6.0.1
     #   -r cicd/requirements.lock
     #   bandit
     #   jupyter-events
+    #   mkdocs
+    #   mkdocs-markdownextradata-plugin
+    #   pymdown-extensions
+    #   pyyaml-env-tag
     #   responses
     #   ydata-profiling
+pyyaml-env-tag==0.1
+    # via mkdocs
 pyzmq==25.1.1
     # via
     #   -r cicd/requirements.lock
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
+rcslice==1.1.0
+    # via mdx-include
 readme-renderer==42.0
     # via twine
 referencing==0.30.2
@@ -843,12 +930,15 @@ referencing==0.30.2
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
+regex==2023.10.3
+    # via mkdocs-material
 requests==2.31.0
     # via
     #   -r cicd/requirements.lock
     #   azure-core
     #   great-expectations
     #   jupyterlab-server
+    #   mkdocs-material
     #   moto
     #   msal
     #   requests-toolbelt
@@ -1039,7 +1129,9 @@ typing-extensions==4.8.0
     #   black
     #   boto3-stubs
     #   great-expectations
+    #   griffe-typingdoc
     #   ipython
+    #   mkdocstrings
     #   mypy
     #   opentelemetry-sdk
     #   pydantic
@@ -1069,6 +1161,8 @@ visions[type-image-path]==0.7.5
     #   -r cicd/requirements.lock
     #   visions
     #   ydata-profiling
+watchdog==3.0.0
+    # via mkdocs
 wcwidth==0.2.8
     # via
     #   -r cicd/requirements.lock
