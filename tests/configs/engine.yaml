@@ -1,0 +1,5 @@
+dq_bucket: /app/tests/lakehouse/out/feature
+notif_disallowed_email_servers:
+  - smtp.office365.com
+engine_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
+collect_engine_usage: False

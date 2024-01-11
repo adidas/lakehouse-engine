@@ -14,7 +14,8 @@
 
 1. Git.
 2. Your IDE of choice with a Python 3 environment (e.g., virtualenv created from the requirements_cicd.txt file).
-3. Docker.
+3. Docker. **Warning:** The default spark driver memory limit for the tests is set at 2g. This limit is configurable but your
+   testing docker setup **MUST** always have **at least** 2 * spark driver memory limit + 1 gb configured.
 4. GNU make.
 
 ## General steps for contributing

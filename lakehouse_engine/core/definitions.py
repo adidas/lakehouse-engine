@@ -13,7 +13,42 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-from lakehouse_engine.utils.configs.config_utils import ConfigUtils
+
+@dataclass
+class EngineConfig(object):
+    """Definitions that can come from the Engine Config file.
+
+    dq_bucket: S3 bucket used to store data quality related artifacts.
+    notif_disallowed_email_servers: email servers not allowed to be used
+        for sending notifications.
+    engine_usage_path: path where the engine usage stats are stored.
+    collect_engine_usage: whether to enable the collection of lakehouse
+        engine usage stats or not.
+    """
+
+    dq_bucket: Optional[str] = None
+    notif_disallowed_email_servers: Optional[list] = None
+    engine_usage_path: Optional[str] = None
+    collect_engine_usage: bool = True
+
+
+class EngineStats(Enum):
+    """Definitions for collection of Lakehouse Engine Stats.
+
+    Note: whenever the value comes from a key inside a Spark Config
+    that returns an array, it can be specified with a '#' so that it
+    is adequately processed.
+    """
+
+    CLUSTER_USAGE_TAGS = "spark.databricks.clusterUsageTags"
+    DEF_SPARK_CONFS = {
+        "dp_name": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#accountName",
+        "environment": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#environment",
+        "workspace_id": f"{CLUSTER_USAGE_TAGS}.orgId",
+        "job_id": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#JobId",
+        "job_name": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#RunName",
+        "run_id": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#ClusterName",
+    }
 
 
 class InputFormat(Enum):
@@ -97,16 +132,6 @@ class NotifierType(Enum):
     """Type of notifier available."""
 
     EMAIL = "email"
-
-
-class NotificationEmailServers(Enum):
-    """Types of email server with special behaviour."""
-
-
-NOTIFICATION_DISALLOWED_EMAIL_SERVERS = ConfigUtils.get_config().get(
-    "notif_disallowed_email_servers", []
-)
-NOTIFICATION_OFFICE_EMAIL_SERVERS = ["smtp.office365.com"]
 
 
 class NotificationRuntimeParameters(Enum):
@@ -695,7 +720,6 @@ SENSOR_SCHEMA = StructType(
         StructField("upstream_value", StringType(), True),
     ]
 )
-
 
 SENSOR_UPDATE_SET: dict = {
     "sensors.sensor_id": "updates.sensor_id",

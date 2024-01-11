@@ -162,7 +162,7 @@ LOGGER = LoggingHandler(__name__).get_logger()
             "spec": TerminatorSpec(
                 function="notify",
                 args={
-                    "server": "smtpgate.emea.adsint.biz",
+                    "server": "smtp.office365.com",
                     "port": "1025",
                     "type": "email",
                     "from": "test-email@email.com",
@@ -174,8 +174,8 @@ LOGGER = LoggingHandler(__name__).get_logger()
                 },
             ),
             "expected": "Trying to use disallowed smtp server: "
-            "'smtpgate.emea.adsint.biz'.\n"
-            "Disallowed smtp servers: ['smtpgate.emea.adsint.biz']",
+            "'smtp.office365.com'.\n"
+            "Disallowed smtp servers: ['smtp.office365.com']",
         },
     ],
 )
@@ -355,7 +355,7 @@ def test_email_notification(scenario: dict) -> None:
         {
             "name": "Error: Using disallowed smtp server",
             "args": {
-                "server": "smtpgate.emea.adsint.biz",
+                "server": "smtp.office365.com",
                 "port": "1025",
                 "type": "email",
                 "from": "test-email@email.com",
@@ -366,8 +366,8 @@ def test_email_notification(scenario: dict) -> None:
                 "args": {"msg": "anything can go here"},
             },
             "expected": "Trying to use disallowed smtp server: "
-            "'smtpgate.emea.adsint.biz'.\n"
-            "Disallowed smtp servers: ['smtpgate.emea.adsint.biz']",
+            "'smtp.office365.com'.\n"
+            "Disallowed smtp servers: ['smtp.office365.com']",
         },
     ],
 )

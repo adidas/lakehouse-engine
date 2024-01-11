@@ -1,0 +1,1 @@
+{"acon": {"function": "execute_sql", "sql": "select 1", "exec_env": {"dp_name": "table_manager"}}, "dp_name": "table_manager", "environment": "", "workspace_id": "", "job_id": "", "job_name": "", "run_id": "", "function": "manage_table", "engine_version": "1.17.0", "start_timestamp": "2024-01-03 00:00:00.000000", "year": 2024, "month": 1}

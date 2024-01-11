@@ -35,6 +35,17 @@ python_image := $(shell cat $(meta_conf_file) | grep amd_python_image | cut -f 2
 cpu_architecture := amd64
 endif
 
+# Condition to define the spark driver memory limit to be used in the tests
+# In order to change this limit you can use the spark_driver_memory parameter
+# Example: make test spark_driver_memory=3g
+#
+# WARNING: When the tests are being run 2 spark nodes are created, so despite
+# the default value being 2g, your configured docker environment should have
+# extra memory for communication and overhead.
+ifndef $(spark_driver_memory)
+	spark_driver_memory := "2g"
+endif
+
 version_deploy_path := $(deploy_bucket)/lakehouse-engine/lakehouse_engine-$(version)-py3-none-any.whl
 latest_deploy_path := $(deploy_bucket)/lakehouse-engine/lakehouse_engine-$(latest_suffix)-py3-none-any.whl
 
@@ -122,7 +133,14 @@ lint:
         -v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'flake8 --docstring-convention google --config=cicd/flake8.conf lakehouse_engine tests cicd/code_doc/render_doc.py \
-		&& mypy --config-file cicd/mypy.ini lakehouse_engine tests'
+		&& mypy --no-incremental --config-file cicd/mypy.ini lakehouse_engine tests'
+
+audit-dep-safety:
+	$(container_cli) run --rm \
+		-w /app \
+        -v "$$PWD":/app \
+		$(image_name):$(version) \
+		/bin/bash -c 'pip-audit -r cicd/requirements.txt --desc on -f json --fix --dry-run -o artefacts/safety_analysis.json'
 
 # useful to print and use make variables. Usage: make print-variable var=variable_to_print.
 print-variable:
@@ -161,7 +179,7 @@ test:
             --cov-report xml --cov-report xml:artefacts/coverage.xml \
             --cov-report term-missing --cov=lakehouse_engine \
             --log-cli-level=INFO --color=yes -x -v \
-            $(test_only)" && \
+            --spark_driver_memory=$(spark_driver_memory) $(test_only)" && \
 	sed -i'' -e 's/filename=\"/filename=\"lakehouse_engine\//g' artefacts/coverage.xml
 
 #####################################

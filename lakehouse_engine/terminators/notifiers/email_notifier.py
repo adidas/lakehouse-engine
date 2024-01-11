@@ -15,11 +15,8 @@ from msgraph.generated.users.item.send_mail.send_mail_post_request_body import (
     SendMailPostRequestBody,
 )
 
-from lakehouse_engine.core.definitions import (
-    NOTIFICATION_DISALLOWED_EMAIL_SERVERS,
-    NOTIFICATION_OFFICE_EMAIL_SERVERS,
-    TerminatorSpec,
-)
+from lakehouse_engine.core.definitions import TerminatorSpec
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.terminators.notifier import Notifier
 from lakehouse_engine.terminators.notifiers.notification_templates import (
     NotificationsTemplates,
@@ -81,13 +78,18 @@ class EmailNotifier(Notifier):
     def send_notification(self) -> None:
         """Sends the notification by using a series of methods."""
         server = self.notification["server"]
+        notification_office_email_servers = ["smtp.office365.com"]
 
-        if server in NOTIFICATION_DISALLOWED_EMAIL_SERVERS:
+        if (
+            ExecEnv.ENGINE_CONFIG.notif_disallowed_email_servers is not None
+            and server in ExecEnv.ENGINE_CONFIG.notif_disallowed_email_servers
+        ):
             raise ValueError(
                 f"Trying to use disallowed smtp server: '{server}'.\n"
-                f"Disallowed smtp servers: {str(NOTIFICATION_DISALLOWED_EMAIL_SERVERS)}"
+                f"Disallowed smtp servers: "
+                f"{str(ExecEnv.ENGINE_CONFIG.notif_disallowed_email_servers)}"
             )
-        elif server in NOTIFICATION_OFFICE_EMAIL_SERVERS:
+        elif server in notification_office_email_servers:
             self._authenticate_and_send_office365()
         else:
             self._authenticate_and_send_simple_smtp()

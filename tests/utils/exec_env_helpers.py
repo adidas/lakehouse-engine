@@ -6,13 +6,14 @@ class ExecEnvHelpers(object):
     """Class with helper functions to interact with test execution environment."""
 
     @staticmethod
-    def prepare_exec_env() -> None:
+    def prepare_exec_env(spark_driver_memory: str) -> None:
         """Create single execution environment session."""
         ExecEnv.get_or_create(
             app_name="Lakehouse Engine Tests",
             enable_hive_support=False,
             config={
                 "spark.master": "local[2]",
+                "spark.driver.memory": spark_driver_memory,
                 "spark.sql.warehouse.dir": "file:///app/tests/lakehouse/spark-warehouse/",  # noqa: E501
                 "spark.sql.shuffle.partitions": "2",
                 "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",

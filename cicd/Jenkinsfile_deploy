@@ -73,6 +73,14 @@ pipeline {
                     }
                 }
 
+                stage('Audit Dependency Safety'){
+                    steps{
+                        catchError(message: "${STAGE_NAME} is unstable", buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                            sh 'make audit-dep-safety version=$VERSION'
+                        }
+                    }
+                }
+
                 stage('Test dependencies') {
                     steps {
                         sh 'make test-deps version=' + "${env.DEPLOY_VERSION}"

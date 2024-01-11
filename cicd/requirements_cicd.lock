@@ -91,6 +91,8 @@ bleach==6.1.0
     # via
     #   -r cicd/requirements.lock
     #   nbconvert
+boolean-py==4.0
+    # via license-expression
 boto3==1.21.32
     # via
     #   -r cicd/requirements.lock
@@ -111,6 +113,10 @@ build==0.10.0
     #   pip-tools
 bump2version==1.0.1
     # via -r cicd/requirements_cicd.txt
+cachecontrol[filecache]==0.13.1
+    # via
+    #   cachecontrol
+    #   pip-audit
 certifi==2023.7.22
     # via
     #   -r cicd/requirements.lock
@@ -163,6 +169,8 @@ cycler==0.12.1
     # via
     #   -r cicd/requirements.lock
     #   matplotlib
+cyclonedx-python-lib==4.2.3
+    # via pip-audit
 dacite==1.8.1
     # via
     #   -r cicd/requirements.lock
@@ -179,6 +187,7 @@ defusedxml==0.7.1
     # via
     #   -r cicd/requirements.lock
     #   nbconvert
+    #   py-serializable
 delta-spark==2.4.0
     # via -r cicd/extra_os_requirements.txt
 deprecated==1.2.14
@@ -207,6 +216,8 @@ fastjsonschema==2.18.1
     # via
     #   -r cicd/requirements.lock
     #   nbformat
+filelock==3.13.1
+    # via cachecontrol
 flake8==6.0.0
     # via
     #   -r cicd/requirements_cicd.txt
@@ -273,6 +284,8 @@ hpack==4.0.0
     # via
     #   -r cicd/requirements.lock
     #   h2
+html5lib==1.1
+    # via pip-audit
 htmlmin==0.1.12
     # via
     #   -r cicd/requirements.lock
@@ -456,6 +469,8 @@ kiwisolver==1.4.5
     # via
     #   -r cicd/requirements.lock
     #   matplotlib
+license-expression==30.2.0
+    # via cyclonedx-python-lib
 llvmlite==0.41.0
     # via
     #   -r cicd/requirements.lock
@@ -538,6 +553,8 @@ msal-extensions==1.0.0
     # via
     #   -r cicd/requirements.lock
     #   azure-identity
+msgpack==1.0.7
+    # via cachecontrol
 msgraph-core==1.0.0a4
     # via
     #   -r cicd/requirements.lock
@@ -635,6 +652,8 @@ overrides==7.4.0
     # via
     #   -r cicd/requirements.lock
     #   jupyter-server
+packageurl-python==0.13.1
+    # via cyclonedx-python-lib
 packaging==23.2
     # via
     #   -r cicd/requirements.lock
@@ -648,6 +667,8 @@ packaging==23.2
     #   marshmallow
     #   matplotlib
     #   nbconvert
+    #   pip-audit
+    #   pip-requirements-parser
     #   pytest
     #   statsmodels
 pandas==2.0.3
@@ -664,7 +685,7 @@ pandocfilters==1.5.0
     # via
     #   -r cicd/requirements.lock
     #   nbconvert
-paramiko==2.12.0
+paramiko==3.4.0
     # via
     #   -r cicd/requirements.lock
     #   pytest-sftpserver
@@ -704,6 +725,12 @@ pillow==10.1.0
     #   imagehash
     #   matplotlib
     #   wordcloud
+pip-api==0.0.30
+    # via pip-audit
+pip-audit==2.6.1
+    # via -r cicd/requirements_cicd.txt
+pip-requirements-parser==32.0.1
+    # via pip-audit
 pip-tools==6.13.0
     # via -r cicd/requirements_cicd.txt
 pkginfo==1.9.6
@@ -740,6 +767,8 @@ pure-eval==0.2.2
     # via
     #   -r cicd/requirements.lock
     #   stack-data
+py-serializable==0.11.1
+    # via cyclonedx-python-lib
 py4j==0.10.9.7
     # via pyspark
 pycodestyle==2.10.0
@@ -779,6 +808,7 @@ pyparsing==3.1.1
     #   -r cicd/requirements.lock
     #   great-expectations
     #   matplotlib
+    #   pip-requirements-parser
 pyproject-hooks==1.0.0
     # via build
 pyspark==3.4.1
@@ -847,10 +877,12 @@ requests==2.31.0
     # via
     #   -r cicd/requirements.lock
     #   azure-core
+    #   cachecontrol
     #   great-expectations
     #   jupyterlab-server
     #   moto
     #   msal
+    #   pip-audit
     #   requests-toolbelt
     #   responses
     #   twine
@@ -874,6 +906,7 @@ rfc3986-validator==0.1.1
 rich==13.6.0
     # via
     #   bandit
+    #   pip-audit
     #   twine
 rpds-py==0.10.6
     # via
@@ -916,7 +949,7 @@ six==1.16.0
     #   asttokens
     #   azure-core
     #   bleach
-    #   paramiko
+    #   html5lib
     #   patsy
     #   pytest-sftpserver
     #   python-dateutil
@@ -931,6 +964,8 @@ sniffio==1.3.0
     #   httpx
 snowballstemmer==2.2.0
     # via pydocstyle
+sortedcontainers==2.4.0
+    # via cyclonedx-python-lib
 soupsieve==2.5
     # via
     #   -r cicd/requirements.lock
@@ -962,6 +997,8 @@ tinycss2==1.2.1
     # via
     #   -r cicd/requirements.lock
     #   nbconvert
+toml==0.10.2
+    # via pip-audit
 tomli==2.0.1
     # via
     #   -r cicd/requirements.lock
@@ -1081,6 +1118,7 @@ webencodings==0.5.1
     # via
     #   -r cicd/requirements.lock
     #   bleach
+    #   html5lib
     #   tinycss2
 websocket-client==1.6.4
     # via

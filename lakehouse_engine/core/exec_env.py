@@ -3,18 +3,31 @@ import os
 
 from pyspark.sql import SparkSession
 
+from lakehouse_engine.core.definitions import EngineConfig
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
 class ExecEnv(object):
     """Represents the basic resources regarding the engine execution environment.
 
-    Currently, it is solely used to encapsulate the logic to get a Spark session.
+    Currently, it is used to encapsulate both the logic to get the Spark
+    session and the engine configurations.
     """
 
     SESSION: SparkSession
     _LOGGER = LoggingHandler(__name__).get_logger()
     DEFAULT_AWS_REGION = "eu-west-1"
+    ENGINE_CONFIG: EngineConfig = EngineConfig(**ConfigUtils.get_config())
+
+    @classmethod
+    def set_default_engine_config(cls, package: str) -> None:
+        """Set default engine configurations by reading them from a specified package.
+
+        Args:
+            package: package where the engine configurations can be found.
+        """
+        cls.ENGINE_CONFIG = EngineConfig(**ConfigUtils.get_config(package))
 
     @classmethod
     def get_or_create(
@@ -87,6 +100,6 @@ class ExecEnv(object):
             os.environ[env_var[0]] = env_var[1]
 
         if "AWS_DEFAULT_REGION" not in os_env_vars:
-            os.environ["AWS_DEFAULT_REGION"] = cls.SESSION.sparkContext.getConf().get(
+            os.environ["AWS_DEFAULT_REGION"] = cls.SESSION.conf.get(
                 "spark.databricks.clusterUsageTags.region", cls.DEFAULT_AWS_REGION
             )

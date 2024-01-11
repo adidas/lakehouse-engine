@@ -67,6 +67,14 @@ pipeline {
                     }
                 }
 
+                stage('Audit Dependency Safety'){
+                    steps{
+                        catchError(message: "${STAGE_NAME} is unstable", buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                            sh 'make audit-dep-safety version=$VERSION'
+                        }
+                    }
+                }
+
                 stage('Test dependencies') {
                     steps {
                         sh 'make test-deps version=$VERSION'
@@ -93,6 +101,7 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'artefacts/docs/**/*'
+            archiveArtifacts artifacts: 'artefacts/*.json'
             junit 'artefacts/tests.xml'
             step([$class: 'CoberturaPublisher', coberturaReportFile: 'artefacts/coverage.xml'])
         }
