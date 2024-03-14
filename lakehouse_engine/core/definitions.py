@@ -18,11 +18,11 @@ from pyspark.sql.types import (
 class EngineConfig(object):
     """Definitions that can come from the Engine Config file.
 
-    dq_bucket: S3 bucket used to store data quality related artifacts.
-    notif_disallowed_email_servers: email servers not allowed to be used
+    - dq_bucket: S3 bucket used to store data quality related artifacts.
+    - notif_disallowed_email_servers: email servers not allowed to be used
         for sending notifications.
-    engine_usage_path: path where the engine usage stats are stored.
-    collect_engine_usage: whether to enable the collection of lakehouse
+    - engine_usage_path: path where the engine usage stats are stored.
+    - collect_engine_usage: whether to enable the collection of lakehouse
         engine usage stats or not.
     """
 
@@ -35,9 +35,10 @@ class EngineConfig(object):
 class EngineStats(Enum):
     """Definitions for collection of Lakehouse Engine Stats.
 
-    Note: whenever the value comes from a key inside a Spark Config
-    that returns an array, it can be specified with a '#' so that it
-    is adequately processed.
+    .. note::
+        Note: whenever the value comes from a key inside a Spark Config
+        that returns an array, it can be specified with a '#' so that it
+        is adequately processed.
     """
 
     CLUSTER_USAGE_TAGS = "spark.databricks.clusterUsageTags"
@@ -150,8 +151,8 @@ NOTIFICATION_RUNTIME_PARAMETERS = [
 class ReadType(Enum):
     """Define the types of read operations.
 
-    BATCH - read the data in batch mode (e.g., Spark batch).
-    STREAMING - read the data in streaming mode (e.g., Spark streaming).
+    - BATCH - read the data in batch mode (e.g., Spark batch).
+    - STREAMING - read the data in streaming mode (e.g., Spark streaming).
     """
 
     BATCH = "batch"
@@ -240,30 +241,31 @@ class InputSpec(object):
     This is very aligned with the way the execution environment connects to the sources
     (e.g., spark sources).
 
-    spec_id: spec_id of the input specification read_type: ReadType type of read
-    operation.
-    data_format: format of the input.
-    sftp_files_format: format of the files (csv, fwf, json, xml...) in a sftp
+    - spec_id: spec_id of the input specification read_type: ReadType type of read
+        operation.
+    - data_format: format of the input.
+    - sftp_files_format: format of the files (csv, fwf, json, xml...) in a sftp
         directory.
-    df_name: dataframe name.
-    db_table: table name in the form of <db>.<table>.
-    location: uri that identifies from where to read data in the specified format.
-    enforce_schema_from_table: if we want to enforce the table schema or not, by
-        providing a table name in the form of <db>.<table>.
-    query: sql query to execute and return the dataframe. Use it if you do not want to
+    - df_name: dataframe name.
+    - db_table: table name in the form of `<db>.<table>`.
+    - location: uri that identifies from where to read data in the specified format.
+    - enforce_schema_from_table: if we want to enforce the table schema or not, by
+        providing a table name in the form of `<db>.<table>`.
+    - query: sql query to execute and return the dataframe. Use it if you do not want to
         read from a file system nor from a table, but rather from a sql query instead.
-    schema: dict representation of a schema of the input (e.g., Spark struct type
+    - schema: dict representation of a schema of the input (e.g., Spark struct type
         schema).
-    schema_path: path to a file with a representation of a schema of the input (e.g.,
+    - schema_path: path to a file with a representation of a schema of the input (e.g.,
         Spark struct type schema).
-    with_filepath: if we want to include the path of the file that is being read. Only
+    - with_filepath: if we want to include the path of the file that is being read. Only
         works with the file reader (batch and streaming modes are supported).
-    options: dict with other relevant options according to the execution
+    - options: dict with other relevant options according to the execution
         environment (e.g., spark) possible sources.
-    calculate_upper_bound: when to calculate upper bound to extract from SAP BW or not.
-    calc_upper_bound_schema: specific schema for the calculated upper_bound.
-    generate_predicates: when to generate predicates to extract from SAP BW or not.
-    predicates_add_null: if we want to include is null on partition by predicates.
+    - calculate_upper_bound: when to calculate upper bound to extract from SAP BW
+        or not.
+    - calc_upper_bound_schema: specific schema for the calculated upper_bound.
+    - generate_predicates: when to generate predicates to extract from SAP BW or not.
+    - predicates_add_null: if we want to include is null on partition by predicates.
     """
 
     spec_id: str
@@ -290,10 +292,10 @@ class InputSpec(object):
 class TransformerSpec(object):
     """Transformer Specification, i.e., a single transformation amongst many.
 
-    function: name of the function (or callable function) to be executed.
-    args: (not applicable if using a callable function) dict with the arguments to pass
-    to the function <k,v> pairs with the name of the parameter of the function and the
-    respective value.
+    - function: name of the function (or callable function) to be executed.
+    - args: (not applicable if using a callable function) dict with the arguments
+        to pass to the function `<k,v>` pairs with the name of the parameter of
+        the function and the respective value.
     """
 
     function: str
@@ -307,10 +309,11 @@ class TransformSpec(object):
     I.e., the specification that defines the many transformations to be done to the data
     that was read.
 
-    spec_id: id of the terminate specification input_id: id of the corresponding input
+    - spec_id: id of the terminate specification
+    - input_id: id of the corresponding input
     specification.
-    transformers: list of transformers to execute.
-    force_streaming_foreach_batch_processing: sometimes, when using streaming, we want
+    - transformers: list of transformers to execute.
+    - force_streaming_foreach_batch_processing: sometimes, when using streaming, we want
         to force the transform to be executed in the foreachBatch function to ensure
         non-supported streaming operations can be properly executed.
     """
@@ -332,9 +335,9 @@ class DQType(Enum):
 class DQFunctionSpec(object):
     """Defines a data quality function specification.
 
-    function - name of the data quality function (expectation) to execute.
+    - function - name of the data quality function (expectation) to execute.
     It follows the great_expectations api https://greatexpectations.io/expectations/.
-    args - args of the function (expectation). Follow the same api as above.
+    - args - args of the function (expectation). Follow the same api as above.
     """
 
     function: str
@@ -345,73 +348,75 @@ class DQFunctionSpec(object):
 class DQSpec(object):
     """Data quality overall specification.
 
-        spec_id - id of the specification.
-        input_id - id of the input specification.
-        dq_type - type of DQ process to execute (e.g. validator).
-        dq_functions - list of function specifications to execute.
-        unexpected_rows_pk - the list of columns composing the primary key of the
-            source data to identify the rows failing the DQ validations. Note: only one
-            of tbl_to_derive_pk or unexpected_rows_pk arguments need to be provided. It
-            is mandatory to provide one of these arguments when using tag_source_data
-            as True. When tag_source_data is False, this is not mandatory, but still
-            recommended.
-        tbl_to_derive_pk - db.table to automatically derive the unexpected_rows_pk from.
-            Note: only one of tbl_to_derive_pk or unexpected_rows_pk arguments need to
-            be provided. It is mandatory to provide one of these arguments when using
-            tag_source_data as True. hen tag_source_data is False, this is not
-            mandatory, but still recommended.
-        gx_result_format - great expectations result format. Default: "COMPLETE".
-    ´   tag_source_data - when set to true, this will ensure that the DQ process ends by
-            tagging the source data with an additional column with information about the
-            DQ results. This column makes it possible to identify if the DQ run was
-            succeeded in general and, if not, it unlocks the insights to know what
-            specific rows have made the DQ validations fail and why. Default: False.
-            Note: it only works if result_sink_explode is True, gx_result_format is
-            COMPLETE, fail_on_error is False (which is done automatically when
-            you specify tag_source_data as True) and tbl_to_derive_pk or
-            unexpected_rows_pk is configured.
-        store_backend - which store_backend to use (e.g. s3 or file_system).
-        local_fs_root_dir - path of the root directory. Note: only applicable for
-            store_backend file_system.
-        bucket - the bucket name to consider for the store_backend (store DQ artefacts).
-            Note: only applicable for store_backend s3.
-        data_docs_bucket - the bucket name for data docs only. When defined, it will
-            supersede bucket parameter.
-        expectations_store_prefix - prefix where to store expectations' data. Note: only
-            applicable for store_backend s3.
-        validations_store_prefix - prefix where to store validations' data. Note: only
-            applicable for store_backend s3.
-        data_docs_prefix - prefix where to store data_docs' data. Note: only applicable
-            for store_backend s3.
-        checkpoint_store_prefix - prefix where to store checkpoints' data. Note: only
-            applicable for store_backend s3.
-        data_asset_name - name of the data asset to consider when configuring the great
-            expectations' data source.
-        expectation_suite_name - name to consider for great expectations' suite.
-        assistant_options - additional options to pass to the DQ assistant processor.
-        result_sink_db_table - db.table_name indicating the database and table in which
-            to save the results of the DQ process.
-        result_sink_location - file system location in which to save the results of the
-            DQ process.
-        result_sink_partitions - the list of partitions to consider.
-        result_sink_format - format of the result table (e.g. delta, parquet, kafka...).
-        result_sink_options - extra spark options for configuring the result sink.
-            E.g: can be used to configure a Kafka sink if result_sink_format is kafka.
-        result_sink_explode - flag to determine if the output table/location should have
-            the columns exploded (as True) or not (as False). Default: True.
-        result_sink_extra_columns - list of extra columns to be exploded (following
-            the pattern "<name>.*") or columns to be selected. It is only used when
-            result_sink_explode is set to True.
-        source - name of data source, to be easier to identify in analysis. If not
-            specified, it is set as default <input_id>. This will be only used
-            when result_sink_explode is set to True.
-        fail_on_error - whether to fail the algorithm if the validations of your data in
-            the DQ process failed.
-        cache_df - whether to cache the dataframe before running the DQ process or not.
-        critical_functions - functions that should not fail. When this argument is
-            defined, fail_on_error is nullified.
-        max_percentage_failure - percentage of failure that should be allowed.
-            This argument has priority over both fail_on_error and critical_functions.
+    - spec_id - id of the specification.
+    - input_id - id of the input specification.
+    - dq_type - type of DQ process to execute (e.g. validator).
+    - dq_functions - list of function specifications to execute.
+    - unexpected_rows_pk - the list of columns composing the primary key of the
+        source data to identify the rows failing the DQ validations. Note: only one
+        of tbl_to_derive_pk or unexpected_rows_pk arguments need to be provided. It
+        is mandatory to provide one of these arguments when using tag_source_data
+        as True. When tag_source_data is False, this is not mandatory, but still
+        recommended.
+    - tbl_to_derive_pk - db.table to automatically derive the unexpected_rows_pk from.
+        Note: only one of tbl_to_derive_pk or unexpected_rows_pk arguments need to
+        be provided. It is mandatory to provide one of these arguments when using
+        tag_source_data as True. hen tag_source_data is False, this is not
+        mandatory, but still recommended.
+    - gx_result_format - great expectations result format. Default: "COMPLETE".
+    - tag_source_data - when set to true, this will ensure that the DQ process ends by
+        tagging the source data with an additional column with information about the
+        DQ results. This column makes it possible to identify if the DQ run was
+        succeeded in general and, if not, it unlocks the insights to know what
+        specific rows have made the DQ validations fail and why. Default: False.
+        Note: it only works if result_sink_explode is True, gx_result_format is
+        COMPLETE, fail_on_error is False (which is done automatically when
+        you specify tag_source_data as True) and tbl_to_derive_pk or
+        unexpected_rows_pk is configured.
+    - store_backend - which store_backend to use (e.g. s3 or file_system).
+    - local_fs_root_dir - path of the root directory. Note: only applicable for
+        store_backend file_system.
+    - data_docs_local_fs - the path for data docs only for store_backend
+        file_system.
+    - bucket - the bucket name to consider for the store_backend (store DQ artefacts).
+        Note: only applicable for store_backend s3.
+    - data_docs_bucket - the bucket name for data docs only. When defined, it will
+        supersede bucket parameter.
+    - expectations_store_prefix - prefix where to store expectations' data. Note: only
+        applicable for store_backend s3.
+    - validations_store_prefix - prefix where to store validations' data. Note: only
+        applicable for store_backend s3.
+    - data_docs_prefix - prefix where to store data_docs' data. Note: only applicable
+        for store_backend s3.
+    - checkpoint_store_prefix - prefix where to store checkpoints' data. Note: only
+        applicable for store_backend s3.
+    - data_asset_name - name of the data asset to consider when configuring the great
+        expectations' data source.
+    - expectation_suite_name - name to consider for great expectations' suite.
+    - assistant_options - additional options to pass to the DQ assistant processor.
+    - result_sink_db_table - db.table_name indicating the database and table in which
+        to save the results of the DQ process.
+    - result_sink_location - file system location in which to save the results of the
+        DQ process.
+    - result_sink_partitions - the list of partitions to consider.
+    - result_sink_format - format of the result table (e.g. delta, parquet, kafka...).
+    - result_sink_options - extra spark options for configuring the result sink.
+        E.g: can be used to configure a Kafka sink if result_sink_format is kafka.
+    - result_sink_explode - flag to determine if the output table/location should have
+        the columns exploded (as True) or not (as False). Default: True.
+    - result_sink_extra_columns - list of extra columns to be exploded (following
+        the pattern "<name>.*") or columns to be selected. It is only used when
+        result_sink_explode is set to True.
+    - source - name of data source, to be easier to identify in analysis. If not
+        specified, it is set as default <input_id>. This will be only used
+        when result_sink_explode is set to True.
+    - fail_on_error - whether to fail the algorithm if the validations of your data in
+        the DQ process failed.
+    - cache_df - whether to cache the dataframe before running the DQ process or not.
+    - critical_functions - functions that should not fail. When this argument is
+        defined, fail_on_error is nullified.
+    - max_percentage_failure - percentage of failure that should be allowed.
+        This argument has priority over both fail_on_error and critical_functions.
     """
 
     spec_id: str
@@ -425,6 +430,7 @@ class DQSpec(object):
     assistant_options: Optional[dict] = None
     store_backend: str = DQDefaults.STORE_BACKEND.value
     local_fs_root_dir: Optional[str] = None
+    data_docs_local_fs: Optional[str] = None
     bucket: Optional[str] = None
     data_docs_bucket: Optional[str] = None
     expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value
@@ -451,18 +457,19 @@ class DQSpec(object):
 class MergeOptions(object):
     """Options for a merge operation.
 
-    merge_predicate: predicate to apply to the merge operation so that we can check if a
-        new record corresponds to a record already included in the historical data.
-    insert_only: indicates if the merge should only insert data (e.g., deduplicate
+    - merge_predicate: predicate to apply to the merge operation so that we can
+        check if a new record corresponds to a record already included in the
+        historical data.
+    - insert_only: indicates if the merge should only insert data (e.g., deduplicate
         scenarios).
-    delete_predicate: predicate to apply to the delete operation.
-    update_predicate: predicate to apply to the update operation.
-    insert_predicate: predicate to apply to the insert operation.
-    update_column_set: rules to apply to the update operation which allows to set the
-        value for each column to be updated.
+    - delete_predicate: predicate to apply to the delete operation.
+    - update_predicate: predicate to apply to the update operation.
+    - insert_predicate: predicate to apply to the insert operation.
+    - update_column_set: rules to apply to the update operation which allows to
+        set the value for each column to be updated.
         (e.g. {"data": "new.data", "count": "current.count + 1"} )
-    insert_column_set: rules to apply to the insert operation which allows to set the
-        value for each column to be inserted.
+    - insert_column_set: rules to apply to the insert operation which allows to
+        set the value for each column to be inserted.
         (e.g. {"date": "updates.date", "count": "1"} )
     """
 
@@ -482,40 +489,40 @@ class OutputSpec(object):
     This is very aligned with the way the execution environment connects to the output
     systems (e.g., spark outputs).
 
-    spec_id: id of the output specification.
-    input_id: id of the corresponding input specification.
-    write_type: type of write operation.
-    data_format: format of the output. Defaults to DELTA.
-    db_table: table name in the form of <db>.<table>.
-    location: uri that identifies from where to write data in the specified format.
-    partitions: list of partition input_col names.
-    merge_opts: options to apply to the merge operation.
-    streaming_micro_batch_transformers: transformers to invoke for each streaming micro
-        batch, before writing (i.e., in Spark's foreachBatch structured
+    - spec_id: id of the output specification.
+    - input_id: id of the corresponding input specification.
+    - write_type: type of write operation.
+    - data_format: format of the output. Defaults to DELTA.
+    - db_table: table name in the form of `<db>.<table>`.
+    - location: uri that identifies from where to write data in the specified format.
+    - partitions: list of partition input_col names.
+    - merge_opts: options to apply to the merge operation.
+    - streaming_micro_batch_transformers: transformers to invoke for each streaming
+        micro batch, before writing (i.e., in Spark's foreachBatch structured
         streaming function). Note: the lakehouse engine manages this for you, so
         you don't have to manually specify streaming transformations here, so we don't
         advise you to manually specify transformations through this parameter. Supply
         them as regular transformers in the transform_specs sections of an ACON.
-    streaming_once: if the streaming query is to be executed just once, or not,
+    - streaming_once: if the streaming query is to be executed just once, or not,
         generating just one micro batch.
-    streaming_processing_time: if streaming query is to be kept alive, this indicates
+    - streaming_processing_time: if streaming query is to be kept alive, this indicates
         the processing time of each micro batch.
-    streaming_available_now: if set to True, set a trigger that processes all available
-        data in multiple batches then terminates the query.
+    - streaming_available_now: if set to True, set a trigger that processes all
+        available data in multiple batches then terminates the query.
         When using streaming, this is the default trigger that the lakehouse-engine will
         use, unless you configure a different one.
-    streaming_continuous: set a trigger that runs a continuous query with a given
+    - streaming_continuous: set a trigger that runs a continuous query with a given
         checkpoint interval.
-    streaming_await_termination: whether to wait (True) for the termination of the
+    - streaming_await_termination: whether to wait (True) for the termination of the
         streaming query (e.g. timeout or exception) or not (False). Default: True.
-    streaming_await_termination_timeout: a timeout to set to the
+    - streaming_await_termination_timeout: a timeout to set to the
         streaming_await_termination. Default: None.
-    with_batch_id: whether to include the streaming batch id in the final data, or not.
-        It only takes effect in streaming mode.
-    options: dict with other relevant options according to the execution environment
+    - with_batch_id: whether to include the streaming batch id in the final data,
+        or not. It only takes effect in streaming mode.
+    - options: dict with other relevant options according to the execution environment
         (e.g., spark) possible outputs.  E.g.,: JDBC options, checkpoint location for
         streaming, etc.
-    streaming_micro_batch_dq_processors: similar to streaming_micro_batch_transformers
+    - streaming_micro_batch_dq_processors: similar to streaming_micro_batch_transformers
         but for the DQ functions to be executed. Used internally by the lakehouse
         engine, so you don't have to supply DQ functions through this parameter. Use the
         dq_specs of the acon instead.
@@ -548,10 +555,9 @@ class TerminatorSpec(object):
     I.e., the specification that defines a terminator operation to be executed. Examples
     are compute statistics, vacuum, optimize, etc.
 
-    spec_id: id of the terminate specification.
-    function: terminator function to execute.
-    args: arguments of the terminator function.
-    input_id: id of the corresponding output specification (Optional).
+    - function: terminator function to execute.
+    - args: arguments of the terminator function.
+    - input_id: id of the corresponding output specification (Optional).
     """
 
     function: str
@@ -563,7 +569,7 @@ class TerminatorSpec(object):
 class ReconciliatorSpec(object):
     """Reconciliator Specification.
 
-    metrics: list of metrics in the form of:
+    - metrics: list of metrics in the form of:
         [{
             metric: name of the column present in both truth and current datasets,
             aggregation: sum, avg, max, min, ...,
@@ -571,28 +577,29 @@ class ReconciliatorSpec(object):
             yellow: value,
             red: value
         }].
-    recon_type: reconciliation type (percentage or absolute). Percentage calculates
+    - recon_type: reconciliation type (percentage or absolute). Percentage calculates
         the difference between truth and current results as a percentage (x-y/x), and
         absolute calculates the raw difference (x - y).
-    truth_input_spec: input specification of the truth data.
-    current_input_spec: input specification of the current results data
-    truth_preprocess_query: additional query on top of the truth input data to
+    - truth_input_spec: input specification of the truth data.
+    - current_input_spec: input specification of the current results data
+    - truth_preprocess_query: additional query on top of the truth input data to
         preprocess the truth data before it gets fueled into the reconciliation process.
         Important note: you need to assume that the data out of
         the truth_input_spec is referencable by a table called 'truth'.
-    truth_preprocess_query_args: optional dict having the functions/transformations to
+    - truth_preprocess_query_args: optional dict having the functions/transformations to
         apply on top of the truth_preprocess_query and respective arguments. Note: cache
         is being applied on the Dataframe, by default. For turning the default behavior
         off, pass `"truth_preprocess_query_args": []`.
-    current_preprocess_query: additional query on top of the current results input data
-        to preprocess the current results data before it gets fueled into the
+    - current_preprocess_query: additional query on top of the current results input
+        data to preprocess the current results data before it gets fueled into the
         reconciliation process. Important note: you need to assume that the data out of
         the current_results_input_spec is referencable by a table called 'current'.
-    current_preprocess_query_args: optional dict having the functions/transformations to
-        apply on top of the current_preprocess_query and respective arguments. Note:
-        cache is being applied on the Dataframe, by default. For turning the default
-        behavior off, pass `"current_preprocess_query_args": []`.
-    ignore_empty_df: optional boolean, to ignore the recon process if source & target
+    - current_preprocess_query_args: optional dict having the
+        functions/transformations to apply on top of the current_preprocess_query
+        and respective arguments. Note: cache is being applied on the Dataframe,
+        by default. For turning the default behavior off, pass
+        `"current_preprocess_query_args": []`.
+    - ignore_empty_df: optional boolean, to ignore the recon process if source & target
        dataframes are empty, recon will exit success code (passed)
     """
 
@@ -610,12 +617,12 @@ class ReconciliatorSpec(object):
 class DQValidatorSpec(object):
     """Data Quality Validator Specification.
 
-    input_spec: input specification of the data to be checked/validated.
-    dq_spec: data quality specification.
-    restore_prev_version: specify if, having
-    delta table/files as input, they should be restored to the
-    previous version if the data quality process fails. Note: this
-    is only considered if fail_on_error is kept as True.
+    - input_spec: input specification of the data to be checked/validated.
+    - dq_spec: data quality specification.
+    - restore_prev_version: specify if, having
+        delta table/files as input, they should be restored to the
+        previous version if the data quality process fails. Note: this
+        is only considered if fail_on_error is kept as True.
     """
 
     input_spec: InputSpec
@@ -650,22 +657,22 @@ class FileManagerAPIKeys(Enum):
 class SensorSpec(object):
     """Sensor Specification.
 
-    sensor_id: sensor id.
-    assets: a list of assets that are considered as available to
+    - sensor_id: sensor id.
+    - assets: a list of assets that are considered as available to
         consume downstream after this sensor has status
         PROCESSED_NEW_DATA.
-    control_db_table_name: db.table to store sensor metadata.
-    input_spec: input specification of the source to be checked for new data.
-    preprocess_query: SQL query to transform/filter the result from the
+    - control_db_table_name: db.table to store sensor metadata.
+    - input_spec: input specification of the source to be checked for new data.
+    - preprocess_query: SQL query to transform/filter the result from the
         upstream. Consider that we should refer to 'new_data' whenever
         we are referring to the input of the sensor. E.g.:
             "SELECT dummy_col FROM new_data WHERE ..."
-    checkpoint_location: optional location to store checkpoints to resume
+    - checkpoint_location: optional location to store checkpoints to resume
         from. These checkpoints use the same as Spark checkpoint strategy.
         For Spark readers that do not support checkpoints, use the
         preprocess_query parameter to form a SQL query to filter the result
         from the upstream accordingly.
-    fail_on_empty_result: if the sensor should throw an error if there is no new
+    - fail_on_empty_result: if the sensor should throw an error if there is no new
         data in the upstream. Default: True.
     """
 
@@ -786,3 +793,23 @@ ARCHIVE_STORAGE_CLASS = [
     "DEEP_ARCHIVE",
     "GLACIER_IR",
 ]
+
+
+class SQLParser(Enum):
+    """Defaults to use for parsing."""
+
+    DOUBLE_QUOTES = '"'
+    SINGLE_QUOTES = "'"
+    BACKSLASH = "\\"
+    SINGLE_TRACE = "-"
+    DOUBLE_TRACES = "--"
+    SLASH = "/"
+    OPENING_MULTIPLE_LINE_COMMENT = "/*"
+    CLOSING_MULTIPLE_LINE_COMMENT = "*/"
+    PARAGRAPH = "\n"
+    STAR = "*"
+
+    MULTIPLE_LINE_COMMENT = [
+        OPENING_MULTIPLE_LINE_COMMENT,
+        CLOSING_MULTIPLE_LINE_COMMENT,
+    ]

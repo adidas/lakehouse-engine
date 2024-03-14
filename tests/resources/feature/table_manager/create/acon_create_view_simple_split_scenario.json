@@ -1,0 +1,4 @@
+{
+  "function": "create_view",
+  "path": "file:///app/tests/lakehouse/in/feature/table_manager/create/view/test_view_simple_split_scenario.sql"
+}

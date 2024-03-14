@@ -1,32 +1,37 @@
 """Module containing the class definition of the Data Quality Factory."""
 import importlib.util
+import json
 from datetime import datetime, timezone
 from json import dumps, loads
 from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union
 
 from great_expectations.checkpoint.types.checkpoint_result import CheckpointResult
 from great_expectations.core.batch import RuntimeBatchRequest
-from great_expectations.data_context import BaseDataContext
+from great_expectations.data_context import EphemeralDataContext
 from great_expectations.data_context.types.base import (
     AnonymizedUsageStatisticsConfig,
     DataContextConfig,
     FilesystemStoreBackendDefaults,
     S3StoreBackendDefaults,
 )
+from great_expectations.util import get_context
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
     array,
     col,
     dayofmonth,
     explode,
+    from_json,
     lit,
     month,
+    schema_of_json,
     struct,
     to_json,
     to_timestamp,
     transform,
     year,
 )
+from pyspark.sql.types import StringType
 
 from lakehouse_engine.core.definitions import (
     DQDefaults,
@@ -74,7 +79,7 @@ class DQFactory(object):
                 "lakehouse_engine.dq_processors.custom_expectations." + expectation
             )
 
-        context = BaseDataContext(project_config=cls._get_data_context_config(dq_spec))
+        context = get_context(project_config=cls._get_data_context_config(dq_spec))
         context.add_datasource(**cls._get_data_source_defaults(dq_spec))
 
         expectation_suite_name = (
@@ -151,7 +156,7 @@ class DQFactory(object):
     def _configure_and_run_checkpoint(
         cls,
         dq_spec: DQSpec,
-        context: BaseDataContext,
+        context: EphemeralDataContext,
         batch_request: RuntimeBatchRequest,
         expectation_suite_name: str,
         source_pk: List[str],
@@ -163,7 +168,7 @@ class DQFactory(object):
 
         Args:
             dq_spec: data quality specification.
-            context: the BaseDataContext containing the configurations for the data
+            context: the EphemeralDataContext containing the configurations for the data
                 source and store backend.
             batch_request: run time batch request to be able to query underlying data.
             expectation_suite_name: name of the expectation suite.
@@ -362,6 +367,12 @@ class DQFactory(object):
                 "base_directory"
             ] = dq_spec.data_docs_prefix
 
+            if dq_spec.data_docs_local_fs:
+                # Enable to write data_docs in a separated path
+                data_docs_site[site_name]["store_backend"][
+                    "root_directory"
+                ] = dq_spec.data_docs_local_fs
+
         return data_docs_site
 
     @classmethod
@@ -379,7 +390,6 @@ class DQFactory(object):
             "class_name": DQDefaults.DATASOURCE_CLASS_NAME.value,
             "execution_engine": {
                 "class_name": DQDefaults.DATASOURCE_EXECUTION_ENGINE.value,
-                "force_reuse_spark_context": True,
                 "persist": False,
             },
             "data_connectors": {
@@ -534,8 +544,11 @@ class DQFactory(object):
             else:
                 results_dict[key] = value
 
-        rdd = ExecEnv.SESSION.sparkContext.parallelize([dumps(results_dict)])
-        df = ExecEnv.SESSION.read.json(rdd)
+        df = ExecEnv.SESSION.createDataFrame(
+            [json.dumps(results_dict)], schema=StringType()
+        )
+        schema = schema_of_json(df.select("value").head()[0])
+        df = df.withColumn("value", from_json("value", schema)).select("value.*")
 
         cols_to_expand = ["run_id"]
         df = (

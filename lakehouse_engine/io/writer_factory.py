@@ -60,9 +60,9 @@ class WriterFactory(ABC):  # noqa: B024
         """Get a writer according to the output specification using a factory pattern.
 
         Args:
-            OutputSpec spec: output specification to write data.
-            DataFrame df: dataframe to be written.
-            OrderedDict data: list of all dfs generated on previous steps before writer.
+            spec: output specification to write data.
+            df: dataframe to be written.
+            data: list of all dfs generated on previous steps before writer.
 
         Returns:
             Writer: writer that will write the data.

@@ -1,6 +1,5 @@
 """Module to define behaviour to read from files."""
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import input_file_name
 
 from lakehouse_engine.core.definitions import FILE_INPUT_FORMATS, InputSpec, ReadType
 from lakehouse_engine.core.exec_env import ExecEnv
@@ -37,7 +36,10 @@ class FileReader(Reader):
             )
 
             if self._input_spec.with_filepath:
-                df = df.withColumn("lhe_extraction_filepath", input_file_name())
+                # _metadata contains hidden columns
+                df = df.selectExpr(
+                    "*", "_metadata.file_path as lhe_extraction_filepath"
+                )
 
             return df
         elif (
@@ -52,7 +54,10 @@ class FileReader(Reader):
             )
 
             if self._input_spec.with_filepath:
-                df = df.withColumn("lhe_extraction_filepath", input_file_name())
+                # _metadata contains hidden columns
+                df = df.selectExpr(
+                    "*", "_metadata.file_path as lhe_extraction_filepath"
+                )
 
             return df
         else:

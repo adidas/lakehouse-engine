@@ -51,14 +51,14 @@ class DataLoader(Algorithm):
         A data loader needs several specifications to work properly,
         but some of them might be optional. The available specifications are:
 
-            - input specifications (mandatory): specify how to read data.
-            - transform specifications (optional): specify how to transform data.
-            - data quality specifications (optional): specify how to execute the data
-                quality process.
-            - output specifications (mandatory): specify how to write data to the
-                target.
-            - terminate specifications (optional): specify what to do after writing into
-                the target (e.g., optimizing target table, vacuum, compute stats, etc).
+        - input specifications (mandatory): specify how to read data.
+        - transform specifications (optional): specify how to transform data.
+        - data quality specifications (optional): specify how to execute the data
+            quality process.
+        - output specifications (mandatory): specify how to write data to the
+            target.
+        - terminate specifications (optional): specify what to do after writing into
+            the target (e.g., optimizing target table, vacuum, compute stats, etc).
 
         Args:
             acon: algorithm configuration.
@@ -411,7 +411,8 @@ class DataLoader(Algorithm):
             input_id: id of the corresponding input specification.
             dq_specs: data quality specifications.
 
-        Returns: a list of TransformerSpec, representing the transformations plan.
+        Returns:
+            a list of TransformerSpec, representing the transformations plan.
         """
         transformer_id = (
             [dq_spec.input_id for dq_spec in dq_specs if dq_spec.spec_id == input_id][0]

@@ -52,7 +52,7 @@ class Joiners(object):
             # to change to global temp view. The goal here is to
             # avoid problems on simultaneously running process,
             # so we added application id on table name.
-            app_id = ExecEnv.SESSION.sparkContext.applicationId
+            app_id = ExecEnv.SESSION.getActiveSession().conf.get("spark.app.id")
             left = f"`{app_id}_{left_df_alias}`"
             right = f"`{app_id}_{right_df_alias}`"
             df_join_with = join_with

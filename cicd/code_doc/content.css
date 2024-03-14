@@ -1,0 +1,437 @@
+/*
+This CSS file contains all style definitions for documentation content.
+
+All selectors are scoped with ".pdoc".
+This makes sure that the pdoc styling doesn't leak to the rest of the page when pdoc is embedded.
+*/
+
+.pdoc {
+    color: var(--text);
+    /* enforce some styling even if bootstrap reboot is not included */
+    box-sizing: border-box;
+    line-height: 1.5;
+    /* override background from pygments */
+    /*unnecessary since pdoc 10, only left here to keep old custom templates working. */
+    background: none;
+}
+
+.pdoc .pdoc-button {
+    cursor: pointer;
+    display: inline-block;
+    border: solid black 1px;
+    border-radius: 2px;
+    font-size: .75rem;
+    padding: calc(0.5em - 1px) 1em;
+    transition: 100ms all;
+}
+
+
+/* Admonitions */
+.pdoc .pdoc-alert {
+    padding: 1rem 1rem 1rem calc(1.5rem + 24px);
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    background-repeat: no-repeat;
+    background-position: 1rem center;
+    margin-bottom: 1rem;
+}
+
+.pdoc .pdoc-alert > *:last-child {
+    margin-bottom: 0;
+}
+
+/* Admonitions are currently not stylable via theme.css */
+.pdoc .pdoc-alert-note  {
+    color: #000000;
+    background-color: #f1efef;
+    border-color: #f1f1f1;
+    background-image: url("data:image/svg+xml,{% filter urlencode %}{% include 'resources/info-circle-fill.svg' %}{% endfilter %}");
+}
+
+.pdoc .pdoc-alert-warning {
+    color: #664d03;
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    background-image: url("data:image/svg+xml,{% filter urlencode %}{% include 'resources/exclamation-triangle-fill.svg' %}{% endfilter %}");
+}
+
+.pdoc .pdoc-alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+    background-image: url("data:image/svg+xml,{% filter urlencode %}{% include 'resources/lightning-fill.svg' %}{% endfilter %}");
+}
+
+.pdoc .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.pdoc h1, .pdoc h2, .pdoc h3 {
+    font-weight: 300;
+    margin: .3em 0;
+    padding: .2em 0;
+}
+
+.pdoc > section:not(.module-info) h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+.pdoc > section:not(.module-info) h2 {
+    font-size: 1.4rem;
+    font-weight: 500;
+}
+.pdoc > section:not(.module-info) h3 {
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+.pdoc > section:not(.module-info) h4 {
+    font-size: 1.2rem;
+}
+.pdoc > section:not(.module-info) h5 {
+    font-size: 1.1rem;
+}
+
+.pdoc a {
+    text-decoration: none;
+    color: var(--link);
+}
+
+.pdoc a:hover {
+    color: var(--link-hover);
+}
+
+.pdoc blockquote {
+    margin-left: 2rem;
+}
+
+.pdoc pre {
+    border-top: 1px solid var(--accent2);
+    border-bottom: 1px solid var(--accent2);
+    margin-top: 0;
+    margin-bottom: 1em;
+    padding: .5rem 0 .5rem .5rem;
+    overflow-x: auto;
+    /*unnecessary since pdoc 10, only left here to keep old custom templates working. */
+    background-color: var(--code);
+}
+
+.pdoc code {
+    color: var(--text);
+    padding: .2em .4em;
+    margin: 0;
+    font-size: 85%;
+    background-color: var(--accent);
+    border-radius: 6px;
+}
+
+.pdoc a > code {
+    color: inherit;
+}
+
+.pdoc pre > code {
+    display: inline-block;
+    font-size: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.pdoc > section:not(.module-info) {
+    /* this margin should collapse with docstring margin,
+       but not for the module docstr which is followed by view_source. */
+    margin-bottom: 1.5rem;
+}
+
+/* Page Heading */
+.pdoc .modulename {
+    margin-top: 0;
+    font-weight: bold;
+}
+
+.pdoc .modulename a {
+    color: var(--link);
+    transition: 100ms all;
+}
+
+/* GitHub Button */
+.pdoc .git-button {
+    float: right;
+    border: solid var(--link) 1px;
+}
+
+.pdoc .git-button:hover {
+    background-color: var(--link);
+    color: var(--pdoc-background);
+}
+
+.view-source-toggle-state,
+.view-source-toggle-state ~ .pdoc-code {
+    display: none;
+}
+.view-source-toggle-state:checked ~ .pdoc-code {
+    display: block;
+}
+
+.view-source-button {
+    display: inline-block;
+    float: right;
+    font-size: .75rem;
+    line-height: 1.5rem;
+    color: var(--muted);
+    padding: 0 .4rem 0 1.3rem;
+    cursor: pointer;
+    /* odd hack to reduce space between "bullet" and text */
+    text-indent: -2px;
+}
+.view-source-button > span {
+    visibility: hidden;
+}
+.module-info .view-source-button {
+    float: none;
+    display: flex;
+    justify-content: flex-end;
+    margin: -1.2rem .4rem -.2rem 0;
+}
+.view-source-button::before {
+    /* somewhat awkward recreation of a <summary> element. ideally we'd just use `display: inline list-item`, but
+     that does not work in Chrome (yet), see https://crbug.com/995106. */
+    position: absolute;
+    content: "View Source";
+    display: list-item;
+    list-style-type: disclosure-closed;
+}
+.view-source-toggle-state:checked ~ .attr .view-source-button::before,
+.view-source-toggle-state:checked ~ .view-source-button::before {
+    list-style-type: disclosure-open;
+}
+
+/* Docstrings */
+.pdoc .docstring {
+    margin-bottom: 1.5rem;
+}
+
+.pdoc section:not(.module-info) .docstring {
+    margin-left: clamp(0rem, 5vw - 2rem, 1rem);
+}
+
+.pdoc .docstring .pdoc-code {
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+/* Highlight focused element */
+.pdoc h1:target,
+.pdoc h2:target,
+.pdoc h3:target,
+.pdoc h4:target,
+.pdoc h5:target,
+.pdoc h6:target,
+.pdoc .pdoc-code > pre > span:target {
+    background-color: var(--active);
+    box-shadow: -1rem 0 0 0 var(--active);
+}
+
+.pdoc .pdoc-code > pre > span:target {
+    /* make the highlighted line full width so that the background extends */
+    display: block;
+}
+
+.pdoc div:target > .attr,
+.pdoc section:target > .attr,
+.pdoc dd:target > a {
+    background-color: var(--active);
+}
+
+.pdoc * {
+    scroll-margin: 2rem;
+}
+
+.pdoc .pdoc-code .linenos {
+    user-select: none;
+}
+
+.pdoc .attr:hover {
+    filter: contrast(0.95);
+}
+
+/* Header link */
+.pdoc section, .pdoc .classattr {
+    position: relative;
+}
+
+.pdoc .headerlink {
+    --width: clamp(1rem, 3vw, 2rem);
+    position: absolute;
+    top: 0;
+    left: calc(0rem - var(--width));
+    transition: all 100ms ease-in-out;
+    opacity: 0;
+}
+.pdoc .headerlink::before {
+    content: "#";
+    display: block;
+    text-align: center;
+    width: var(--width);
+    height: 2.3rem;
+    line-height: 2.3rem;
+    font-size: 1.5rem;
+}
+
+.pdoc .attr:hover ~ .headerlink,
+.pdoc *:target > .headerlink,
+.pdoc .headerlink:hover {
+    opacity: 1;
+}
+
+/* Attributes */
+.pdoc .attr {
+    display: block;
+    margin: .5rem 0 .5rem;
+    padding: .4rem .4rem .4rem 1rem;
+    background-color: var(--accent);
+    overflow-x: auto;
+}
+
+.pdoc .classattr {
+    margin-left: 2rem;
+}
+
+.pdoc .name {
+    color: var(--name);
+    font-weight: bold;
+}
+
+.pdoc .def {
+    color: var(--def);
+    font-weight: bold;
+}
+
+.pdoc .signature {
+    /* override pygments background color */
+    background-color: transparent;
+}
+
+.pdoc .param, .pdoc .return-annotation {
+    white-space: pre;
+}
+.pdoc .signature.multiline .param {
+    display: block;
+}
+.pdoc .signature.condensed .param {
+    display:inline-block;
+}
+
+.pdoc .annotation {
+    color: var(--annotation);
+}
+
+/* Show/Hide buttons for long default values */
+.pdoc .view-value-toggle-state,
+.pdoc .view-value-toggle-state ~ .default_value {
+    display: none;
+}
+.pdoc .view-value-toggle-state:checked ~ .default_value {
+    display: inherit;
+}
+.pdoc .view-value-button {
+    font-size: .5rem;
+    vertical-align: middle;
+    border-style: dashed;
+    margin-top: -0.1rem;
+}
+.pdoc .view-value-button:hover {
+    background: white;
+}
+.pdoc .view-value-button::before {
+    content: "show";
+    text-align: center;
+    width: 2.2em;
+    display: inline-block;
+}
+.pdoc .view-value-toggle-state:checked ~ .view-value-button::before {
+    content: "hide";
+}
+
+/* Inherited Members */
+.pdoc .inherited {
+    margin-left: 2rem;
+}
+
+.pdoc .inherited dt {
+    font-weight: 700;
+}
+
+.pdoc .inherited dt, .pdoc .inherited dd {
+    display: inline;
+    margin-left: 0;
+    margin-bottom: .5rem;
+}
+
+.pdoc .inherited dd:not(:last-child):after {
+    content: ", ";
+}
+
+.pdoc .inherited .class:before {
+    content: "class ";
+}
+
+.pdoc .inherited .function a:after {
+    content: "()";
+}
+
+/* Search results */
+.pdoc .search-result .docstring {
+    overflow: auto;
+    max-height: 25vh;
+}
+
+.pdoc .search-result.focused > .attr {
+    background-color: var(--active);
+}
+
+/* "built with pdoc" attribution */
+.pdoc .attribution {
+    margin-top: 2rem;
+    display: block;
+    opacity: 0.5;
+    transition: all 200ms;
+    filter: grayscale(100%);
+}
+
+.pdoc .attribution:hover {
+    opacity: 1;
+    filter: grayscale(0%);
+}
+
+.pdoc .attribution img {
+    margin-left: 5px;
+    height: 35px;
+    vertical-align: middle;
+    width: 70px;
+    transition: all 200ms;
+}
+
+.pdoc table {
+    display: block;
+    width: max-content;
+    max-width: 150%;
+    overflow: auto;
+    margin-bottom: 1rem;
+}
+
+.pdoc table th, .pdoc table td {
+    padding: 12px 13px;
+    border: 1px solid var(--accent2);
+}
+
+.pdoc table th {
+    font-weight: 600;
+}

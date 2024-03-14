@@ -1,8 +1,8 @@
 """Column creators transformers module."""
 from typing import Any, Callable, Dict
 
-from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, lit, monotonically_increasing_id
+from pyspark.sql import DataFrame, Window
+from pyspark.sql.functions import col, lit, monotonically_increasing_id, row_number
 from pyspark.sql.types import IntegerType
 
 from lakehouse_engine.transformers.exceptions import (
@@ -42,13 +42,13 @@ class ColumnCreators(object):
 
     @classmethod
     def with_auto_increment_id(
-        cls,
-        output_col: str = "lhe_row_id",
+        cls, output_col: str = "lhe_row_id", rdd: bool = True
     ) -> Callable:
         """Create a sequential and consecutive id.
 
         Args:
             output_col: optional name of the output column.
+            rdd: optional parameter to use spark rdd.
 
         Returns:
             A function to be executed in the .transform() spark function.
@@ -59,12 +59,16 @@ class ColumnCreators(object):
                 if len(df.take(1)) == 0:
                     # if df is empty we have to prevent the algorithm from failing
                     return df.withColumn(output_col, lit(None).cast(IntegerType()))
-                else:
+                elif rdd:
                     return (
                         df.rdd.zipWithIndex()
                         .toDF()
                         .select(col("_1.*"), col("_2").alias(output_col))
                     )
+                else:
+                    w = Window.orderBy(monotonically_increasing_id())
+                    return df.withColumn(output_col, (row_number().over(w)) - 1)
+
             else:
                 raise UnsupportedStreamingTransformerException(
                     "Transformer with_auto_increment_id is not supported in "

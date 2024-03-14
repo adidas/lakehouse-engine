@@ -1,0 +1,3 @@
+"""
+.. include::sensor.md
+"""

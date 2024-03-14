@@ -65,7 +65,7 @@ class ExecEnv(object):
         else:
             # with active session we do not need app name
             if SparkSession.getActiveSession():
-                app_name = SparkSession.getActiveSession().sparkContext.appName
+                app_name = SparkSession.getActiveSession().conf.get("spark.app.name")
                 cls._LOGGER.info(f"Detected active session: {app_name}")
             elif not SparkSession.getActiveSession() and not app_name:
                 cls._LOGGER.info("No active session or appname detected")
@@ -91,7 +91,7 @@ class ExecEnv(object):
 
         Args:
             os_env_vars: this parameter can be used to pass the environment variables to
-            be defined.
+                be defined.
         """
         if os_env_vars is None:
             os_env_vars = {}

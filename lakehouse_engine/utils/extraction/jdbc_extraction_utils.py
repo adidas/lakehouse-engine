@@ -22,51 +22,51 @@ class JDBCExtraction(object):
     """Configurations available for an Extraction from a JDBC source.
 
     These configurations cover:
-        user: username to connect to JDBC source.
-        password: password to connect to JDBC source (always use secrets,
-            don't use text passwords in your code).
-        url: url to connect to JDBC source.
-        dbtable: database.table to extract data from.
-        calc_upper_bound_schema: custom schema used for the upper bound calculation.
-        changelog_table: table of type changelog from which to extract data,
-            when the extraction type is delta.
-        partition_column: column used to split the extraction.
-        latest_timestamp_data_location: data location (e.g., s3) containing the data
-            to get the latest timestamp already loaded into bronze.
-        latest_timestamp_data_format: the format of the dataset in
-            latest_timestamp_data_location. Default: delta.
-        extraction_type: type of extraction (delta or init). Default: "delta".
-        driver: JDBC driver name. Default: "com.sap.db.jdbc.Driver".
-        num_partitions: number of Spark partitions to split the extraction.
-        lower_bound: lower bound to decide the partition stride.
-        upper_bound: upper bound to decide the partition stride. If
-            calculate_upper_bound is True, then upperBound will be
-            derived by our upper bound optimizer, using the partition column.
-        default_upper_bound: the value to use as default upper bound in case
-            the result of the upper bound calculation is None. Default: "1".
-        fetch_size: how many rows to fetch per round trip. Default: "100000".
-        compress: enable network compression. Default: True.
-        custom_schema: specify custom_schema for particular columns of the
-            returned dataframe in the init/delta extraction of the source table.
-        min_timestamp: min timestamp to consider to filter the changelog data.
-            Default: None and automatically derived from the location provided.
-            In case this one is provided it has precedence and the calculation
-            is not done.
-        max_timestamp: max timestamp to consider to filter the changelog data.
-            Default: None and automatically derived from the table having information
-            about the extraction requests, their timestamps and their status.
-            In case this one is provided it has precedence and the calculation
-            is not done.
-        generate_predicates: whether to generate predicates automatically or not.
-            Default: False.
-        predicates: list containing all values to partition (if generate_predicates
-            is used, the manual values provided are ignored). Default: None.
-        predicates_add_null: whether to consider null on predicates list.
-            Default: True.
-        extraction_timestamp: the timestamp of the extraction. Default: current time
-            following the format "%Y%m%d%H%M%S".
-        max_timestamp_custom_schema: custom schema used on the max_timestamp derivation
-            from the table holding the extraction requests information.
+    - user: username to connect to JDBC source.
+    - password: password to connect to JDBC source (always use secrets,
+        don't use text passwords in your code).
+    - url: url to connect to JDBC source.
+    - dbtable: `database.table` to extract data from.
+    - calc_upper_bound_schema: custom schema used for the upper bound calculation.
+    - changelog_table: table of type changelog from which to extract data,
+        when the extraction type is delta.
+    - partition_column: column used to split the extraction.
+    - latest_timestamp_data_location: data location (e.g., s3) containing the data
+        to get the latest timestamp already loaded into bronze.
+    - latest_timestamp_data_format: the format of the dataset in
+        latest_timestamp_data_location. Default: delta.
+    - extraction_type: type of extraction (delta or init). Default: "delta".
+    - driver: JDBC driver name. Default: "com.sap.db.jdbc.Driver".
+    - num_partitions: number of Spark partitions to split the extraction.
+    - lower_bound: lower bound to decide the partition stride.
+    - upper_bound: upper bound to decide the partition stride. If
+        calculate_upper_bound is True, then upperBound will be
+        derived by our upper bound optimizer, using the partition column.
+    - default_upper_bound: the value to use as default upper bound in case
+        the result of the upper bound calculation is None. Default: "1".
+    - fetch_size: how many rows to fetch per round trip. Default: "100000".
+    - compress: enable network compression. Default: True.
+    - custom_schema: specify custom_schema for particular columns of the
+        returned dataframe in the init/delta extraction of the source table.
+    - min_timestamp: min timestamp to consider to filter the changelog data.
+        Default: None and automatically derived from the location provided.
+        In case this one is provided it has precedence and the calculation
+        is not done.
+    - max_timestamp: max timestamp to consider to filter the changelog data.
+        Default: None and automatically derived from the table having information
+        about the extraction requests, their timestamps and their status.
+        In case this one is provided it has precedence and the calculation
+        is not done.
+    - generate_predicates: whether to generate predicates automatically or not.
+        Default: False.
+    - predicates: list containing all values to partition (if generate_predicates
+        is used, the manual values provided are ignored). Default: None.
+    - predicates_add_null: whether to consider null on predicates list.
+        Default: True.
+    - extraction_timestamp: the timestamp of the extraction. Default: current time
+        following the format "%Y%m%d%H%M%S".
+    - max_timestamp_custom_schema: custom schema used on the max_timestamp derivation
+        from the table holding the extraction requests information.
     """
 
     user: str
@@ -189,9 +189,11 @@ class JDBCExtractionUtils(object):
             )
         )
 
-        predicates_list = predicates_df.rdd.map(
-            lambda row: f"{self._JDBC_EXTRACTION.partition_column}='{row[0]}'"
-        ).collect()
+        predicates_list = [
+            f"{self._JDBC_EXTRACTION.partition_column}='{row[0]}'"
+            for row in predicates_df.collect()
+        ]
+
         if self._JDBC_EXTRACTION.predicates_add_null:
             predicates_list.append(f"{self._JDBC_EXTRACTION.partition_column} IS NULL")
         self._LOGGER.info(

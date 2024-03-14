@@ -1,0 +1,6 @@
+{
+  "function": "execute_sql",
+  "sql": "/* New table manager test view, to check if new parser works as expected and deals well to different delimiters (===).The parser must be able to deal with the delimiters that are inside of \"\", '', --, */ ALTER TABLE test_db.DummyTableBronzeComplexDefaultScenario1 ALTER COLUMN col1 COMMENT 'comment === for col1'=== /* New table manager test view, to check if new parser works as expected and deals well to different delimiters (===). The parser must be able to deal with the delimiters that are inside of \"\", '', --, */ ALTER TABLE test_db.DummyTableBronzeComplexDefaultScenario1 ALTER COLUMN col2 COMMENT 'comment for col2'=== /* New table manager test view, to check if new parser works as expected and deals well to different delimiters (===). The parser must be able to deal with the delimiters that are inside of \"\", '', --, */ ALTER TABLE test_db.DummyTableBronzeComplexDefaultScenario2 ALTER COLUMN col1 COMMENT 'comment \" for col1'=== /* New table manager test view, to check if new parser works as expected and deals well to different delimiters (===). The parser must be able to deal with the delimiters that are inside of \"\", '', --, */ ALTER TABLE test_db.DummyTableBronzeComplexDefaultScenario2 ALTER COLUMN col2 COMMENT 'comment () <> for col2'",
+  "delimiter": "===",
+  "advanced_parser": "True"
+}

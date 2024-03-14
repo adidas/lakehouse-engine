@@ -4,8 +4,6 @@ from typing import Any, Tuple
 
 from pyspark.sql import SparkSession
 
-from lakehouse_engine.core.exec_env import ExecEnv
-
 
 class DatabricksUtils(object):
     """Databricks utilities class."""
@@ -23,7 +21,10 @@ class DatabricksUtils(object):
         try:
             from pyspark.dbutils import DBUtils
 
-            dbutils = DBUtils(spark)
+            if "dbutils" not in locals():
+                dbutils = DBUtils(spark)
+            else:
+                dbutils = locals().get("dbutils")
         except ImportError:
             import IPython
 
@@ -31,25 +32,28 @@ class DatabricksUtils(object):
         return dbutils
 
     @staticmethod
-    def get_databricks_job_information() -> Tuple[str, str]:
+    def get_databricks_job_information(spark: SparkSession) -> Tuple[str, str]:
         """Get notebook context from running acon.
+
+        Args:
+            spark: spark session.
 
         Returns:
             Dict containing databricks notebook context.
         """
-        if "local" in ExecEnv.SESSION.sparkContext.applicationId:
+        if "local" in spark.getActiveSession().conf.get("spark.app.id"):
             return "local", "local"
         else:
-            dbutils = DatabricksUtils.get_db_utils(ExecEnv.SESSION)
+            dbutils = DatabricksUtils.get_db_utils(spark)
             notebook_context = json.loads(
                 (
                     dbutils.notebook.entry_point.getDbutils()
                     .notebook()
                     .getContext()
-                    .toJson()
+                    .safeToJson()
                 )
             )
 
-            return notebook_context["tags"].get("orgId"), notebook_context["tags"].get(
-                "jobName"
-            )
+            return notebook_context["attributes"].get("orgId"), notebook_context[
+                "attributes"
+            ].get("jobName")

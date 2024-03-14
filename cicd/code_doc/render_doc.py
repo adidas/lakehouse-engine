@@ -1,5 +1,7 @@
 """Module for customizing pdoc documentation."""
 import json
+import os
+import shutil
 import warnings
 from pathlib import Path
 
@@ -8,6 +10,20 @@ from markupsafe import Markup
 from pdoc import pdoc, render
 
 STACK_LEVEL = 2
+
+logo_path = (
+    "https://github.com/adidas/lakehouse-engine/blob/master/assets/img/"
+    "lakehouse_engine_logo_no_bg_160.png?raw=true"
+)
+
+
+def _get_project_version() -> str:
+    version = (
+        os.popen('cat cicd/.bumpversion.cfg | grep current_version | cut -f 3 -d " "')
+        .read()
+        .replace("\n", "")
+    )
+    return version
 
 
 def _search_files(file: dict, search_string: str) -> list:
@@ -127,9 +143,31 @@ env_jinja = render.env
 env_jinja.filters["link_example"] = _link_example
 env_jinja.filters["highlight_examples"] = _highlight_examples
 
+
 root_path = Path(__file__).parents[2]
 documentation_path = root_path / "artefacts" / "docs"
 # Tell pdoc's render to use our jinja template
-render.configure(template_directory=root_path / "cicd" / "code_doc" / ".")
+render.configure(
+    template_directory=root_path / "cicd" / "code_doc" / ".",
+    docformat="google",
+    logo=logo_path,
+    favicon=logo_path,
+    footer_text=f"Lakehouse Engine v{_get_project_version()}",
+    mermaid=True,
+)
+# Temporarily copy README file to be used in index.html page
+shutil.copyfile("README.md", root_path / "cicd" / "code_doc" / "README.md")
+
 # Render pdoc's documentation into artefacts/docs
-pdoc("./lakehouse_engine/", output_directory=documentation_path)
+pdoc(
+    "./lakehouse_engine/",
+    "./lakehouse_engine_usage/",
+    output_directory=documentation_path,
+)
+
+# Copy the images used on the documentation, to the path where we have the rendered
+# html pages.
+shutil.copytree("./assets", documentation_path / "assets", dirs_exist_ok=True)
+
+# Remove the temporary copy README file
+os.remove(root_path / "cicd" / "code_doc" / "README.md")

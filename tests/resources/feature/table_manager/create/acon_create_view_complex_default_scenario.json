@@ -1,0 +1,5 @@
+{
+  "function": "create_view",
+  "path": "file:///app/tests/lakehouse/in/feature/table_manager/create/view/test_view_complex_default_scenario.sql",
+  "advanced_parser": true
+}

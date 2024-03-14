@@ -173,9 +173,8 @@ class ColumnReshapers(object):
     def with_expressions(cls, cols_and_exprs: Dict[str, str]) -> Callable:
         """Execute Spark SQL expressions to create the specified columns.
 
-        This function uses the Spark expr function:
-        https://spark.apache.org/docs/latest/api/python/reference/api/
-        pyspark.sql.functions.expr.html
+        This function uses the Spark expr function. [Check here](
+        https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.expr.html).
 
         Args:
             cols_and_exprs: dict with columns and respective expressions to compute
@@ -201,8 +200,9 @@ class ColumnReshapers(object):
         Args:
             cols: dict with columns and respective target names.
             escape_col_names: whether to escape column names (e.g. `/BIC/COL1`) or not.
-            If True it creates a column with the new name and drop the old one.
-            If False, uses the native withColumnRenamed Spark function. Default: True.
+                If True it creates a column with the new name and drop the old one.
+                If False, uses the native withColumnRenamed Spark function.
+                Default: True.
 
         Returns:
             Function to be called in .transform() spark function.
@@ -240,9 +240,9 @@ class ColumnReshapers(object):
             value_col: the name of the value column.
             options: extra options (e.g., mode: "PERMISSIVE").
             expand_key: whether you want to expand the content inside the key
-            column or not. Default: false.
+                column or not. Default: false.
             expand_value: whether you want to expand the content inside the value
-            column or not. Default: true.
+                column or not. Default: true.
 
         Returns:
             Function to be called in .transform() spark function.
@@ -285,12 +285,12 @@ class ColumnReshapers(object):
             value_schema: the name of the value schema entry in the schema registry.
             value_col: the name of the value column.
             key_schema: the name of the key schema entry in the schema
-            registry. Default: None.
+                registry. Default: None.
             key_col: the name of the key column.
             expand_key: whether you want to expand the content inside the key
-            column or not. Default: false.
+                column or not. Default: false.
             expand_value: whether you want to expand the content inside the value
-            column or not. Default: true.
+                column or not. Default: true.
 
         Returns:
             Function to be called in .transform() spark function.

@@ -156,7 +156,7 @@ def test_custom_expectation(scenario: dict, caplog: Any) -> None:
 
     # test if the run_results column is json object
     # test if the json generated has the correct keys
-    for key in dq_result_df.rdd.collect():
+    for key in dq_result_df.collect():
         assert list(loads(key.run_results).keys()) == [
             "actions_results",
             "validation_result",

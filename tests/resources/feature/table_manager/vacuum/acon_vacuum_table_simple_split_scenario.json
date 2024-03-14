@@ -1,0 +1,5 @@
+{
+  "function": "vacuum",
+  "table_or_view": "test_db.DummyTableBronzeSimpleSplitScenario",
+  "vacuum_hours": 168
+}

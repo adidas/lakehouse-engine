@@ -4,10 +4,16 @@ from typing import Any
 
 import pytest
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import array_sort, col, from_json, regexp_replace, transform
+from pyspark.sql.functions import (
+    array_sort,
+    col,
+    from_json,
+    regexp_replace,
+    schema_of_json,
+    transform,
+)
 
 from lakehouse_engine.core.definitions import DQDefaults, DQFunctionSpec, DQSpec
-from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
 from lakehouse_engine.engine import load_data
@@ -405,6 +411,7 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
         dq_type=scenario["dq_type"],
         store_backend="file_system",
         local_fs_root_dir=f"{location}/{scenario['dq_type']}/",
+        data_docs_local_fs=f"{location}/{scenario['dq_type']}/data_docs/",
         assistant_options=None,
         result_sink_format="json",
         result_sink_explode=False,
@@ -467,11 +474,10 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
         assert result_df.columns == control_df.select(*result_df.columns).columns
 
         # test if the run_results column has the correct keys
-        json_schema = ExecEnv.SESSION.read.json(
-            result_df.rdd.map(lambda row: str(row.run_results))
-        ).schema
+        run_results = result_df.select("run_results").collect()
+        schema = schema_of_json(run_results[0]["run_results"])
         result_df = result_df.withColumn(
-            "run_results", from_json(col("run_results"), json_schema)
+            "run_results", from_json(col("run_results"), schema)
         )
         assert result_df.select("run_results.*").columns == [
             "actions_results",
@@ -479,7 +485,8 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
         ]
 
         assert exists(
-            f"{location}/{scenario['dq_type']}/{DQDefaults.DATA_DOCS_PREFIX.value}"
+            f"{location}/{scenario['dq_type']}/data_docs/"
+            f"{DQDefaults.DATA_DOCS_PREFIX.value}"
         )
 
 

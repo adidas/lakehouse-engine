@@ -1,0 +1,4 @@
+{
+  "function": "create_table",
+  "path": "file:///app/tests/lakehouse/in/feature/table_manager/create/table/test_table_simple_split_scenario.sql"
+}

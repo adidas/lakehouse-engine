@@ -58,7 +58,7 @@ class DataframeHelpers(object):
 
         diff_1 = df.exceptAll(another_df)
         diff_2 = another_df.exceptAll(df)
-        if diff_1.rdd.isEmpty() is False or diff_2.rdd.isEmpty() is False:
+        if diff_1.isEmpty() is False or diff_2.isEmpty() is False:
             df.show(100, False)
             another_df.show(100, False)
             cls._logger.debug("Dataframes have diff...")
@@ -104,7 +104,7 @@ class DataframeHelpers(object):
         """Read data from a table into a dataframe.
 
         Args:
-            db_table: database.table_name.
+            db_table: `database.table_name`.
             options: options (e.g., spark options) to read data.
 
         Returns:
@@ -126,7 +126,7 @@ class DataframeHelpers(object):
 
         Args:
             uri: uri for the jdbc connection.
-            db_table: database.table_name.
+            db_table: `database.table_name`.
             driver: driver class.
 
         Returns:
@@ -154,7 +154,7 @@ class DataframeHelpers(object):
         Args:
             df: dataframe containing the data to append.
             uri: uri for the jdbc connection.
-            db_table: database.table_name.
+            db_table: `database.table_name`.
             write_type: type of writer to use for writing into the destination
             driver: driver class.
             data: list of all dfs generated on previous steps before writer.
@@ -174,9 +174,8 @@ class DataframeHelpers(object):
         """Create an empty DataFrame.
 
         Args:
-            struct_type: dict containing a spark schema structure. Check here:
-                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/
-                StructType.html.
+            struct_type: dict containing a spark schema structure. [Check here](
+                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
         """
         return ExecEnv.SESSION.createDataFrame(data=[], schema=struct_type)
 

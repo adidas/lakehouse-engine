@@ -57,16 +57,18 @@ class Reconciliator(Executable):
     All of these configurations are passed via the ACON to instantiate a
     ReconciliatorSpec object.
 
-    Notes:
-        - It is crucial that both the current and truth datasets have exactly the same
-            structure.
-        - You should not use 0 as yellow or red threshold, as the algorithm will verify
-            if the difference between the truth and current values is bigger
-            or equal than those thresholds.
-        - The reconciliation does not produce any negative values or percentages, as we
-            use the absolute value of the differences. This means that the recon result
-            will not indicate if it was the current values that were bigger or smaller
-            than the truth values, or vice versa.
+    .. note::
+        It is crucial that both the current and truth datasets have exactly the same
+        structure.
+    .. note::
+        You should not use 0 as yellow or red threshold, as the algorithm will verify
+        if the difference between the truth and current values is bigger
+        or equal than those thresholds.
+    .. note::
+        The reconciliation does not produce any negative values or percentages, as we
+        use the absolute value of the differences. This means that the recon result
+        will not indicate if it was the current values that were bigger or smaller
+        than the truth values, or vice versa.
     """
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -180,7 +182,7 @@ class Reconciliator(Executable):
         Args:
             df: dataframe being transformed.
             preprocess_query_args: dict having the functions/transformations to
-        apply and respective arguments.
+                apply and respective arguments.
 
         Returns: the transformed Dataframe.
         """

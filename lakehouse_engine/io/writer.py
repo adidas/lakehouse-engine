@@ -69,7 +69,7 @@ class Writer(ABC):
             batch_df: batch dataframe (given from streaming foreachBatch).
             batch_id: if of the batch (given from streaming foreachBatch).
             data: list of all dfs generated on previous steps before writer
-            to be available on micro batch transforms.
+                to be available on micro batch transforms.
 
         Returns:
             The transformed dataframe.

@@ -96,7 +96,7 @@ class DataFrameWriter(Writer):
             output_spec: output specification.
             data: list of all dfs generated on previous steps before writer.
         """
-        app_id = ExecEnv.SESSION.sparkContext.applicationId
+        app_id = ExecEnv.SESSION.getActiveSession().conf.get("spark.app.id")
         stream_df_view_name = f"`{app_id}_{output_spec.spec_id}`"
         DataFrameWriter._logger.info("Drop temp view if exists")
 
@@ -157,12 +157,20 @@ class DataFrameWriter(Writer):
         Args:
             table_name: table/view name to check if exists in the session.
             db_name: database name that you want to check if the table/view exists,
-            default value is the global_temp.
+                default value is the global_temp.
 
         Returns:
             A bool representing if the table/view exists.
         """
-        return ExecEnv.SESSION.catalog.tableExists(table_name.strip("`"), db_name)
+        table_name = table_name.strip("`")
+        return (
+            len(
+                ExecEnv.SESSION.sql(f"SHOW  TABLES  IN `{db_name}`")
+                .filter(f"tableName = '{table_name}'")
+                .collect()
+            )
+            > 0
+        )
 
     @staticmethod
     def _write_transformed_micro_batch(  # type: ignore

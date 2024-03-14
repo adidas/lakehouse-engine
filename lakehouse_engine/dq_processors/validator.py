@@ -33,7 +33,7 @@ class Validator(object):
 
         Args:
             context: the BaseDataContext containing the configurations for the data
-            source and store backend.
+                source and store backend.
             batch_request: run time batch request to be able to query underlying data.
             expectation_suite_name: name of the expectation suite.
             dq_functions: a list of DQFunctionSpec to consider in the expectation suite.
@@ -88,7 +88,7 @@ class Validator(object):
             else results_df.filter("expectation_success == False")
         )
 
-        if failures_df.rdd.isEmpty() is not True:
+        if failures_df.isEmpty() is not True:
             run_success = False
 
             source_df = cls._get_row_tagged_fail_df(
@@ -135,7 +135,7 @@ class Validator(object):
         Args:
             failures_df: dataframe having all failed expectations from the DQ execution.
             raised_exceptions: whether there was at least one expectation raising
-            exceptions (True) or not (False).
+                exceptions (True) or not (False).
             source_df: the source dataframe being tagged with DQ results.
             source_pk: the primary key of the source data.
 
@@ -190,9 +190,9 @@ class Validator(object):
         Args:
             run_name: the name of the DQ execution in great expectations.
             run_success: whether the general execution of the DQ was succeeded (True)
-            or not (False).
+                or not (False).
             raised_exceptions: whether there was at least one expectation raising
-            exceptions (True) or not (False).
+                exceptions (True) or not (False).
             source_df: the source dataframe being tagged with DQ results.
 
         Returns: the source_df tagged with complementary data.
@@ -207,9 +207,9 @@ class Validator(object):
                 }
             }
         ]
-        complementary_df = ExecEnv.SESSION.sparkContext.parallelize(
-            complementary_data
-        ).toDF(schema=DQDefaults.DQ_VALIDATIONS_SCHEMA.value)
+        complementary_df = ExecEnv.SESSION.createDataFrame(
+            complementary_data, schema=DQDefaults.DQ_VALIDATIONS_SCHEMA.value
+        )
 
         return (
             source_df.crossJoin(

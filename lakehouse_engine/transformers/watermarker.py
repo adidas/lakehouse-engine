@@ -17,7 +17,7 @@ class Watermarker(object):
 
         Args:
             watermarker_column: name of the input column to be considered for
-             the watermarking. Note: it must be a timestamp.
+                the watermarking. Note: it must be a timestamp.
             watermarker_time: time window to define the watermark value.
 
         Returns:

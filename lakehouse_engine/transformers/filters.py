@@ -24,14 +24,14 @@ class Filters(object):
     ) -> Callable:
         """Incrementally Filter a certain dataframe given an increment logic.
 
-        This logic can either be an increment value or an increment dataframe from which
-        the get the latest value from. By default the operator for the filtering process
-        is greater or equal to cover cases where we receive late arriving data not cover
-        in a previous load. You can change greater_or_equal to false to use greater,
-        when you trust the source will never output more data with the increment after
-        you have load the data (e.g., you will never load data until the source is still
-        dumping data, which may cause you to get an incomplete picture of the last
-        arrived data).
+        This logic can either be an increment value or an increment dataframe from
+        which the get the latest value from. By default, the operator for the
+        filtering process is greater or equal to cover cases where we receive late
+        arriving data not cover in a previous load. You can change greater_or_equal
+        to false to use greater, when you trust the source will never output more data
+        with the increment after you have load the data (e.g., you will never load
+        data until the source is still dumping data, which may cause you to get an
+        incomplete picture of the last arrived data).
 
         Args:
             input_col: input column name
@@ -47,7 +47,7 @@ class Filters(object):
                 See our append load feature tests  to see how to provide an acon for
                 incremental loads, taking advantage of the scenario explained here.
             increment_col: name of the column from which to get the increment
-                value from from (when using increment_df approach). This assumes there's
+                value from (when using increment_df approach). This assumes there's
                 only one row in the increment_df, reason why is a good idea to use
                 together with the get_max_value transformer. Defaults to "latest"
                 because that's the default output column name provided by the

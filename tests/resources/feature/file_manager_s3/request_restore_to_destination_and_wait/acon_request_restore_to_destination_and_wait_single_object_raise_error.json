@@ -1,0 +1,10 @@
+{
+  "function": "request_restore_to_destination_and_wait",
+  "bucket": "test_bucket",
+  "source_object": "test_single_file.json",
+  "destination_bucket": "destination_bucket",
+  "destination_object": "destination_single_file",
+  "restore_expiration": 1,
+  "retrieval_tier": "Bulk",
+  "dry_run": false
+}

@@ -184,10 +184,10 @@ class DeltaMergeWriter(Writer):
         streaming mode, performing a delta lake merge while streaming the micro batches.
 
         Args:
+            output_spec: output specification.
+            data: list of all dfs generated on previous steps before writer.
             delta_table: delta table for which to merge the streaming data
                 with.
-            data: list of all dfs generated on previous steps before writer.
-            output_spec: output specification.
 
         Returns:
             Function to call in .foreachBatch streaming function.

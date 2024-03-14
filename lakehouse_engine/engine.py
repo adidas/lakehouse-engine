@@ -7,7 +7,7 @@ from lakehouse_engine.algorithms.reconciliator import Reconciliator
 from lakehouse_engine.algorithms.sensor import Sensor, SensorStatus
 from lakehouse_engine.core.definitions import SAPLogchain, TerminatorSpec
 from lakehouse_engine.core.exec_env import ExecEnv
-from lakehouse_engine.core.file_manager import FileManager
+from lakehouse_engine.core.file_manager import FileManagerFactory
 from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
 from lakehouse_engine.core.table_manager import TableManager
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
@@ -138,7 +138,7 @@ def manage_files(
     EngineUsageStats.store_engine_usage(
         acon, manage_files.__name__, collect_engine_usage, spark_confs
     )
-    FileManager(acon).get_function()
+    FileManagerFactory.execute_function(configs=acon)
 
 
 def execute_sensor(
@@ -187,7 +187,7 @@ def update_sensor_status(
 
     Args:
         sensor_id: sensor id.
-        control_db_table_name: db.table to store sensor checkpoints.
+        control_db_table_name: `db.table` to store sensor checkpoints.
         status: status of the sensor.
         assets: a list of assets that are considered as available to
             consume downstream after this sensor has status
@@ -219,7 +219,7 @@ def generate_sensor_query(
             ?default_upstream_value, so that it can be replaced by the
             respective values in the control_db_table_name for this specific
             sensor_id.
-        control_db_table_name: db.table to retrieve the last status change
+        control_db_table_name: `db.table` to retrieve the last status change
             timestamp. This is only relevant for the jdbc sensor.
         upstream_key: the key of custom sensor information to control how to
             identify new data from the upstream (e.g., a time column in the
@@ -228,9 +228,9 @@ def generate_sensor_query(
             to identify new data from the upstream (e.g., the value of a time
             present in the upstream).
         upstream_table_name: value for custom sensor
-                to query new data from the upstream
-                If none we will set the default value,
-                our `sensor_new_data` view.
+            to query new data from the upstream
+            If none we will set the default value,
+            our `sensor_new_data` view.
 
     Return:
         The query string.
@@ -261,12 +261,12 @@ def generate_sensor_sap_logchain_query(
 
     Args:
         chain_id: chain id to query the status on SAP.
-        dbtable: db.table to retrieve the data to
-                check if the sap chain is already finished.
-        status: db.table to retrieve the last status change
-                timestamp.
+        dbtable: `db.table` to retrieve the data to
+            check if the sap chain is already finished.
+        status: `db.table` to retrieve the last status change
+            timestamp.
         engine_table_name: table name exposed with the SAP LOGCHAIN data.
-                This table will be used in the jdbc query.
+            This table will be used in the jdbc query.
 
     Return:
         The query string.

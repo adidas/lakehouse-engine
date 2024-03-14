@@ -9,6 +9,7 @@ from lakehouse_engine.core.definitions import SQLDefinitions
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+from lakehouse_engine.utils.sql_parser_utils import SQLParserUtils
 
 
 class TableManager(object):
@@ -58,7 +59,12 @@ class TableManager(object):
         """Create a new table or view on metastore."""
         sql = ConfigUtils.read_sql(self.configs["path"])
         try:
-            for command in sql.split(";"):
+            sql_commands = SQLParserUtils().split_sql_commands(
+                sql_commands=sql,
+                delimiter=self.configs.get("delimiter", ";"),
+                advanced_parser=self.configs.get("advanced_parser", False),
+            )
+            for command in sql_commands:
                 if command.strip():
                     self._logger.info(f"sql command: {command}")
                     ExecEnv.SESSION.sql(command)
@@ -180,7 +186,12 @@ class TableManager(object):
         """
         for table_metadata_file in self.configs["path"].split(","):
             sql = ConfigUtils.read_sql(table_metadata_file.strip())
-            for command in sql.split(";"):
+            sql_commands = SQLParserUtils().split_sql_commands(
+                sql_commands=sql,
+                delimiter=self.configs.get("delimiter", ";"),
+                advanced_parser=self.configs.get("advanced_parser", False),
+            )
+            for command in sql_commands:
                 if command.strip():
                     self._logger.info(f"sql command: {command}")
                     ExecEnv.SESSION.sql(command)
@@ -188,7 +199,12 @@ class TableManager(object):
 
     def execute_sql(self) -> None:
         """Execute sql commands separated by semicolon (;)."""
-        for command in self.configs.get("sql").split(";"):
+        sql_commands = SQLParserUtils().split_sql_commands(
+            sql_commands=self.configs.get("sql"),
+            delimiter=self.configs.get("delimiter", ";"),
+            advanced_parser=self.configs.get("advanced_parser", False),
+        )
+        for command in sql_commands:
             if command.strip():
                 self._logger.info(f"sql command: {command}")
                 ExecEnv.SESSION.sql(command)
@@ -197,7 +213,8 @@ class TableManager(object):
     def show_tbl_properties(self) -> DataFrame:
         """Show Table Properties.
 
-        Returns: a dataframe with the table properties.
+        Returns:
+            A dataframe with the table properties.
         """
         show_tbl_props_stmt = "{} {}".format(
             SQLDefinitions.show_tbl_props_stmt.value,
@@ -212,7 +229,8 @@ class TableManager(object):
     def get_tbl_pk(self) -> List[str]:
         """Get the primary key of a particular table.
 
-        Returns: the list of columns that are part of the primary key.
+        Returns:
+            The list of columns that are part of the primary key.
         """
         output: List[str] = (
             self.show_tbl_properties()

@@ -1,0 +1,4 @@
+{
+  "function": "compute_table_statistics",
+  "table_or_view": "test_db.DummyTableBronzeComplexDifferentDelimiterScenario1"
+}

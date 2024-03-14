@@ -1,0 +1,6 @@
+{
+  "function": "delete_objects",
+  "bucket": "",
+  "object_paths": ["tests/lakehouse/dbfs/test_directory", "tests/lakehouse/dbfs/destination_directory"],
+  "dry_run": true
+}

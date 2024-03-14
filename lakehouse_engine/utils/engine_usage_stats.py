@@ -10,10 +10,7 @@ from lakehouse_engine.core.definitions import EngineStats
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
-from lakehouse_engine.utils.storage.file_storage_functions import (
-    LocalFSStorage,
-    S3Storage,
-)
+from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
 class EngineUsageStats(object):
@@ -52,7 +49,7 @@ class EngineUsageStats(object):
                 timestamp_str = start_timestamp.strftime("%Y%m%d%H%M%S")
 
                 usage_stats: Dict = {"acon": ConfigUtils.remove_sensitive_info(acon)}
-                EngineUsageStats._get_spark_conf_values(usage_stats, spark_confs)
+                EngineUsageStats.get_spark_conf_values(usage_stats, spark_confs)
 
                 usage_stats["function"] = func_name
                 usage_stats["engine_version"] = ConfigUtils.get_engine_version()
@@ -75,11 +72,10 @@ class EngineUsageStats(object):
                 )
 
                 try:
-                    if engine_usage_path.startswith("s3://"):
-                        cls._LOGGER.info("Storing Lakehouse Engine usage statistics")
-                        S3Storage.write_payload_to_file(url, usage_stats_str)
-                    else:
-                        LocalFSStorage.write_payload_to_file(url, usage_stats_str)
+                    FileStorageFunctions.write_payload(
+                        engine_usage_path, url, usage_stats_str
+                    )
+                    cls._LOGGER.info("Storing Lakehouse Engine usage statistics")
                 except FileNotFoundError as e:
                     cls._LOGGER.error(f"Could not write engine stats into file: {e}.")
         except Exception as e:
@@ -88,14 +84,14 @@ class EngineUsageStats(object):
                 f"Unexpected {e=}, {type(e)=}."
             )
 
-    @staticmethod
-    def _get_spark_conf_values(usage_stats: dict, spark_confs: dict) -> None:
+    @classmethod
+    def get_spark_conf_values(cls, usage_stats: dict, spark_confs: dict) -> None:
         """Get information from spark session configurations.
 
         Args:
             usage_stats: usage_stats dictionary file.
             spark_confs: optional dictionary with the spark tags to be used when
-            collecting the engine usage.
+                collecting the engine usage.
         """
         spark_confs = (
             EngineStats.DEF_SPARK_CONFS.value

@@ -22,32 +22,32 @@ class SAPBWExtraction(JDBCExtraction):
     and/or overwrite those configurations.
 
     These configurations cover:
-        latest_timestamp_input_col: the column containing the actrequest timestamp
-            in the dataset in latest_timestamp_data_location. Default:
-            "actrequest_timestamp".
-        act_request_table: the name of the SAP BW activation requests table.
-            Composed of database.table. Default: SAPPHA.RSODSACTREQ.
-        request_col_name: name of the column having the request to join
-            with the activation request table. Default: actrequest.
-        act_req_join_condition: the join condition into activation table
-            can be changed using this property.
-            Default: 'changelog_tbl.request = act_req.request_col_name'.
-        odsobject: name of BW Object, used for joining with the activation request
-            table to get the max actrequest_timestamp to consider while filtering
-            the changelog table.
-        include_changelog_tech_cols: whether to include the technical columns
-            (usually coming from the changelog) table or not. Default: True.
-        extra_cols_act_request: list of columns to be added from act request table.
-            It needs to contain the prefix "act_req.". E.g. "act_req.col1
-            as column_one, act_req.col2 as column_two".
-        get_timestamp_from_act_request: whether to get init timestamp
-            from act request table or assume current/given timestamp.
-        sap_bw_schema: sap bw schema. Default: SAPPHA.
-        max_timestamp_custom_schema: the custom schema to apply on the calculation of
-            the max timestamp to consider for the delta extractions.
-            Default: timestamp DECIMAL(23,0).
-        default_max_timestamp: the timestamp to use as default, when it is not possible
-            to derive one.
+    - latest_timestamp_input_col: the column containing the actrequest timestamp
+        in the dataset in latest_timestamp_data_location. Default:
+        "actrequest_timestamp".
+    - act_request_table: the name of the SAP BW activation requests table.
+        Composed of database.table. Default: SAPPHA.RSODSACTREQ.
+    - request_col_name: name of the column having the request to join
+        with the activation request table. Default: actrequest.
+    - act_req_join_condition: the join condition into activation table
+        can be changed using this property.
+        Default: 'changelog_tbl.request = act_req.request_col_name'.
+    - odsobject: name of BW Object, used for joining with the activation request
+        table to get the max actrequest_timestamp to consider while filtering
+        the changelog table.
+    - include_changelog_tech_cols: whether to include the technical columns
+        (usually coming from the changelog) table or not. Default: True.
+    - extra_cols_act_request: list of columns to be added from act request table.
+        It needs to contain the prefix "act_req.". E.g. "act_req.col1
+        as column_one, act_req.col2 as column_two".
+    - get_timestamp_from_act_request: whether to get init timestamp
+        from act request table or assume current/given timestamp.
+    - sap_bw_schema: sap bw schema. Default: SAPPHA.
+    - max_timestamp_custom_schema: the custom schema to apply on the calculation of
+        the max timestamp to consider for the delta extractions.
+        Default: timestamp DECIMAL(23,0).
+    - default_max_timestamp: the timestamp to use as default, when it is not possible
+        to derive one.
     """
 
     latest_timestamp_input_col: str = "actrequest_timestamp"

@@ -1,17 +1,12 @@
 """Module to read configurations."""
 import importlib.resources
 from typing import Any, Optional, Union
-from urllib.parse import urlparse
 
 import pkg_resources
 import yaml
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
-from lakehouse_engine.utils.storage.file_storage_functions import (
-    FileStorageFunctions,
-    LocalFSStorage,
-    S3Storage,
-)
+from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
 class ConfigUtils(object):
@@ -91,21 +86,12 @@ class ConfigUtils(object):
         """Read a DDL file in Spark SQL format from a cloud object storage system.
 
         Args:
-            path: path to the acon (algorithm configuration) file.
+            path: path to the SQL file.
 
         Returns:
             Content of the SQL file.
         """
-        url = urlparse(path, allow_fragments=False)
-        if url.scheme == "s3":
-            return S3Storage.get_file_payload(url).read().decode("utf-8")
-        elif url.scheme == "file":
-            local = LocalFSStorage.get_file_payload(url).read()
-            return local
-        else:
-            raise NotImplementedError(
-                f"Object storage protocol not implemented for {path}."
-            )
+        return FileStorageFunctions.read_sql(path)
 
     @classmethod
     def remove_sensitive_info(

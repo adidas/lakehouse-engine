@@ -1,0 +1,29 @@
+{% set root_module_name = "" %}
+{% extends "default/index.html.jinja2" %}
+{% block title %}Lakehouse Engine Documentation{% endblock %}
+{% block nav %}
+    <img src="{{ logo }}" class="logo" alt="project logo"/>
+    <input type="search" placeholder="Search..." role="searchbox" aria-label="search"
+                   pattern=".+" required>
+    <h2>Available Modules</h2>
+    <ul>
+        {% for submodule in all_modules if "." not in submodule and not submodule.startswith("_") %}
+            <li><a href="{{ submodule.replace(".","/") }}.html">{{ submodule.replace("_"," ").title() }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+{% block content %}
+    <header class="pdoc">
+        <h1>Lakehouse Engine Documentation</h1>
+    </header>
+    <main class="pdoc">
+        {% filter to_html %}
+
+{% include "README.md" %}
+
+        {% endfilter %}
+    </main>
+    {% if search %}
+        {% include "search.html.jinja2" %}
+    {% endif %}
+{% endblock %}

@@ -26,3 +26,16 @@ def get_file_names_without_file_type(
             file_list.append(file.split(".")[0])
 
     return file_list
+
+
+def get_directory_path(path: str) -> str:
+    """Add '/' to the end of the path of a directory.
+
+    Args:
+        path: directory to be processed
+
+    Returns:
+        Directory path stripped and with '/' at the end.
+    """
+    path = path.strip()
+    return path if path[-1] == "/" else path + "/"

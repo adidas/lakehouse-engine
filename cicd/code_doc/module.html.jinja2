@@ -4,6 +4,17 @@ copying the block on which we would like to make changes and
 adding both the "View Example" summary tag and the "View Full Acon" button.
 #}
 {% extends "default/module.html.jinja2" %}
+{% block title %}{{ module.modulename }}{% endblock %}
+{% block nav_submodules %}
+        {% if module.submodules %}
+            <h2>Submodules</h2>
+            <ul>
+                {% for submodule in module.submodules if is_public(submodule) | trim %}
+                    <li><a href="./{{ module.name }}/{{ submodule.name }}.html">{{ submodule.name.replace("_"," ").title() }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock %}
 {% block module_contents %}
     {% for m in module.flattened_own_members if is_public(m) | trim %}
         <section id="{{ m.qualname or m.name }}">
@@ -32,6 +43,35 @@ adding both the "View Example" summary tag and the "View Full Acon" button.
             {% endif %}
         </section>
     {% endfor %}
+{% endblock %}
+{% block attribution %}
+{% endblock %}
+
+{% block module_info %}
+    <section class="module-info">
+        {% block edit_button %}
+            {% if edit_url %}
+                {% if "github.com" in edit_url %}
+                    {% set edit_text = "Edit on GitHub" %}
+                {% elif "gitlab" in edit_url %}
+                    {% set edit_text = "Edit on GitLab" %}
+                {% else %}
+                    {% set edit_text = "Edit Source" %}
+                {% endif %}
+                <a class="pdoc-button git-button" href="{{ edit_url }}">{{ edit_text }}</a>
+            {% endif %}
+        {% endblock %}
+
+        {% if "lakehouse_engine" == module.modulename.split(".")[0] %}
+            {{ module_name() }}
+        {% endif %}
+        {{ docstring(module) }}
+        {% if "lakehouse_engine" == module.modulename.split(".")[0] %}
+            {{ view_source_state(module) }}
+            {{ view_source_button(module) }}
+            {{ view_source_code(module) }}
+        {% endif %}
+    </section>
 {% endblock %}
 
 {#

@@ -1,0 +1,8 @@
+{
+  "function": "move_objects",
+  "bucket": "",
+  "source_object": "tests/lakehouse/dbfs/test_directory",
+  "destination_bucket": "",
+  "destination_object": "tests/lakehouse/dbfs/test_mv_directory",
+  "dry_run": false
+}

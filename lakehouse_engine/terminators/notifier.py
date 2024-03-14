@@ -8,6 +8,7 @@ from lakehouse_engine.core.definitions import (
     NotificationRuntimeParameters,
     TerminatorSpec,
 )
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.terminators.notifiers.notification_templates import (
     NotificationsTemplates,
 )
@@ -83,7 +84,9 @@ class Notifier(ABC):
             or NotificationRuntimeParameters.DATABRICKS_WORKSPACE_ID.value
             in template_field
         ):
-            workspace_id, job_name = DatabricksUtils.get_databricks_job_information()
+            workspace_id, job_name = DatabricksUtils.get_databricks_job_information(
+                ExecEnv.SESSION
+            )
             args["databricks_job_name"] = job_name
             args["databricks_workspace_id"] = workspace_id
 

@@ -34,7 +34,7 @@ class SensorControlTableManager(object):
 
         Args:
             sensor_id: sensor id.
-            control_db_table_name: db.table to control sensor runs.
+            control_db_table_name: `db.table` to control sensor runs.
 
         Returns:
             True if acquired new data, otherwise False

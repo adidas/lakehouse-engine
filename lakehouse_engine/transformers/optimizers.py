@@ -33,8 +33,8 @@ class Optimizers(object):
 
         Args:
             storage_level: the type of StorageLevel, as default MEMORY_AND_DISK_DESER.
-                More options here: https://spark.apache.org/docs/latest/api/python/
-                reference/api/pyspark.StorageLevel.html
+                [More options here](
+                https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.StorageLevel.html).
 
         Returns:
             A function to be called in .transform() spark function.

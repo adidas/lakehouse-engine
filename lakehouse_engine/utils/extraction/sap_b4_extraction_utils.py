@@ -30,33 +30,33 @@ class SAPB4Extraction(JDBCExtraction):
     and/or overwrite those configurations.
 
     These configurations cover:
-        latest_timestamp_input_col: the column containing the request timestamps
-            in the dataset in latest_timestamp_data_location. Default: REQTSN.
-        request_status_tbl: the name of the SAP B4 table having information
-            about the extraction requests. Composed of database.table.
-            Default: SAPHANADB.RSPMREQUEST.
-        request_col_name: name of the column having the request timestamp to join
-            with the request status table. Default: REQUEST_TSN.
-        data_target: the data target to extract from. User in the join operation with
-            the request status table.
-        act_req_join_condition: the join condition into activation table
-            can be changed using this property.
-            Default: 'tbl.reqtsn = req.request_col_name'.
-        include_changelog_tech_cols: whether to include the technical columns
-            (usually coming from the changelog) table or not.
-        extra_cols_req_status_tbl: columns to be added from request status table.
-            It needs to contain the prefix "req.". E.g. "req.col1 as column_one,
-            req.col2 as column_two".
-        request_status_tbl_filter: filter to use for filtering the request status table,
-            influencing the calculation of the max timestamps and the delta extractions.
-        adso_type: the type of ADSO that you are extracting from. Can be "AQ" or "CL".
-        max_timestamp_custom_schema: the custom schema to apply on the calculation of
-            the max timestamp to consider for the delta extractions.
-            Default: timestamp DECIMAL(23,0).
-        default_max_timestamp: the timestamp to use as default, when it is not possible
-            to derive one.
-        custom_schema: specify custom_schema for particular columns of the
-            returned dataframe in the init/delta extraction of the source table.
+    - latest_timestamp_input_col: the column containing the request timestamps
+        in the dataset in latest_timestamp_data_location. Default: REQTSN.
+    - request_status_tbl: the name of the SAP B4 table having information
+        about the extraction requests. Composed of database.table.
+        Default: SAPHANADB.RSPMREQUEST.
+    - request_col_name: name of the column having the request timestamp to join
+        with the request status table. Default: REQUEST_TSN.
+    - data_target: the data target to extract from. User in the join operation with
+        the request status table.
+    - act_req_join_condition: the join condition into activation table
+        can be changed using this property.
+        Default: 'tbl.reqtsn = req.request_col_name'.
+    - include_changelog_tech_cols: whether to include the technical columns
+        (usually coming from the changelog) table or not.
+    - extra_cols_req_status_tbl: columns to be added from request status table.
+        It needs to contain the prefix "req.". E.g. "req.col1 as column_one,
+        req.col2 as column_two".
+    - request_status_tbl_filter: filter to use for filtering the request status table,
+        influencing the calculation of the max timestamps and the delta extractions.
+    - adso_type: the type of ADSO that you are extracting from. Can be "AQ" or "CL".
+    - max_timestamp_custom_schema: the custom schema to apply on the calculation of
+        the max timestamp to consider for the delta extractions.
+        Default: timestamp DECIMAL(23,0).
+    - default_max_timestamp: the timestamp to use as default, when it is not possible
+        to derive one.
+    - custom_schema: specify custom_schema for particular columns of the
+        returned dataframe in the init/delta extraction of the source table.
     """
 
     latest_timestamp_input_col: str = "REQTSN"
@@ -122,7 +122,7 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
 
         Returns:
             A query to submit to SAP B4 for the initial data extraction. The query
-            is enclosed in parenthesis so that Spark treats it as a table and supports
+            is enclosed in parentheses so that Spark treats it as a table and supports
             it in the dbtable option.
         """
         extraction_query = self._get_init_extraction_query()
@@ -181,7 +181,7 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
 
         Returns:
             A query to submit to SAP B4 for the delta data extraction. The query
-            is enclosed in parenthesis so that Spark treats it as a table and supports
+            is enclosed in parentheses so that Spark treats it as a table and supports
             it in the dbtable option.
         """
         if not self._B4_EXTRACTION.min_timestamp:

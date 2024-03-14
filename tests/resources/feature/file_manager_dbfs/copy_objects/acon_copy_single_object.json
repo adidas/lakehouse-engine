@@ -1,0 +1,8 @@
+{
+  "function": "copy_objects",
+  "bucket": "",
+  "source_object": "tests/lakehouse/dbfs/test_single_file.json",
+  "destination_bucket": "",
+  "destination_object": "tests/lakehouse/dbfs/destination_single_file.json",
+  "dry_run": false
+}

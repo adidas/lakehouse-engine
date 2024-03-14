@@ -50,6 +50,9 @@ class Algorithm(Executable):
             ),
             store_backend=spec.get("store_backend", DQDefaults.STORE_BACKEND.value),
             local_fs_root_dir=spec.get("local_fs_root_dir", DQSpec.local_fs_root_dir),
+            data_docs_local_fs=spec.get(
+                "data_docs_local_fs", DQSpec.data_docs_local_fs
+            ),
             bucket=spec.get("bucket", DQSpec.bucket),
             data_docs_bucket=spec.get("data_docs_bucket", DQSpec.data_docs_bucket),
             checkpoint_store_prefix=spec.get(
@@ -112,7 +115,7 @@ class Algorithm(Executable):
         Args:
             spec: data quality specifications.
             function_key: dq function key ("dq_functions" or
-            "critical_functions").
+                "critical_functions").
 
         Returns:
             a list of DQ Function Specs.

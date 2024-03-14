@@ -1,0 +1,6 @@
+{
+  "function": "optimize",
+  "table_or_view": "test_db.DummyTableBronzeSimpleSplitScenario",
+  "where_clause": "year >= 2021 and month >= 09 and day > 01",
+  "optimize_zorder_col_list": "col1,col2"
+}

@@ -30,11 +30,17 @@
     make test
     make test-security
     ```
-> **Note:** To use the make targets with another docker-compatible cli other than docker you can pass the parameter "container_cli". 
+---
+> ***Note:*** To use the make targets with another docker-compatible cli other than docker you can pass the parameter "container_cli". 
 Example: `make test container_cli=nerdctl`
 
-> **Note:** Most make target commands are running on docker. If you face any problem, you can also check the code of the respective
-make targets and directly execute the code in your python virtual environment.
+---
+
+---
+> ***Note:*** Most make target commands are running on docker. If you face any problem, you can also check the code of the respective make targets and directly execute the code in your python virtual environment.
+
+---
+
 6. (optional) You can build the wheel locally with `make build` or `make build os_deployment=True` (in case the wheel targets an environment, which does not have the dependencies listed in [extra_os_requirements.txt](cicd/extra_os_requirements.txt) pre-installed).
 7. (optional) Install the wheel you have just generated and test it.
 8. If you have changed or added new requirements, you should run `make build-lock-files`, to rebuild the lock files. 

@@ -28,10 +28,10 @@ class DatasetOptimizer(object):
     ) -> None:
         """Optimize a dataset based on a set of pre-conceived optimizations.
 
-        Most of the times the dataset is a table, but it can be a file-based one only.
+        Most of the time the dataset is a table, but it can be a file-based one only.
 
         Args:
-            db_table: database_name.table_name.
+            db_table: `database_name.table_name`.
             location: dataset/table filesystem location.
             compute_table_stats: to compute table statistics or not.
             vacuum: (delta lake tables only) whether to vacuum the delta lake
@@ -79,7 +79,7 @@ class DatasetOptimizer(object):
         """Compute table statistics.
 
         Args:
-            db_table: <db>.<table> string.
+            db_table: `<db>.<table>` string.
         """
         if not db_table:
             raise WrongArgumentsException("A table needs to be provided.")
@@ -93,7 +93,7 @@ class DatasetOptimizer(object):
         """Vacuum a delta table.
 
         Args:
-            db_table: <db>.<table> string. Takes precedence over location.
+            db_table: `<db>.<table>` string. Takes precedence over location.
             location: location of the delta table.
             hours: number of hours to consider in vacuum operation.
         """
@@ -117,7 +117,7 @@ class DatasetOptimizer(object):
         """Optimize a delta table.
 
         Args:
-            db_table: <db>.<table> string. Takes precedence over location.
+            db_table: `<db>.<table>` string. Takes precedence over location.
             location: location of the delta table.
             where: expression to use in the optimize function.
             zorder_cols: list of columns to consider in the zorder optimization process.

@@ -14,13 +14,13 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
 
     Args:
         template_dict: dict with the following keys:
-            column (column to check sum).
-            group_column_list (group by column names to be listed).
-            condition (how to validate the aggregated value eg: between,
-            greater, lesser).
-            max_value (maximum allowed value).
-            min_value (minimum allowed value).
-            agg_type (sum/count/max/min).
+            - column (column to check sum).
+            - group_column_list (group by column names to be listed).
+            - condition (how to validate the aggregated value eg: between,
+                greater, lesser).
+            - max_value (maximum allowed value).
+            - min_value (minimum allowed value).
+            - agg_type (sum/count/max/min).
     """
 
     metric_dependencies = ("query.template_values",)
@@ -53,7 +53,7 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
 
         Args:
             configuration (OPTIONAL[ExpectationConfiguration]):
-            An optional Expectation Configuration entry.
+                An optional Expectation Configuration entry.
 
         Returns:
             None. Raises InvalidExpectationConfigurationError

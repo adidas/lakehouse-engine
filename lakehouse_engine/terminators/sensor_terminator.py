@@ -1,4 +1,4 @@
-"""Defines terminator behaviour."""
+"""Module with sensor terminator."""
 from typing import List
 
 from lakehouse_engine.core.definitions import SensorSpec, SensorStatus
@@ -31,7 +31,7 @@ class SensorTerminator(object):
 
         Args:
             sensor_id: sensor id.
-            control_db_table_name: db.table to store sensor checkpoints.
+            control_db_table_name: `db.table` to store sensor checkpoints.
             status: status of the sensor.
             assets: a list of assets that are considered as available to
                 consume downstream after this sensor has status

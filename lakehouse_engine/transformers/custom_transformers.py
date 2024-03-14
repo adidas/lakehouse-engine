@@ -13,11 +13,16 @@ class CustomTransformers(object):
         transformers, or they want to write complex logic in the transform step of the
         algorithm.
 
-        Attention!!! Please bare in mind that the custom_transformer function provided
-        as argument needs to receive a DataFrame and return a DataFrame, because it is
-        how Spark's .transform method is able to chain the transformations.
+        .. warning:: Attention!
+            Please bear in mind that the custom_transformer function provided
+            as argument needs to receive a DataFrame and return a DataFrame,
+            because it is how Spark's .transform method is able to chain the
+            transformations.
+
         Example:
-            def my_custom_logic(df: DataFrame) -> DataFrame:
+        ```python
+        def my_custom_logic(df: DataFrame) -> DataFrame:
+        ```
 
         Args:
             custom_transformer: custom transformer function. A python function with all

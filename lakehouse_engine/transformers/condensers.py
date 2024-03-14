@@ -33,10 +33,10 @@ class Condensers(object):
         Args:
             business_key: The business key (logical primary key) of the data.
             ranking_key_desc: In this type of CDC condensation the data needs to be
-                ordered descendingly in a certain way, using columns specified in this
+                in descending order in a certain way, using columns specified in this
                 parameter.
             ranking_key_asc: In this type of CDC condensation the data needs to be
-                ordered ascendingly in a certain way, using columns specified in
+                in ascending order in a certain way, using columns specified in
                 this parameter.
             record_mode_col: Name of the record mode input_col.
             valid_record_modes: Depending on the context, not all record modes may be
@@ -47,8 +47,8 @@ class Condensers(object):
         """
         if not ranking_key_desc and not ranking_key_asc:
             raise WrongArgumentsException(
-                "The condense_record_mode_cdc transfomer requires data to be ordered"
-                "either descendingly or ascendingly, but no arguments for ordering"
+                "The condense_record_mode_cdc transformer requires data to be either"
+                "in descending or ascending order, but no arguments for ordering"
                 "were provided."
             )
 
@@ -92,7 +92,7 @@ class Condensers(object):
 
         Args:
             group_key: list of column names to use in the group by.
-            ranking_key: the data needs to be ordered descendingly using columns
+            ranking_key: the data needs to be in descending order using columns
                 specified in this parameter.
             descending: if the ranking considers descending order or not. Defaults to
                 True.

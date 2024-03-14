@@ -39,9 +39,8 @@ class DateTransformers(object):
 
         Args:
             cols: list of names of the string columns to convert.
-            source_format: dates source format (e.g., YYYY-MM-dd). Check here:
-                https://docs.oracle.com/javase/10/docs/api/java/time/format/
-                DateTimeFormatter.html
+            source_format: dates source format (e.g., YYYY-MM-dd). [Check here](
+                https://docs.oracle.com/javase/10/docs/api/java/time/format/DateTimeFormatter.html).
 
         Returns:
             A function to be executed in the .transform() spark function.
@@ -66,9 +65,9 @@ class DateTransformers(object):
 
         Args:
             cols: list of names of the string columns to convert.
-            source_format: dates source format (e.g., MM-dd-yyyy HH:mm:ss.SSS). Check
-                here: https://docs.oracle.com/javase/10/docs/api/java/time/format/
-                DateTimeFormatter.html
+            source_format: dates source format (e.g., MM-dd-yyyy HH:mm:ss.SSS).
+                [Check here](
+                https://docs.oracle.com/javase/10/docs/api/java/time/format/DateTimeFormatter.html).
 
         Returns:
             A function to be executed in the .transform() spark function.
@@ -91,9 +90,8 @@ class DateTransformers(object):
 
         Args:
             cols: list of names of the string columns to convert.
-            target_format: strings target format (e.g., YYYY-MM-dd). Check here:
-                https://docs.oracle.com/javase/10/docs/api/java/time/format/
-                DateTimeFormatter.html
+            target_format: strings target format (e.g., YYYY-MM-dd). [Check here](
+                https://docs.oracle.com/javase/10/docs/api/java/time/format/DateTimeFormatter.html).
 
         Returns:
             A function to be executed in the .transform() spark function.
@@ -119,7 +117,8 @@ class DateTransformers(object):
         Args:
             cols: list of names of the date columns to create the hierarchy.
             formats: dict with the correspondence between the hierarchy and the format
-                to apply.
+                to apply. [Check here](
+                https://docs.oracle.com/javase/10/docs/api/java/time/format/DateTimeFormatter.html).
                 Example: {
                     "year": "year",
                     "month": "month",
@@ -127,8 +126,6 @@ class DateTransformers(object):
                     "week": "week",
                     "quarter": "quarter"
                 }
-                Check here: https://docs.oracle.com/javase/10/docs/api/java/time/format/
-                DateTimeFormatter.html
 
         Returns:
             A function to be executed in the .transform() spark function.

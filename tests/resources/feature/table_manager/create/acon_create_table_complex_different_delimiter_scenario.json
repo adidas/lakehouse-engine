@@ -1,0 +1,6 @@
+{
+  "function": "create_table",
+  "path": "file:///app/tests/lakehouse/in/feature/table_manager/create/table/test_table_complex_different_delimiter_scenario.sql",
+  "delimiter": "===",
+  "advanced_parser": true
+}

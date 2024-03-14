@@ -21,9 +21,10 @@ class SchemaUtils(object):
         """Get a spark schema from a file (spark StructType json file) in a file system.
 
         Args:
-            file_path: path of the file in a file system. Check here:
-                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/
-                StructType.html
+            file_path: path of the file in a file system. [Check here](
+                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
+
+
 
         Returns:
             Spark schema struct type.
@@ -35,9 +36,8 @@ class SchemaUtils(object):
         """Get a dict with the spark schema from a file in a file system.
 
         Args:
-            file_path: path of the file in a file system. Check here:
-                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/
-                StructType.html
+            file_path: path of the file in a file system. [Check here](
+                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
 
         Returns:
              Spark schema in a dict.
@@ -49,9 +49,8 @@ class SchemaUtils(object):
         """Get a spark schema from a dict.
 
         Args:
-            struct_type: dict containing a spark schema structure. Check here:
-                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/
-                StructType.html
+            struct_type: dict containing a spark schema structure. [Check here](
+                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
 
         Returns:
              Spark schema struct type.
@@ -129,16 +128,16 @@ class SchemaUtils(object):
         Args:
             schema: schema to be flattened.
             prefix: prefix of the struct to get the value for. Only relevant
-            for being used in the internal recursive logic.
+                for being used in the internal recursive logic.
             level: level of the depth in the schema being flattened. Only relevant
-            for being used in the internal recursive logic.
+                for being used in the internal recursive logic.
             max_level: level until which you want to flatten the schema. Default: None.
             shorten_names: whether to shorten the names of the prefixes of the fields
-            being flattened or not. Default: False.
+                being flattened or not. Default: False.
             alias: whether to define alias for the columns being flattened or
-            not. Default: True.
+                not. Default: True.
             num_chars: number of characters to consider when shortening the names of
-            the fields. Default: 7.
+                the fields. Default: 7.
             ignore_cols: columns which you don't want to flatten. Default: None.
 
         Returns:

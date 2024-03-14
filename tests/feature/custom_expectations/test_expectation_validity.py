@@ -6,7 +6,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import DQDefaults
 
-"""This value '✔' is used to filter the output from the GE diagnostics"""
+"""This value '✔' is used to filter the output from the GX diagnostics"""
 CHECKMARK = "\u2714"
 DIAGNOSTICS_VALIDATIONS = [
     " ✔ Has a docstring, including a one-line short description",

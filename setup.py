@@ -14,7 +14,7 @@ with open(requirements_path, "r") as requirements_file:
 
 setuptools.setup(
     name="lakehouse-engine",
-    version="1.18.0",
+    version="1.19.0",
     author="Adidas Lakehouse Foundations Team",
     author_email="software.engineering@adidas.com",
     description="A Spark framework serving as the engine for several lakehouse "
