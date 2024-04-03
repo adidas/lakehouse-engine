@@ -5,7 +5,11 @@ from lakehouse_engine.algorithms.data_loader import DataLoader
 from lakehouse_engine.algorithms.dq_validator import DQValidator
 from lakehouse_engine.algorithms.reconciliator import Reconciliator
 from lakehouse_engine.algorithms.sensor import Sensor, SensorStatus
-from lakehouse_engine.core.definitions import SAPLogchain, TerminatorSpec
+from lakehouse_engine.core.definitions import (
+    CollectEngineUsage,
+    SAPLogchain,
+    TerminatorSpec,
+)
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.file_manager import FileManagerFactory
 from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
@@ -19,7 +23,7 @@ from lakehouse_engine.utils.engine_usage_stats import EngineUsageStats
 def load_data(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> Optional[OrderedDict]:
     """Load data using the DataLoader algorithm.
@@ -28,8 +32,7 @@ def load_data(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks or other
             apps).
-        collect_engine_usage: a boolean that enables or disables the collection and
-                storage of Lakehouse usage statistics.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
@@ -44,7 +47,7 @@ def load_data(
 def execute_reconciliation(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> None:
     """Execute the Reconciliator algorithm.
@@ -53,8 +56,7 @@ def execute_reconciliation(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks or other
             apps).
-        collect_engine_usage: whether we want to enable the collection and storage of
-            lakehouse engine usage stats or not.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
@@ -69,7 +71,7 @@ def execute_reconciliation(
 def execute_dq_validation(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> None:
     """Execute the DQValidator algorithm.
@@ -78,8 +80,7 @@ def execute_dq_validation(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks or other
             apps).
-        collect_engine_usage: whether we want to enable the collection and storage of
-            lakehouse engine usage stats or not.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
@@ -94,7 +95,7 @@ def execute_dq_validation(
 def manage_table(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> None:
     """Manipulate tables/views using Table Manager algorithm.
@@ -103,8 +104,7 @@ def manage_table(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks
             or other apps).
-        collect_engine_usage: whether we want to enable the collection and storage of
-            lakehouse engine usage stats or not.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
@@ -119,7 +119,7 @@ def manage_table(
 def manage_files(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> None:
     """Manipulate s3 files using File Manager algorithm.
@@ -128,8 +128,7 @@ def manage_files(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks
             or other apps).
-        collect_engine_usage: whether we want to enable the collection and storage of
-            lakehouse engine usage stats or not.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
@@ -144,7 +143,7 @@ def manage_files(
 def execute_sensor(
     acon_path: Optional[str] = None,
     acon: Optional[dict] = None,
-    collect_engine_usage: bool = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
     spark_confs: dict = None,
 ) -> bool:
     """Execute a sensor based on a Sensor Algorithm Configuration.
@@ -155,8 +154,7 @@ def execute_sensor(
         acon_path: path of the acon (algorithm configuration) file.
         acon: acon provided directly through python code (e.g., notebooks
             or other apps).
-        collect_engine_usage: whether we want to enable the collection and storage of
-            lakehouse engine usage stats or not.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """

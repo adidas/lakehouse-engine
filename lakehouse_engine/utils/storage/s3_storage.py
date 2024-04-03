@@ -25,7 +25,10 @@ class S3Storage(FileStorage):
         """
         s3 = boto3.resource("s3")
         obj = s3.Object(url.netloc, url.path.lstrip("/"))
-        cls._LOGGER.info(f"Reading from file: {url.scheme}://{url.netloc}{url.path}")
+        cls._LOGGER.info(
+            f"Trying with s3_storage: "
+            f"Reading from file: {url.scheme}://{url.netloc}{url.path}"
+        )
         return obj.get()["Body"]
 
     @classmethod
@@ -38,5 +41,8 @@ class S3Storage(FileStorage):
         """
         s3 = boto3.resource("s3")
         obj = s3.Object(url.netloc, url.path.lstrip("/"))
-        cls._LOGGER.info(f"Writing into file: {url.scheme}://{url.netloc}{url.path}")
+        cls._LOGGER.info(
+            f"Trying with s3_storage: "
+            f"Writing into file: {url.scheme}://{url.netloc}{url.path}"
+        )
         obj.put(Body=content)

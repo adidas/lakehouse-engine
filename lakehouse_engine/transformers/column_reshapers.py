@@ -327,6 +327,7 @@ class ColumnReshapers(object):
         schema: Optional[dict] = None,
         json_options: Optional[dict] = None,
         drop_all_cols: bool = False,
+        disable_dbfs_retry: bool = False,
     ) -> Callable:
         """Convert a json string into a json column (struct).
 
@@ -341,6 +342,7 @@ class ColumnReshapers(object):
             json_options: options to parse the json value.
             drop_all_cols: whether to drop all the input columns or not.
                 Defaults to False.
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
             A function to be called in .transform() spark function.
@@ -348,7 +350,7 @@ class ColumnReshapers(object):
 
         def inner(df: DataFrame) -> DataFrame:
             if schema_path:
-                json_schema = SchemaUtils.from_file(schema_path)
+                json_schema = SchemaUtils.from_file(schema_path, disable_dbfs_retry)
             elif schema:
                 json_schema = SchemaUtils.from_dict(schema)
             else:

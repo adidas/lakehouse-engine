@@ -29,6 +29,7 @@ class ConfigUtils(object):
         cls,
         acon_path: Optional[str] = None,
         acon: Optional[dict] = None,
+        disable_dbfs_retry: bool = False,
     ) -> dict:
         """Get acon based on a filesystem path or on a dict.
 
@@ -36,11 +37,14 @@ class ConfigUtils(object):
             acon_path: path of the acon (algorithm configuration) file.
             acon: acon provided directly through python code (e.g., notebooks
                 or other apps).
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
             Dict representation of an acon.
         """
-        acon = acon if acon else ConfigUtils.read_json_acon(acon_path)
+        acon = (
+            acon if acon else ConfigUtils.read_json_acon(acon_path, disable_dbfs_retry)
+        )
         cls._LOGGER.info(f"Read Algorithm Configuration: {str(acon)}")
         return acon
 
@@ -70,28 +74,30 @@ class ConfigUtils(object):
         return str(version)
 
     @staticmethod
-    def read_json_acon(path: str) -> Any:
+    def read_json_acon(path: str, disable_dbfs_retry: bool = False) -> Any:
         """Read an acon (algorithm configuration) file.
 
         Args:
             path: path to the acon file.
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
             The acon file content as a dict.
         """
-        return FileStorageFunctions.read_json(path)
+        return FileStorageFunctions.read_json(path, disable_dbfs_retry)
 
     @staticmethod
-    def read_sql(path: str) -> Any:
+    def read_sql(path: str, disable_dbfs_retry: bool = False) -> Any:
         """Read a DDL file in Spark SQL format from a cloud object storage system.
 
         Args:
             path: path to the SQL file.
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
             Content of the SQL file.
         """
-        return FileStorageFunctions.read_sql(path)
+        return FileStorageFunctions.read_sql(path, disable_dbfs_retry)
 
     @classmethod
     def remove_sensitive_info(

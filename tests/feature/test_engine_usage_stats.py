@@ -128,7 +128,7 @@ def test_load_data(scenario: str) -> None:
     load_data(
         acon=_get_test_acon(scenario),
         spark_confs={"dp_name": "dp_name"},
-        collect_engine_usage=True,
+        collect_engine_usage="enabled",
     )
 
     _prepare_and_compare_dfs(scenario)
@@ -156,7 +156,7 @@ def test_table_manager(scenario: str) -> None:
     }
 
     manage_table(
-        acon=acon, spark_confs={"dp_name": "dp_name"}, collect_engine_usage=True
+        acon=acon, spark_confs={"dp_name": "dp_name"}, collect_engine_usage="enabled"
     )
 
     _prepare_and_compare_dfs(scenario)
@@ -214,7 +214,7 @@ def test_dq_validator(scenario: str) -> None:
     }
 
     execute_dq_validation(
-        acon=acon, spark_confs={"dp_name": "dp_name"}, collect_engine_usage=True
+        acon=acon, spark_confs={"dp_name": "dp_name"}, collect_engine_usage="enabled"
     )
 
     _prepare_and_compare_dfs(scenario)

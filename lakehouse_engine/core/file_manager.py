@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from lakehouse_engine.algorithms.exceptions import RestoreTypeNotFoundException
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
@@ -54,7 +55,20 @@ class FileManagerFactory(ABC):  # noqa: B024
         from lakehouse_engine.core.dbfs_file_manager import DBFSFileManager
         from lakehouse_engine.core.s3_file_manager import S3FileManager
 
-        if FileStorageFunctions.is_boto3_configured():
+        disable_dbfs_retry = (
+            configs["disable_dbfs_retry"]
+            if "disable_dbfs_retry" in configs.keys()
+            else False
+        )
+
+        if disable_dbfs_retry:
             S3FileManager(configs).get_function()
+        elif FileStorageFunctions.is_boto3_configured():
+            try:
+                S3FileManager(configs).get_function()
+            except (ValueError, NotImplementedError, RestoreTypeNotFoundException):
+                raise
+            except Exception:
+                DBFSFileManager(configs).get_function()
         else:
             DBFSFileManager(configs).get_function()

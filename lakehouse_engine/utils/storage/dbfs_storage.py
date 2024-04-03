@@ -26,7 +26,7 @@ class DBFSStorage(FileStorage):
         from lakehouse_engine.core.exec_env import ExecEnv
 
         str_url = urlunparse(url)
-        cls._LOGGER.info(f"Reading from file: {str_url}")
+        cls._LOGGER.info(f"Trying with dbfs_storage: Reading from file: {str_url}")
         return DatabricksUtils.get_db_utils(ExecEnv.SESSION).fs.head(
             str_url, cls._MAX_INT
         )
@@ -42,5 +42,5 @@ class DBFSStorage(FileStorage):
         from lakehouse_engine.core.exec_env import ExecEnv
 
         str_url = urlunparse(url)
-        cls._LOGGER.info(f"Writing into file: {str_url}")
+        cls._LOGGER.info(f"Trying with dbfs_storage: Writing into file: {str_url}")
         DatabricksUtils.get_db_utils(ExecEnv.SESSION).fs.put(str_url, content, True)

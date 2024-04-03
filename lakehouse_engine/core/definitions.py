@@ -14,6 +14,22 @@ from pyspark.sql.types import (
 )
 
 
+class CollectEngineUsage(Enum):
+    """Options for collecting engine usage stats.
+
+    - enabled, enables the collection and storage of Lakehouse Engine
+    usage statistics for any environment.
+    - prod_only, enables the collection and storage of Lakehouse Engine
+    usage statistics for production environment only.
+    - disabled, disables the collection and storage of Lakehouse Engine
+    usage statistics, for all environments.
+    """
+
+    ENABLED = "enabled"
+    PROD_ONLY = "prod_only"
+    DISABLED = "disabled"
+
+
 @dataclass
 class EngineConfig(object):
     """Definitions that can come from the Engine Config file.
@@ -21,7 +37,8 @@ class EngineConfig(object):
     - dq_bucket: S3 bucket used to store data quality related artifacts.
     - notif_disallowed_email_servers: email servers not allowed to be used
         for sending notifications.
-    - engine_usage_path: path where the engine usage stats are stored.
+    - engine_usage_path: path where the engine prod usage stats are stored.
+    - engine_dev_usage_path: path where the engine dev usage stats are stored.
     - collect_engine_usage: whether to enable the collection of lakehouse
         engine usage stats or not.
     """
@@ -29,7 +46,8 @@ class EngineConfig(object):
     dq_bucket: Optional[str] = None
     notif_disallowed_email_servers: Optional[list] = None
     engine_usage_path: Optional[str] = None
-    collect_engine_usage: bool = True
+    engine_dev_usage_path: Optional[str] = None
+    collect_engine_usage: str = CollectEngineUsage.ENABLED.value
 
 
 class EngineStats(Enum):
@@ -257,6 +275,7 @@ class InputSpec(object):
         schema).
     - schema_path: path to a file with a representation of a schema of the input (e.g.,
         Spark struct type schema).
+    - disable_dbfs_retry: optional flag to disable file storage dbfs.
     - with_filepath: if we want to include the path of the file that is being read. Only
         works with the file reader (batch and streaming modes are supported).
     - options: dict with other relevant options according to the execution
@@ -279,6 +298,7 @@ class InputSpec(object):
     enforce_schema_from_table: Optional[str] = None
     schema: Optional[dict] = None
     schema_path: Optional[str] = None
+    disable_dbfs_retry: bool = False
     with_filepath: bool = False
     options: Optional[dict] = None
     jdbc_args: Optional[dict] = None

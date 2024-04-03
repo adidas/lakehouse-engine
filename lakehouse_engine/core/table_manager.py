@@ -57,7 +57,12 @@ class TableManager(object):
 
     def create(self) -> None:
         """Create a new table or view on metastore."""
-        sql = ConfigUtils.read_sql(self.configs["path"])
+        disable_dbfs_retry = (
+            self.configs["disable_dbfs_retry"]
+            if "disable_dbfs_retry" in self.configs.keys()
+            else False
+        )
+        sql = ConfigUtils.read_sql(self.configs["path"], disable_dbfs_retry)
         try:
             sql_commands = SQLParserUtils().split_sql_commands(
                 sql_commands=sql,
@@ -185,7 +190,12 @@ class TableManager(object):
         In this function the path to the files is separated by comma.
         """
         for table_metadata_file in self.configs["path"].split(","):
-            sql = ConfigUtils.read_sql(table_metadata_file.strip())
+            disable_dbfs_retry = (
+                self.configs["disable_dbfs_retry"]
+                if "disable_dbfs_retry" in self.configs.keys()
+                else False
+            )
+            sql = ConfigUtils.read_sql(table_metadata_file.strip(), disable_dbfs_retry)
             sql_commands = SQLParserUtils().split_sql_commands(
                 sql_commands=sql,
                 delimiter=self.configs.get("delimiter", ";"),

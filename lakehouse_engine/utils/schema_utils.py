@@ -17,32 +17,34 @@ class SchemaUtils(object):
     _logger: Logger = LoggingHandler(__name__).get_logger()
 
     @staticmethod
-    def from_file(file_path: str) -> StructType:
+    def from_file(file_path: str, disable_dbfs_retry: bool = False) -> StructType:
         """Get a spark schema from a file (spark StructType json file) in a file system.
 
         Args:
             file_path: path of the file in a file system. [Check here](
                 https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
-
-
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
             Spark schema struct type.
         """
-        return StructType.fromJson(FileStorageFunctions.read_json(file_path))
+        return StructType.fromJson(
+            FileStorageFunctions.read_json(file_path, disable_dbfs_retry)
+        )
 
     @staticmethod
-    def from_file_to_dict(file_path: str) -> Any:
+    def from_file_to_dict(file_path: str, disable_dbfs_retry: bool = False) -> Any:
         """Get a dict with the spark schema from a file in a file system.
 
         Args:
             file_path: path of the file in a file system. [Check here](
                 https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
+            disable_dbfs_retry: optional flag to disable file storage dbfs.
 
         Returns:
              Spark schema in a dict.
         """
-        return FileStorageFunctions.read_json(file_path)
+        return FileStorageFunctions.read_json(file_path, disable_dbfs_retry)
 
     @staticmethod
     def from_dict(struct_type: dict) -> StructType:
@@ -91,7 +93,9 @@ class SchemaUtils(object):
             return SchemaUtils.from_table_schema(input_spec.enforce_schema_from_table)
         elif input_spec.schema_path:
             cls._logger.info(f"Reading schema from file: {input_spec.schema_path}")
-            return SchemaUtils.from_file(input_spec.schema_path)
+            return SchemaUtils.from_file(
+                input_spec.schema_path, input_spec.disable_dbfs_retry
+            )
         elif input_spec.schema:
             cls._logger.info(
                 f"Reading schema from configuration file: {input_spec.schema}"
