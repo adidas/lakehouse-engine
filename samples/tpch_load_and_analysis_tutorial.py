@@ -19,7 +19,7 @@
 
 # You can install the Lakehouse Engine framework with below command just like any other python library,
 # or you can also install it as a cluster-scoped library
-pip install lakehouse-engine
+%pip install lakehouse-engine
 
 # COMMAND ----------
 
