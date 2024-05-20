@@ -703,7 +703,7 @@ pbr==5.11.1
     # via stevedore
 pdoc==13.1.1
     # via -r cicd/requirements_cicd.txt
-pendulum==2.1.2
+pendulum==3.0.0
     # via
     #   -r cicd/requirements.lock
     #   microsoft-kiota-serialization-json
@@ -835,6 +835,7 @@ python-dateutil==2.8.2
     #   moto
     #   pandas
     #   pendulum
+    #   time-machine
 python-json-logger==2.0.7
     # via
     #   -r cicd/requirements.lock
@@ -844,10 +845,6 @@ pytz==2023.3.post1
     #   -r cicd/requirements.lock
     #   great-expectations
     #   pandas
-pytzdata==2020.1
-    # via
-    #   -r cicd/requirements.lock
-    #   pendulum
 pywavelets==1.4.1
     # via
     #   -r cicd/requirements.lock
@@ -993,6 +990,10 @@ terminado==0.18.0
     #   -r cicd/requirements.lock
     #   jupyter-server
     #   jupyter-server-terminals
+time-machine==2.13.0
+    # via
+    #   -r cicd/requirements.lock
+    #   pendulum
 tinycss2==1.2.1
     # via
     #   -r cicd/requirements.lock
@@ -1085,6 +1086,7 @@ tzdata==2023.3
     # via
     #   -r cicd/requirements.lock
     #   pandas
+    #   pendulum
 tzlocal==5.1
     # via
     #   -r cicd/requirements.lock

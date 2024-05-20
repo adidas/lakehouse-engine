@@ -1,0 +1,13 @@
+{
+  "query_id": "int",
+  "query_label": "string",
+  "query_type": "string",
+  "mappings": "string",
+  "intermediate_stages": "string",
+  "recon_window": "string",
+  "timezone_offset": "int",
+  "start_of_the_week": "string",
+  "is_active": "string",
+  "queue": "string",
+  "lh_created_on": "timestamp"
+}

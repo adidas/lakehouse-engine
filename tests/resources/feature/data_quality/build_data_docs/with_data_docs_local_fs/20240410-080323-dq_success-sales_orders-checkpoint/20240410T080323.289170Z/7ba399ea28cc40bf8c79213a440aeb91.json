@@ -1,0 +1,80 @@
+{
+  "evaluation_parameters": {},
+  "meta": {
+    "active_batch_definition": {
+      "batch_identifiers": {
+        "input_id": "sales_orders",
+        "spec_id": "dq_success",
+        "timestamp": "20240410080151"
+      },
+      "data_asset_name": "dq_success-sales_orders",
+      "data_connector_name": "dq_success-sales_orders-data_connector",
+      "datasource_name": "dq_success-sales_orders-datasource"
+    },
+    "batch_markers": {
+      "ge_load_time": "20240410T080323.295280Z"
+    },
+    "batch_spec": {
+      "batch_data": "SparkDataFrame",
+      "data_asset_name": "dq_success-sales_orders"
+    },
+    "checkpoint_id": null,
+    "checkpoint_name": "dq_success-sales_orders-checkpoint",
+    "expectation_suite_name": "dq_success-sales_orders-validator",
+    "great_expectations_version": "0.18.8",
+    "run_id": {
+      "run_name": "20240410-080323-dq_success-sales_orders-checkpoint",
+      "run_time": "2024-04-10T08:03:23.289170+00:00"
+    },
+    "validation_id": null,
+    "validation_time": "20240410T080323.296161Z"
+  },
+  "results": [
+    {
+      "exception_info": {
+        "exception_message": null,
+        "exception_traceback": null,
+        "raised_exception": false
+      },
+      "expectation_config": {
+        "expectation_type": "expect_column_to_exist",
+        "kwargs": {
+          "batch_id": "7ba399ea28cc40bf8c79213a440aeb91",
+          "column": "article"
+        },
+        "meta": {}
+      },
+      "meta": {},
+      "result": {},
+      "success": true
+    },
+    {
+      "exception_info": {
+        "exception_message": null,
+        "exception_traceback": null,
+        "raised_exception": false
+      },
+      "expectation_config": {
+        "expectation_type": "expect_table_row_count_to_be_between",
+        "kwargs": {
+          "batch_id": "7ba399ea28cc40bf8c79213a440aeb91",
+          "max_value": 50,
+          "min_value": 0
+        },
+        "meta": {}
+      },
+      "meta": {},
+      "result": {
+        "observed_value": 34
+      },
+      "success": true
+    }
+  ],
+  "statistics": {
+    "evaluated_expectations": 2,
+    "success_percent": 100.0,
+    "successful_expectations": 2,
+    "unsuccessful_expectations": 0
+  },
+  "success": true
+}

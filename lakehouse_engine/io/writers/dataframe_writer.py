@@ -102,7 +102,8 @@ class DataFrameWriter(Writer):
 
         if DataFrameWriter._table_exists(stream_df_view_name):
             # Cleaning global temp view to not maintain state and impact other acon runs
-            ExecEnv.SESSION.catalog.dropGlobalTempView(stream_df_view_name.strip("`"))
+            view_name = stream_df_view_name.strip("`")
+            ExecEnv.SESSION.sql(f"DROP VIEW global_temp.`{view_name}`")
 
         df_writer = df.writeStream.trigger(**Writer.get_streaming_trigger(output_spec))
 

@@ -3,10 +3,12 @@ from typing import List, Optional, OrderedDict
 
 from lakehouse_engine.algorithms.data_loader import DataLoader
 from lakehouse_engine.algorithms.dq_validator import DQValidator
+from lakehouse_engine.algorithms.gab import GAB
 from lakehouse_engine.algorithms.reconciliator import Reconciliator
 from lakehouse_engine.algorithms.sensor import Sensor, SensorStatus
 from lakehouse_engine.core.definitions import (
     CollectEngineUsage,
+    DQDefaults,
     SAPLogchain,
     TerminatorSpec,
 )
@@ -14,6 +16,7 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.file_manager import FileManagerFactory
 from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
 from lakehouse_engine.core.table_manager import TableManager
+from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.terminators.sensor_terminator import SensorTerminator
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
@@ -290,3 +293,79 @@ def send_notification(args: dict) -> None:
 
     notifier.create_notification()
     notifier.send_notification()
+
+
+def build_data_docs(
+    store_backend: str = DQDefaults.STORE_BACKEND.value,
+    local_fs_root_dir: str = None,
+    data_docs_local_fs: str = None,
+    data_docs_prefix: str = DQDefaults.DATA_DOCS_PREFIX.value,
+    bucket: str = None,
+    data_docs_bucket: str = None,
+    expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value,
+    validations_store_prefix: str = DQDefaults.VALIDATIONS_STORE_PREFIX.value,
+    checkpoint_store_prefix: str = DQDefaults.CHECKPOINT_STORE_PREFIX.value,
+) -> None:
+    """Build Data Docs for the project.
+
+    This function does a full build of data docs based on all the great expectations
+    checkpoints in the specified location, getting all history of run/validations
+    executed and results.
+
+    Args:
+        store_backend: which store_backend to use (e.g. s3 or file_system).
+        local_fs_root_dir: path of the root directory. Note: only applicable
+            for store_backend file_system
+        data_docs_local_fs: path of the root directory. Note: only applicable
+            for store_backend file_system.
+        data_docs_prefix: prefix where to store data_docs' data.
+        bucket: the bucket name to consider for the store_backend
+            (store DQ artefacts). Note: only applicable for store_backend s3.
+        data_docs_bucket: the bucket name for data docs only. When defined,
+            it will supersede bucket parameter.
+            Note: only applicable for store_backend s3.
+        expectations_store_prefix: prefix where to store expectations' data.
+            Note: only applicable for store_backend s3.
+        validations_store_prefix: prefix where to store validations' data.
+            Note: only applicable for store_backend s3.
+        checkpoint_store_prefix: prefix where to store checkpoints' data.
+            Note: only applicable for store_backend s3.
+    """
+    DQFactory.build_data_docs(
+        store_backend=store_backend,
+        local_fs_root_dir=local_fs_root_dir,
+        data_docs_local_fs=data_docs_local_fs,
+        data_docs_prefix=data_docs_prefix,
+        bucket=bucket,
+        data_docs_bucket=data_docs_bucket,
+        expectations_store_prefix=expectations_store_prefix,
+        validations_store_prefix=validations_store_prefix,
+        checkpoint_store_prefix=checkpoint_store_prefix,
+    )
+
+
+def execute_gab(
+    acon_path: Optional[str] = None,
+    acon: Optional[dict] = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
+    spark_confs: dict = None,
+) -> None:
+    """Execute the gold asset builder based on a GAB Algorithm Configuration.
+
+    GaB is useful to build your gold assets with predefined functions for recurrent
+    periods.
+
+    Args:
+        acon_path: path of the acon (algorithm configuration) file.
+        acon: acon provided directly through python code (e.g., notebooks
+            or other apps).
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
+        spark_confs: optional dictionary with the spark confs to be used when collecting
+            the engine usage.
+    """
+    acon = ConfigUtils.get_acon(acon_path, acon)
+    ExecEnv.get_or_create(app_name="execute_gab", config=acon.get("exec_env", None))
+    EngineUsageStats.store_engine_usage(
+        acon, execute_gab.__name__, collect_engine_usage, spark_confs
+    )
+    GAB(acon).execute()

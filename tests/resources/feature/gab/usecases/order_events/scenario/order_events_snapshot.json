@@ -1,0 +1,13 @@
+{
+  "query_label_filter": ["order_events_snapshot"],
+  "queue_filter": ["Medium"],
+  "cadence_filter": ["DAY","WEEK"],
+  "target_database": "test_db",
+  "start_date": "2022-01-01",
+  "end_date": "2022-12-31",
+  "rerun_flag": "N",
+  "target_table": "gab_use_case_results",
+  "source_database": "test_db",
+  "gab_base_path": "/app/tests/lakehouse/in/feature/gab/usecases_sql/",
+  "lookup_table": "lkp_query_builder"
+}

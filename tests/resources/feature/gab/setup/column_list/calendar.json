@@ -1,0 +1,15 @@
+{
+  "calendar_date": "date",
+  "day_en": "string",
+  "weeknum_mon": "int",
+  "weekstart_mon": "date",
+  "weekend_mon": "date",
+  "weekstart_sun": "date",
+  "weekend_sun": "date",
+  "month_start": "date",
+  "month_end": "date",
+  "quarter_start": "date",
+  "quarter_end": "date",
+  "year_start": "date",
+  "year_end": "date"
+}

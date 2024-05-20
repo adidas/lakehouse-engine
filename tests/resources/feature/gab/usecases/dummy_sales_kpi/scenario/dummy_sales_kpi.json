@@ -1,0 +1,14 @@
+{
+  "query_label_filter": ["dummy_sales_kpi"],
+  "queue_filter": ["Low"],
+  "cadence_filter": ["DAY","WEEK","MONTH","QUARTER","YEAR"],
+  "target_database": "test_db",
+  "start_date": "2016-01-01",
+  "end_date": "2018-12-31",
+  "rerun_flag": "N",
+  "target_table": "gab_use_case_results",
+  "source_database": "test_db",
+  "gab_base_path": "/app/tests/lakehouse/in/feature/gab/usecases_sql/",
+  "lookup_table": "lkp_query_builder",
+  "calendar_table": "dim_calendar"
+}

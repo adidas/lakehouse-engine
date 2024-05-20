@@ -1,0 +1,83 @@
+{
+  "evaluation_parameters": {},
+  "meta": {
+    "active_batch_definition": {
+      "batch_identifiers": {
+        "input_id": "sales_source",
+        "spec_id": "dq_validator",
+        "timestamp": "20240409143443"
+      },
+      "data_asset_name": "dq_validator-sales_source",
+      "data_connector_name": "dq_validator-sales_source-data_connector",
+      "datasource_name": "dq_validator-sales_source-datasource"
+    },
+    "batch_markers": {
+      "ge_load_time": "20240409T143548.465215Z"
+    },
+    "batch_spec": {
+      "batch_data": "SparkDataFrame",
+      "data_asset_name": "dq_validator-sales_source"
+    },
+    "checkpoint_id": null,
+    "checkpoint_name": "dq_validator-sales_source-checkpoint",
+    "expectation_suite_name": "dq_validator-sales_source-validator",
+    "great_expectations_version": "0.18.8",
+    "run_id": {
+      "run_name": "20240409-143548-dq_validator-sales_source-checkpoint",
+      "run_time": "2024-04-09T14:35:48.454043+00:00"
+    },
+    "validation_id": null,
+    "validation_time": "20240409T143548.466032Z"
+  },
+  "results": [
+    {
+      "exception_info": {
+        "exception_message": null,
+        "exception_traceback": null,
+        "raised_exception": false
+      },
+      "expectation_config": {
+        "expectation_type": "expect_table_row_count_to_be_between",
+        "kwargs": {
+          "batch_id": "f0d7bd293d22bcfd3c1fec5a7d566638",
+          "max_value": 34,
+          "min_value": 34
+        },
+        "meta": {}
+      },
+      "meta": {},
+      "result": {
+        "observed_value": 34
+      },
+      "success": true
+    },
+    {
+      "exception_info": {
+        "exception_message": null,
+        "exception_traceback": null,
+        "raised_exception": false
+      },
+      "expectation_config": {
+        "expectation_type": "expect_table_column_count_to_be_between",
+        "kwargs": {
+          "batch_id": "f0d7bd293d22bcfd3c1fec5a7d566638",
+          "max_value": 12,
+          "min_value": 12
+        },
+        "meta": {}
+      },
+      "meta": {},
+      "result": {
+        "observed_value": 12
+      },
+      "success": true
+    }
+  ],
+  "statistics": {
+    "evaluated_expectations": 2,
+    "success_percent": 100.0,
+    "successful_expectations": 2,
+    "unsuccessful_expectations": 0
+  },
+  "success": true
+}

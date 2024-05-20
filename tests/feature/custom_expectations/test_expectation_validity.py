@@ -1,4 +1,5 @@
 """Module with the validation code for the custom expectations."""
+import copy
 import importlib
 import re
 
@@ -88,7 +89,7 @@ def _process_diagnostics_output(diagnostics_output: str) -> None:
     Args:
         diagnostics_output: the output from the diagnostics command.
     """
-    validations = DIAGNOSTICS_VALIDATIONS
+    validations = copy.deepcopy(DIAGNOSTICS_VALIDATIONS)
     for line in str(diagnostics_output).split("\n"):
         if CHECKMARK in line:
             for validation in validations:

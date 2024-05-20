@@ -1,0 +1,59 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name":"cadence",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"order_date",
+      "type":"date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"to_date",
+      "type":"date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"category_name",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"qty_articles",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"total_amount",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"total_amount_last_year",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"avg_total_amount_last_2_years",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"discounted_total_amount",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "cadence",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "order_date",
+      "type": "date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "to_date",
+      "type": "date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "sales_order_schedule",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "delivery_country_cod",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "orders",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "total_sales",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "orders_last_cad",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "orders_last_year",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "orders_avg_last_3_1",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "orders_derived",
+      "type":"double",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

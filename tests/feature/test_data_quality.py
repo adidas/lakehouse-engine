@@ -1,4 +1,6 @@
 """Test data quality process in different types of data loads."""
+import shutil
+from os import stat
 from os.path import exists
 from typing import Any
 
@@ -16,7 +18,7 @@ from pyspark.sql.functions import (
 from lakehouse_engine.core.definitions import DQDefaults, DQFunctionSpec, DQSpec
 from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
-from lakehouse_engine.engine import load_data
+from lakehouse_engine.engine import build_data_docs, load_data
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -619,3 +621,85 @@ def _prepare_validation_df(df: DataFrame) -> DataFrame:
             ),
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        {
+            "scenario_name": "without_data_docs_local_fs",
+            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
+            f"load_with_dq_validator/no_transformers/dq",
+            "data_docs_local_fs": None,
+            "data_docs_prefix": DQDefaults.DATA_DOCS_PREFIX.value,
+        },
+        {
+            "scenario_name": "with_data_docs_local_fs",
+            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
+            f"validator",
+            "data_docs_local_fs": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
+            f"validator/data_docs",
+            "data_docs_prefix": DQDefaults.DATA_DOCS_PREFIX.value,
+        },
+    ],
+)
+def test_build_data_docs(scenario: dict, caplog: Any) -> None:
+    """Test the data quality build data docs process.
+
+    The tests executed intend to validate if the build of data docs is
+    done successfully. It is expected that data docs are built considering
+    all the history of checkpoints, even when changing store_backend s3 to
+    file_system. The build of data docs should enable all the runs/validations,
+    that are stored in the path specified, to be available in data docs
+    website, with all the history of runs/validations.
+
+    These tests enable to validate if the build of data docs is done
+    correctly when adding an extra checkpoint, having a specific
+    data_docs_local_fs or using the default value:
+    - without_data_docs_local_fs: data quality is stored in file_system
+    and for this test local_fs_root_dir is specified and data_docs_local_fs
+    and data_docs_prefix have the default value.
+    - with_data_docs_local_fs: data quality is stored in file_system
+    and for this test local_fs_root_dir and data_docs_local_fs are specified
+    and data_docs_prefix have the default value.
+
+    Args:
+        scenario: scenario to test.
+        caplog: captured log.
+    """
+    if scenario["data_docs_local_fs"]:
+        data_docs_location = (
+            f'{scenario["data_docs_local_fs"]}/{scenario["data_docs_prefix"]}index.html'
+        )
+    else:
+        data_docs_location = (
+            f'{scenario["local_fs_root_dir"]}/{scenario["data_docs_prefix"]}index.html'
+        )
+    file_stats_before = stat(data_docs_location)
+    if scenario["scenario_name"] == "without_data_docs_local_fs":
+        checkpoint_name = "20240409-143548-dq_validator-sales_source-checkpoint"
+        shutil.copytree(
+            src=f'{TEST_RESOURCES.replace("/app/", "")}/build_data_docs/'
+            f'{scenario["scenario_name"]}/{checkpoint_name}',
+            dst=f'{scenario["local_fs_root_dir"].replace("/app/", "")}/uncommitted/'
+            f"validations/dq_validator-sales_source-validator/{checkpoint_name}",
+        )
+    elif scenario["scenario_name"] == "with_data_docs_local_fs":
+        checkpoint_name = "20240410-080323-dq_success-sales_orders-checkpoint"
+        shutil.copytree(
+            src=f'{TEST_RESOURCES.replace("/app/", "")}/build_data_docs/'
+            f'{scenario["scenario_name"]}/{checkpoint_name}',
+            dst=f'{scenario["local_fs_root_dir"].replace("/app/", "")}/uncommitted/'
+            f"validations/dq_success-sales_orders-validator/{checkpoint_name}",
+        )
+
+    build_data_docs(
+        store_backend=DQDefaults.FILE_SYSTEM_STORE.value,
+        local_fs_root_dir=scenario["local_fs_root_dir"],
+        data_docs_local_fs=scenario["data_docs_local_fs"],
+        data_docs_prefix=scenario["data_docs_prefix"],
+    )
+
+    file_stats_after = stat(data_docs_location)
+    assert "The data docs were rebuilt" in caplog.text
+    assert file_stats_before.st_size < file_stats_after.st_size

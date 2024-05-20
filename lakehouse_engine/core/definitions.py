@@ -1,7 +1,8 @@
 """Definitions of standard values and structures for core components."""
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import (
@@ -401,13 +402,12 @@ class DQSpec(object):
     - bucket - the bucket name to consider for the store_backend (store DQ artefacts).
         Note: only applicable for store_backend s3.
     - data_docs_bucket - the bucket name for data docs only. When defined, it will
-        supersede bucket parameter.
+        supersede bucket parameter. Note: only applicable for store_backend s3.
     - expectations_store_prefix - prefix where to store expectations' data. Note: only
         applicable for store_backend s3.
     - validations_store_prefix - prefix where to store validations' data. Note: only
         applicable for store_backend s3.
-    - data_docs_prefix - prefix where to store data_docs' data. Note: only applicable
-        for store_backend s3.
+    - data_docs_prefix - prefix where to store data_docs' data.
     - checkpoint_store_prefix - prefix where to store checkpoints' data. Note: only
         applicable for store_backend s3.
     - data_asset_name - name of the data asset to consider when configuring the great
@@ -833,3 +833,520 @@ class SQLParser(Enum):
         OPENING_MULTIPLE_LINE_COMMENT,
         CLOSING_MULTIPLE_LINE_COMMENT,
     ]
+
+
+class GABDefaults(Enum):
+    """Defaults used on the GAB process."""
+
+    DATE_FORMAT = "%Y-%m-%d"
+    DIMENSIONS_DEFAULT_COLUMNS = ["from_date", "to_date"]
+    DEFAULT_DIMENSION_CALENDAR_TABLE = "dim_calendar"
+    DEFAULT_LOOKUP_QUERY_BUILDER_TABLE = "lkp_query_builder"
+
+
+class GABStartOfWeek(Enum):
+    """Representation of start of week values on GAB."""
+
+    SUNDAY = "S"
+    MONDAY = "M"
+
+    @classmethod
+    def get_start_of_week(cls) -> dict:
+        """Get the start of week enum as a dict.
+
+        Returns:
+            dict containing all enum entries as `{name:value}`.
+        """
+        return {
+            start_of_week.name: start_of_week.value
+            for start_of_week in list(GABStartOfWeek)
+        }
+
+    @classmethod
+    def get_values(cls) -> set[str]:
+        """Get the start of week enum values as set.
+
+        Returns:
+            set containing all possible values `{value}`.
+        """
+        return {start_of_week.value for start_of_week in list(GABStartOfWeek)}
+
+
+@dataclass
+class GABSpec(object):
+    """Gab Specification.
+
+    query_label_filter: query use-case label to execute.
+    queue_filter: queue to execute the job.
+    cadence_filter: selected cadences to build the asset.
+    target_database: target database to write.
+    curr_date: current date.
+    start_date: period start date.
+    end_date: period end date.
+    rerun_flag: rerun flag.
+    target_table: target table to write.
+    source_database: source database.
+    gab_base_path: base path to read the use cases.
+    lookup_table: gab configuration table.
+    calendar_table: gab calendar table.
+    """
+
+    query_label_filter: list[str]
+    queue_filter: list[str]
+    cadence_filter: list[str]
+    target_database: str
+    current_date: datetime
+    start_date: datetime
+    end_date: datetime
+    rerun_flag: str
+    target_table: str
+    source_database: str
+    gab_base_path: str
+    lookup_table: str
+    calendar_table: str
+
+    @classmethod
+    def create_from_acon(cls, acon: dict):  # type: ignore
+        """Create GabSpec from acon.
+
+        Args:
+            acon: gab ACON.
+        """
+        lookup_table = f"{acon['source_database']}." + (
+            acon.get(
+                "lookup_table", GABDefaults.DEFAULT_LOOKUP_QUERY_BUILDER_TABLE.value
+            )
+        )
+
+        calendar_table = f"{acon['source_database']}." + (
+            acon.get(
+                "calendar_table", GABDefaults.DEFAULT_DIMENSION_CALENDAR_TABLE.value
+            )
+        )
+
+        def format_date(date_to_format: Union[datetime, str]) -> datetime:
+            if isinstance(date_to_format, str):
+                return datetime.strptime(date_to_format, GABDefaults.DATE_FORMAT.value)
+            else:
+                return date_to_format
+
+        return cls(
+            query_label_filter=acon["query_label_filter"],
+            queue_filter=acon["queue_filter"],
+            cadence_filter=acon["cadence_filter"],
+            target_database=acon["target_database"],
+            current_date=datetime.now(),
+            start_date=format_date(acon["start_date"]),
+            end_date=format_date(acon["end_date"]),
+            rerun_flag=acon["rerun_flag"],
+            target_table=acon["target_table"],
+            source_database=acon["source_database"],
+            gab_base_path=acon["gab_base_path"],
+            lookup_table=lookup_table,
+            calendar_table=calendar_table,
+        )
+
+
+class GABCadence(Enum):
+    """Representation of the supported cadences on GAB."""
+
+    DAY = 1
+    WEEK = 2
+    MONTH = 3
+    QUARTER = 4
+    YEAR = 5
+
+    @classmethod
+    def get_ordered_cadences(cls) -> dict:
+        """Get the cadences ordered by the value.
+
+        Returns:
+            dict containing ordered cadences as `{name:value}`.
+        """
+        cadences = list(GABCadence)
+        return {
+            cadence.name: cadence.value
+            for cadence in sorted(cadences, key=lambda gab_cadence: gab_cadence.value)
+        }
+
+    @classmethod
+    def get_cadences(cls) -> set[str]:
+        """Get the cadences values as set.
+
+        Returns:
+            set containing all possible cadence values as `{value}`.
+        """
+        return {cadence.name for cadence in list(GABCadence)}
+
+    @classmethod
+    def order_cadences(cls, cadences_to_order: list[str]) -> list[str]:
+        """Order a list of cadences by value.
+
+        Returns:
+            ordered set containing the received cadences.
+        """
+        return sorted(
+            cadences_to_order,
+            key=lambda item: cls.get_ordered_cadences().get(item),  # type: ignore
+        )
+
+
+class GABKeys:
+    """Constants used to update pre-configured gab dict key."""
+
+    JOIN_SELECT = "join_select"
+    PROJECT_START = "project_start"
+    PROJECT_END = "project_end"
+
+
+class GABReplaceableKeys:
+    """Constants used to replace pre-configured gab dict values."""
+
+    CADENCE = "${cad}"
+    DATE_COLUMN = "${date_column}"
+    CONFIG_WEEK_START = "${config_week_start}"
+    RECONCILIATION_CADENCE = "${rec_cadence}"
+
+
+class GABCombinedConfiguration(Enum):
+    """GAB combined configuration.
+
+    Based on the use case configuration return the values to override in the SQL file.
+    This enum aims to exhaustively map each combination of `cadence`, `reconciliation`,
+        `week_start` and `snap_flag` return the corresponding values `join_select`,
+        `project_start` and `project_end` to replace this values in the stages SQL file.
+
+    Return corresponding configuration (join_select, project_start, project_end) for
+        each combination (cadence x recon x week_start x snap_flag).
+    """
+
+    _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE = (
+        "date(date_trunc('${cad}',${date_column}))"
+    )
+    _DEFAULT_PROJECT_START = "df_cal.cadence_start_date"
+    _DEFAULT_PROJECT_END = "df_cal.cadence_end_date"
+
+    COMBINED_CONFIGURATION = {
+        # Combination of:
+        # - cadence: `DAY`
+        # - reconciliation_window: `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`
+        # - week_start: `S`, `M`
+        # - snapshot_flag: `Y`, `N`
+        1: {
+            "cadence": GABCadence.DAY.name,
+            "recon": GABCadence.get_cadences(),
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": {"Y", "N"},
+            "join_select": "",
+            "project_start": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+            "project_end": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+        },
+        # Combination of:
+        # - cadence: `WEEK`
+        # - reconciliation_window: `DAY`
+        # - week_start: `S`, `M`
+        # - snapshot_flag: `Y`
+        2: {
+            "cadence": GABCadence.WEEK.name,
+            "recon": GABCadence.DAY.name,
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct case
+                when '${config_week_start}' = 'Monday' then weekstart_mon
+                when '${config_week_start}' = 'Sunday' then weekstart_sun
+            end as cadence_start_date,
+            calendar_date as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        # Combination of:
+        # - cadence: `WEEK`
+        # - reconciliation_window: `DAY, `MONTH`, `QUARTER`, `YEAR`
+        # - week_start: `M`
+        # - snapshot_flag: `Y`, `N`
+        3: {
+            "cadence": GABCadence.WEEK.name,
+            "recon": {
+                GABCadence.DAY.name,
+                GABCadence.MONTH.name,
+                GABCadence.QUARTER.name,
+                GABCadence.YEAR.name,
+            },
+            "week_start": "M",
+            "snap_flag": {"Y", "N"},
+            "join_select": """
+            select distinct case
+                when '${config_week_start}'  = 'Monday' then weekstart_mon
+                when '${config_week_start}' = 'Sunday' then weekstart_sun
+            end as cadence_start_date,
+            case
+                when '${config_week_start}' = 'Monday' then weekend_mon
+                when '${config_week_start}' = 'Sunday' then weekend_sun
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        4: {
+            "cadence": GABCadence.MONTH.name,
+            "recon": GABCadence.DAY.name,
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct month_start as cadence_start_date,
+            calendar_date as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        5: {
+            "cadence": GABCadence.MONTH.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.MONDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct month_start as cadence_start_date,
+            case
+                when date(
+                    date_trunc('MONTH',add_months(calendar_date, 1))
+                )-1 < weekend_mon
+                    then date(date_trunc('MONTH',add_months(calendar_date, 1)))-1
+                else weekend_mon
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        6: {
+            "cadence": GABCadence.MONTH.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.SUNDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct month_start as cadence_start_date,
+            case
+                when date(
+                    date_trunc('MONTH',add_months(calendar_date, 1))
+                )-1 < weekend_sun
+                    then date(date_trunc('MONTH',add_months(calendar_date, 1)))-1
+                else weekend_sun
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        7: {
+            "cadence": GABCadence.MONTH.name,
+            "recon": GABCadence.get_cadences(),
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": {"Y", "N"},
+            "join_select": "",
+            "project_start": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+            "project_end": "date(date_trunc('MONTH',add_months(${date_column}, 1)))-1",
+        },
+        8: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.DAY.name,
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct quarter_start as cadence_start_date,
+            calendar_date as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        9: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.MONDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct quarter_start as cadence_start_date,
+            case
+                when weekend_mon > date(
+                    date_trunc('QUARTER',add_months(calendar_date, 3))
+                )-1
+                    then date(date_trunc('QUARTER',add_months(calendar_date, 3)))-1
+                else weekend_mon
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        10: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.SUNDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct quarter_start as cadence_start_date,
+            case
+                when weekend_sun > date(
+                    date_trunc('QUARTER',add_months(calendar_date, 3))
+                )-1
+                    then date(date_trunc('QUARTER',add_months(calendar_date, 3)))-1
+                else weekend_sun
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        11: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.MONTH.name,
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct quarter_start as cadence_start_date,
+            month_end as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        12: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.YEAR.name,
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "N",
+            "join_select": "",
+            "project_start": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+            "project_end": """
+            date(
+                date_trunc(
+                    '${cad}',add_months(date(date_trunc('${cad}',${date_column})), 3)
+                )
+            )-1
+        """,
+        },
+        13: {
+            "cadence": GABCadence.QUARTER.name,
+            "recon": GABCadence.get_cadences(),
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "N",
+            "join_select": "",
+            "project_start": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+            "project_end": """
+            date(
+                date_trunc(
+                    '${cad}',add_months( date(date_trunc('${cad}',${date_column})), 3)
+                )
+            )-1
+        """,
+        },
+        14: {
+            "cadence": GABCadence.YEAR.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.MONDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct year_start as cadence_start_date,
+            case
+                when weekend_mon > date(
+                    date_trunc('YEAR',add_months(calendar_date, 12))
+                )-1
+                    then date(date_trunc('YEAR',add_months(calendar_date, 12)))-1
+                else weekend_mon
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        15: {
+            "cadence": GABCadence.YEAR.name,
+            "recon": GABCadence.WEEK.name,
+            "week_start": GABStartOfWeek.SUNDAY.value,
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct year_start as cadence_start_date,
+            case
+                when weekend_sun > date(
+                    date_trunc('YEAR',add_months(calendar_date, 12))
+                )-1
+                    then date(date_trunc('YEAR',add_months(calendar_date, 12)))-1
+                else weekend_sun
+            end as cadence_end_date""",
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        16: {
+            "cadence": GABCadence.YEAR.name,
+            "recon": GABCadence.get_cadences(),
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "N",
+            "inverse_flag": "Y",
+            "join_select": "",
+            "project_start": _PROJECT_DATE_COLUMN_TRUNCATED_BY_CADENCE,
+            "project_end": """
+            date(
+                date_trunc(
+                    '${cad}',add_months(date(date_trunc('${cad}',${date_column})), 12)
+                )
+            )-1
+        """,
+        },
+        17: {
+            "cadence": GABCadence.YEAR.name,
+            "recon": {
+                GABCadence.DAY.name,
+                GABCadence.MONTH.name,
+                GABCadence.QUARTER.name,
+            },
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": "Y",
+            "join_select": """
+            select distinct year_start as cadence_start_date,
+            case
+                when '${rec_cadence}' = 'DAY' then calendar_date
+                when '${rec_cadence}' = 'MONTH' then month_end
+                when '${rec_cadence}' = 'QUARTER' then quarter_end
+            end as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+        18: {
+            "cadence": GABCadence.get_cadences(),
+            "recon": GABCadence.get_cadences(),
+            "week_start": GABStartOfWeek.get_values(),
+            "snap_flag": {"Y", "N"},
+            "join_select": """
+            select distinct
+            case
+                when '${cad}' = 'WEEK' and '${config_week_start}' = 'Monday'
+                    then weekstart_mon
+                when  '${cad}' = 'WEEK' and '${config_week_start}' = 'Sunday'
+                    then weekstart_sun
+                else
+                    date(date_trunc('${cad}',calendar_date))
+            end as cadence_start_date,
+            case
+                when '${cad}' = 'WEEK' and '${config_week_start}' = 'Monday'
+                    then weekend_mon
+                when  '${cad}' = 'WEEK' and '${config_week_start}' = 'Sunday'
+                    then weekend_sun
+                when '${cad}' = 'DAY'
+                    then date(date_trunc('${cad}',calendar_date))
+                when '${cad}' = 'MONTH'
+                    then date(
+                        date_trunc(
+                            'MONTH',
+                            add_months(date(date_trunc('${cad}',calendar_date)), 1)
+                        )
+                    )-1
+                when '${cad}' = 'QUARTER'
+                    then date(
+                        date_trunc(
+                            'QUARTER',
+                            add_months(date(date_trunc('${cad}',calendar_date)) , 3)
+                        )
+                    )-1
+                when '${cad}' = 'YEAR'
+                    then date(
+                        date_trunc(
+                            'YEAR',
+                            add_months(date(date_trunc('${cad}',calendar_date)), 12)
+                        )
+                    )-1
+            end as cadence_end_date
+        """,
+            "project_start": _DEFAULT_PROJECT_START,
+            "project_end": _DEFAULT_PROJECT_END,
+        },
+    }

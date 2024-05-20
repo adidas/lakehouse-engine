@@ -55,10 +55,7 @@ class MulticolumnCustomMetric(MulticolumnMapMetricProvider):
 
 
 class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
-    """MultiColumn Expectation.
-
-    Expect that the column 'a' is equal to 'b' when this is
-    not empty; otherwise 'a' must be equal to 'c'.
+    """Expect that the column 'a' is equal to 'b' when this is not empty; otherwise 'a' must be equal to 'c'.
 
     Args:
         column_list: The column names to evaluate.
@@ -77,7 +74,7 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
 
     Returns:
         An ExpectationSuiteValidationResult.
-    """
+    """  # noqa: E501
 
     examples = [
         {

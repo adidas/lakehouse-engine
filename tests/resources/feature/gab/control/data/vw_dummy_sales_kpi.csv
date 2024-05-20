@@ -1,0 +1,5 @@
+cadence|order_date|to_date|category_name|qty_articles|total_amount|total_amount_last_year|avg_total_amount_last_2_years|discounted_total_amount
+YEAR|2016-01-01|2016-12-31|category_a|3|7000|0|0|3920.0000000000005
+YEAR|2017-01-01|2017-12-31|category_a|10|15000|7000|7000|8400
+YEAR|2018-01-01|2018-12-31|category_a|4|36|15000|11000|20.160000000000004
+YEAR|2017-01-01|2017-12-31|category_b|5|11000|0|0|6160.000000000001

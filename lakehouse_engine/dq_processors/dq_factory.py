@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union
 from great_expectations.checkpoint.types.checkpoint_result import CheckpointResult
 from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.data_context import EphemeralDataContext
+from great_expectations.data_context.data_context.context_factory import get_context
 from great_expectations.data_context.types.base import (
     AnonymizedUsageStatisticsConfig,
     DataContextConfig,
     FilesystemStoreBackendDefaults,
     S3StoreBackendDefaults,
 )
-from great_expectations.util import get_context
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
     array,
@@ -134,6 +134,71 @@ class DQFactory(object):
             )
 
         return data
+
+    @classmethod
+    def build_data_docs(
+        cls,
+        store_backend: str = DQDefaults.STORE_BACKEND.value,
+        local_fs_root_dir: str = None,
+        data_docs_local_fs: str = None,
+        data_docs_prefix: str = DQDefaults.DATA_DOCS_PREFIX.value,
+        bucket: str = None,
+        data_docs_bucket: str = None,
+        expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value,
+        validations_store_prefix: str = DQDefaults.VALIDATIONS_STORE_PREFIX.value,
+        checkpoint_store_prefix: str = DQDefaults.CHECKPOINT_STORE_PREFIX.value,
+    ) -> None:
+        """Build Data Docs for the project.
+
+        This function does a full build of data docs based on all the great expectations
+        checkpoints in the specified location, getting all history of run/validations
+        executed and results.
+
+        Args:
+            store_backend: which store_backend to use (e.g. s3 or file_system).
+            local_fs_root_dir: path of the root directory. Note: only applicable
+                for store_backend file_system
+            data_docs_local_fs: path of the root directory. Note: only applicable
+                for store_backend file_system.
+            data_docs_prefix: prefix where to store data_docs' data.
+            bucket: the bucket name to consider for the store_backend
+                (store DQ artefacts). Note: only applicable for store_backend s3.
+            data_docs_bucket: the bucket name for data docs only. When defined,
+                it will supersede bucket parameter.
+                Note: only applicable for store_backend s3.
+            expectations_store_prefix: prefix where to store expectations' data.
+                Note: only applicable for store_backend s3.
+            validations_store_prefix: prefix where to store validations' data.
+                Note: only applicable for store_backend s3.
+            checkpoint_store_prefix: prefix where to store checkpoints' data.
+                Note: only applicable for store_backend s3.
+        """
+        if store_backend == DQDefaults.STORE_BACKEND.value:
+            dq_spec = DQSpec(
+                spec_id="dq_validator",
+                input_id="dq",
+                dq_type=DQType.VALIDATOR.value,
+                store_backend=DQDefaults.STORE_BACKEND.value,
+                data_docs_prefix=data_docs_prefix,
+                bucket=bucket,
+                data_docs_bucket=data_docs_bucket,
+                expectations_store_prefix=expectations_store_prefix,
+                validations_store_prefix=validations_store_prefix,
+                checkpoint_store_prefix=checkpoint_store_prefix,
+            )
+        elif store_backend == DQDefaults.FILE_SYSTEM_STORE.value:
+            dq_spec = DQSpec(
+                spec_id="dq_validator",
+                input_id="dq",
+                dq_type=DQType.VALIDATOR.value,
+                store_backend=DQDefaults.FILE_SYSTEM_STORE.value,
+                local_fs_root_dir=local_fs_root_dir,
+                data_docs_local_fs=data_docs_local_fs,
+                data_docs_prefix=data_docs_prefix,
+            )
+        context = get_context(project_config=cls._get_data_context_config(dq_spec))
+        cls._LOGGER.info("The data docs were rebuilt")
+        context.build_data_docs()
 
     @classmethod
     def _check_critical_functions_tags(cls, failed_expectations: List[Any]) -> list:

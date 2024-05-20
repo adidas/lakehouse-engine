@@ -1,0 +1,13 @@
+{
+  "run_start_time": "timestamp",
+  "run_end_time": "timestamp",
+  "input_start_date": "timestamp",
+  "input_end_date": "timestamp",
+  "query_id": "string",
+  "query_label": "string",
+  "cadence": "string",
+  "stage_name": "string",
+  "stage_query": "string",
+  "status": "string",
+  "error_code": "string"
+}
