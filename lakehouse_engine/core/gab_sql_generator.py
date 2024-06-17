@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, lit
+from pyspark.sql.functions import col, lit, struct, to_json
 
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.gab_utils import GABUtils
@@ -475,8 +475,10 @@ class GABDeleteGenerator(GABSQLGenerator):
             col("query_id") == lit(self.query_id)
         )
 
-        df_map = df_filtered.select(col("mappings")).toJSON()
-        view_df = df_map.collect()[0]
+        df_map = df_filtered.select(col("mappings"))
+        view_df = df_map.select(
+            to_json(struct([df_map[x] for x in df_map.columns]))
+        ).collect()[0][0]
         line = json.loads(view_df)
 
         for line_v in line.values():

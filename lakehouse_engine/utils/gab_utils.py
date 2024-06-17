@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 import pendulum
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, lit
+from pyspark.sql.functions import col, lit, struct, to_json
 
 from lakehouse_engine.core.definitions import GABCadence, GABDefaults
 from lakehouse_engine.core.exec_env import ExecEnv
@@ -106,13 +106,15 @@ class GABUtils(object):
             query_id: gab configuration table use case identifier.
             query_column: column to get as json.
         """
-        column_df = (
-            lookup_query_builder.filter(col("query_id") == lit(query_id))
-            .select(col(query_column))
-            .toJSON()
-            .collect()[0]
-        )
-        json_column = json.loads(column_df)
+        column_df = lookup_query_builder.filter(
+            col("query_id") == lit(query_id)
+        ).select(col(query_column))
+
+        column_df_json = column_df.select(
+            to_json(struct([column_df[x] for x in column_df.columns]))
+        ).collect()[0][0]
+
+        json_column = json.loads(column_df_json)
 
         for mapping in json_column.values():
             column_as_json = ast.literal_eval(mapping)
