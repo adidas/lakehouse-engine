@@ -1,4 +1,5 @@
 """Module for abstract representation of a file manager system."""
+
 from abc import ABC, abstractmethod
 from typing import Any
 

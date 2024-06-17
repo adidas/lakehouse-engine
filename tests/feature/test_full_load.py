@@ -1,4 +1,5 @@
 """Test full loads."""
+
 from typing import List
 
 import pytest

@@ -1,4 +1,5 @@
 """Test file manager for s3."""
+
 import logging
 from typing import Any
 

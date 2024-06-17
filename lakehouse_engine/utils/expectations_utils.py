@@ -1,4 +1,5 @@
 """Utilities to be used by custom expectations."""
+
 from typing import Dict
 
 from great_expectations.core import ExpectationConfiguration

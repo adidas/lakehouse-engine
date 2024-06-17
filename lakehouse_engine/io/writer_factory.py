@@ -1,4 +1,5 @@
 """Module for writer factory."""
+
 from abc import ABC
 from typing import OrderedDict
 

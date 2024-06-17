@@ -1,4 +1,5 @@
 """Module to define Data Validator class."""
+
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame
 from pyspark.sql.utils import StreamingQueryException

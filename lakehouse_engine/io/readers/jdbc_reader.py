@@ -1,4 +1,5 @@
 """Module to define behaviour to read from JDBC sources."""
+
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import InputFormat, InputSpec

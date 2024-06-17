@@ -1,4 +1,5 @@
 """Module for reader factory."""
+
 from abc import ABC
 
 from pyspark.sql import DataFrame
@@ -11,7 +12,6 @@ from lakehouse_engine.io.readers.kafka_reader import KafkaReader
 from lakehouse_engine.io.readers.query_reader import QueryReader
 from lakehouse_engine.io.readers.sap_b4_reader import SAPB4Reader
 from lakehouse_engine.io.readers.sap_bw_reader import SAPBWReader
-from lakehouse_engine.io.readers.sftp_reader import SFTPReader
 from lakehouse_engine.io.readers.table_reader import TableReader
 
 
@@ -45,6 +45,8 @@ class ReaderFactory(ABC):  # noqa: B024
         elif spec.data_format == InputFormat.DATAFRAME.value:
             return DataFrameReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SFTP.value:
+            from lakehouse_engine.io.readers.sftp_reader import SFTPReader
+
             return SFTPReader(input_spec=spec).read()
         else:
             raise NotImplementedError(

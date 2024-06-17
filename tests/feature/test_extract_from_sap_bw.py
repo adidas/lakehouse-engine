@@ -1,4 +1,5 @@
 """Test extractions from SAP BW."""
+
 import re
 from datetime import datetime, timezone
 
@@ -327,9 +328,11 @@ def _execute_load(
     # if it is an init, we need to provide an extraction_timestamp, otherwise the
     # current time would be used and data would be filtered accordingly.
     acon = _get_test_acon(
-        extraction_timestamp="20211004151010"
-        if extraction_type == "init"
-        else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S"),
+        extraction_timestamp=(
+            "20211004151010"
+            if extraction_type == "init"
+            else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        ),
         extraction_type=extraction_type,
         write_type=write_type,
         scenario=scenario,
@@ -376,9 +379,11 @@ def _get_test_acon(
                     "url": f"jdbc:sqlite:{TEST_LAKEHOUSE_IN}/"
                     f"{scenario['scenario_name']}/{extra_params['test_name']}/tests.db",
                     "dbtable": DB_TABLE,
-                    "changelog_table": extra_params["changelog_table"]
-                    if "changelog_table" in extra_params.keys()
-                    else None,
+                    "changelog_table": (
+                        extra_params["changelog_table"]
+                        if "changelog_table" in extra_params.keys()
+                        else None
+                    ),
                     "customSchema": "actrequest_timestamp DECIMAL(15,0), "
                     "datapakid STRING, request STRING, "
                     "partno INTEGER, record INTEGER, "
@@ -431,9 +436,9 @@ def _get_test_acon(
             }
         ],
         "exec_env": {
-            "spark.databricks.delta.schema.autoMerge.enabled": True
-            if scenario["extra_cols_act_request"]
-            else False
+            "spark.databricks.delta.schema.autoMerge.enabled": (
+                True if scenario["extra_cols_act_request"] else False
+            )
         },
     }
 

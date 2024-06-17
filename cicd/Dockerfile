@@ -32,14 +32,13 @@ RUN wget "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.39.zip" -O "a
 RUN groupadd -g ${GROUP_ID} appuser && \
     useradd -rm -l -u ${USER_ID} -d /home/appuser -s /bin/bash -g appuser appuser
 
-COPY cicd/requirements_cicd.lock /tmp/requirements.txt
+COPY cicd/requirements_full.lock /tmp/requirements.txt
 
 USER appuser
 
-# install python and configure it for the appuser
-RUN python -m pip install --upgrade pip && \
-    python -m pip install --user -r /tmp/requirements.txt
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PATH="/home/appuser/.local/bin:$PATH"
+RUN python -m pip install --upgrade pip==24.0 --user
+RUN python -m pip install --user -r /tmp/requirements.txt
 
 RUN mkdir /home/appuser/.ssh/ && touch /home/appuser/.ssh/known_hosts
 

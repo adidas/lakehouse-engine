@@ -1,4 +1,5 @@
 """Module containing the definition of a data quality validator."""
+
 from typing import Any, List
 
 from great_expectations.core.batch import RuntimeBatchRequest
@@ -219,11 +220,13 @@ class Validator(object):
             )
             .withColumn(
                 "dq_validations",
-                when(
-                    col("dq_validations").isNotNull(), col("dq_validations")
-                ).otherwise(col("tmp_dq_validations"))
-                if "dq_validations" in source_df.columns
-                else col("tmp_dq_validations"),
+                (
+                    when(
+                        col("dq_validations").isNotNull(), col("dq_validations")
+                    ).otherwise(col("tmp_dq_validations"))
+                    if "dq_validations" in source_df.columns
+                    else col("tmp_dq_validations")
+                ),
             )
             .drop("tmp_dq_validations")
         )

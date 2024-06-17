@@ -1,4 +1,5 @@
 """Module to parse sql files."""
+
 from typing import Union
 
 from lakehouse_engine.core.definitions import SQLParser

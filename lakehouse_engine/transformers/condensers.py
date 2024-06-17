@@ -1,4 +1,5 @@
 """Condensers module."""
+
 from typing import Callable, List, Optional
 
 from pyspark.sql import DataFrame, Window

@@ -1,4 +1,0 @@
-{
-  "function": "show_tbl_properties",
-  "table_or_view": "test_db.DummyTableBronze"
-}

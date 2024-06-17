@@ -1,4 +1,5 @@
 """Expectation to check if aggregated column satisfy the condition."""
+
 from typing import Any, Dict, Optional, Union
 
 from great_expectations.core.expectation_configuration import ExpectationConfiguration

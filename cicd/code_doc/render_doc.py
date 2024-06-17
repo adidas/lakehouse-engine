@@ -1,4 +1,5 @@
 """Module for customizing pdoc documentation."""
+
 import json
 import os
 import shutil

@@ -1,4 +1,5 @@
 """Module to define behaviour to read from SAP B4 sources."""
+
 from logging import Logger
 from typing import Tuple
 
@@ -50,9 +51,11 @@ class SAPB4Reader(Reader):
             ),
             changelog_table=self._input_spec.options.get(
                 "changelog_table",
-                self._input_spec.options["dbtable"]
-                if self._input_spec.options["adso_type"] == ADSOTypes.AQ.value
-                else self._input_spec.options["changelog_table"],
+                (
+                    self._input_spec.options["dbtable"]
+                    if self._input_spec.options["adso_type"] == ADSOTypes.AQ.value
+                    else self._input_spec.options["changelog_table"]
+                ),
             ),
             data_target=SAPB4ExtractionUtils.get_data_target(self._input_spec.options),
             act_req_join_condition=self._input_spec.options.get(
@@ -124,9 +127,11 @@ class SAPB4Reader(Reader):
             calc_upper_bound_schema=self._input_spec.calc_upper_bound_schema,
             include_changelog_tech_cols=self._input_spec.options.get(
                 "include_changelog_tech_cols",
-                False
-                if self._input_spec.options["adso_type"] == ADSOTypes.AQ.value
-                else True,
+                (
+                    False
+                    if self._input_spec.options["adso_type"] == ADSOTypes.AQ.value
+                    else True
+                ),
             ),
         )
         return SAPB4ExtractionUtils(jdbc_extraction)
@@ -156,9 +161,9 @@ class SAPB4Reader(Reader):
             )
         else:
             if self._input_spec.calculate_upper_bound:
-                options_args[
-                    "upperBound"
-                ] = self.jdbc_utils.get_spark_jdbc_optimal_upper_bound()
+                options_args["upperBound"] = (
+                    self.jdbc_utils.get_spark_jdbc_optimal_upper_bound()
+                )
 
             options_args.update(
                 self.jdbc_utils.get_additional_spark_options(

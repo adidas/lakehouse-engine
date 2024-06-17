@@ -1,4 +1,5 @@
 """Defines abstract reader behaviour."""
+
 from abc import ABC, abstractmethod
 
 from pyspark.sql import DataFrame

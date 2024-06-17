@@ -1,4 +1,5 @@
 """Test table manager."""
+
 import logging
 from typing import Any
 

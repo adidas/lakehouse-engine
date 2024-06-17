@@ -1,12 +1,76 @@
 [build-system]
 requires = [
-    "setuptools>=62.4.0",
-    "wheel>=0.37.1"
+    "setuptools>=69.2.0"
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "lakehouse-engine"
+requires-python = ">=3.10"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+version = "1.21.0"
+authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
+description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
+keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
+    "lakehouse", "delta-lake", "configuration-driver"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+    "License :: OSI Approved :: Apache Software License"
+]
+dynamic = ["dependencies", "optional-dependencies"]
+
+[project.urls]
+Repository = "https://github.com/adidas/lakehouse-engine"
+Documentation = "https://adidas.github.io/lakehouse-engine-docs/index.html"
+Issues = "https://github.com/adidas/lakehouse-engine/issues"
+Releases = "https://github.com/adidas/lakehouse-engine/releases"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["cicd/requirements.lock"] }
+optional-dependencies.os = { file = ["cicd/requirements_os.lock"] }
+optional-dependencies.azure = { file = ["cicd/requirements_azure.lock"] }
+optional-dependencies.dq = { file = ["cicd/requirements_dq.lock"] }
+optional-dependencies.sftp = { file = ["cicd/requirements_sftp.lock"] }
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "lakehouse_engine_usage*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+lakehouse_engine = ["configs/engine.yaml"]
+
 [tool.isort]
 profile = "black"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+strict_optional = false
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "delta.*",
+    "pyspark.*",
+    "py4j.*",
+    "great_expectations.*",
+    "pandas.*",
+    "IPython.*",
+    "nest_asyncio.*",
+    "msgraph.*",
+    "pkg_resources.*",
+    "yaml.*"
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 filterwarnings = [
@@ -23,12 +87,6 @@ filterwarnings = [
     "ignore: 'contextfilter' is renamed to 'pass_context', the old name will be removed in Jinja 3.1:DeprecationWarning", # 4 warnings
     "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:DeprecationWarning",
     "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:FutureWarning",
-    # Warning coming from ipywidgets (transitive dependency from GX), occuring in the assistant tests
-    "ignore: `ipykernel.pylab.backend_inline` is deprecated, directly use `matplotlib_inline.backend_inline`:DeprecationWarning",
-    # Warning coming from pandas used in Assistant and SFTP test. No direct usage of iteritems on our side.
-    "ignore: iteritems is deprecated and will be removed in a future version: FutureWarning",
-    # Warning on scipy (transitive dependency from GX) when running test_dq_validator.py::test_dq_assistant
-    "ignore: The input array could not be properly checked for nan values. nan values will be ignored.:RuntimeWarning",
     # Warning about host keys on local ftp tests with paramiko
     "ignore: Unknown ssh-rsa host key for : UserWarning",
     # expect_multicolumn_sum_to_equal from GX is generating this warning

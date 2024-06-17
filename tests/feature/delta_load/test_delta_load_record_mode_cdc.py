@@ -1,4 +1,5 @@
 """Test delta loads with record mode based cdc."""
+
 from typing import List
 
 import pytest

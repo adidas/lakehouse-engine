@@ -1,4 +1,5 @@
 """Utilities module for JDBC extraction processes."""
+
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timezone

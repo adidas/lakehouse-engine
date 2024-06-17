@@ -1,4 +1,0 @@
-{
-  "function": "execute_sql",
-  "sql": "ALTER TABLE test_db.DummyTableBronze ALTER COLUMN col1 COMMENT 'comment for col1'"
-}

@@ -1,19 +1,10 @@
 """Module with email notifier."""
+
 import asyncio
 import smtplib
 from copy import copy
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-from azure.identity.aio import ClientSecretCredential
-from msgraph import GraphServiceClient
-from msgraph.generated.models.email_address import EmailAddress
-from msgraph.generated.models.item_body import ItemBody
-from msgraph.generated.models.message import Message
-from msgraph.generated.models.recipient import Recipient
-from msgraph.generated.users.item.send_mail.send_mail_post_request_body import (
-    SendMailPostRequestBody,
-)
 
 from lakehouse_engine.core.definitions import TerminatorSpec
 from lakehouse_engine.core.exec_env import ExecEnv
@@ -96,6 +87,16 @@ class EmailNotifier(Notifier):
 
     def _authenticate_and_send_office365(self) -> None:
         """Authenticates and sends an email notification using Graph API."""
+        from azure.identity.aio import ClientSecretCredential
+        from msgraph import GraphServiceClient
+        from msgraph.generated.models.email_address import EmailAddress
+        from msgraph.generated.models.item_body import ItemBody
+        from msgraph.generated.models.message import Message
+        from msgraph.generated.models.recipient import Recipient
+        from msgraph.generated.users.item.send_mail.send_mail_post_request_body import (
+            SendMailPostRequestBody,
+        )
+
         self._logger.info("Attempting authentication using Graph API.")
 
         credential = ClientSecretCredential(

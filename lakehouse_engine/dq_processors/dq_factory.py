@@ -1,4 +1,5 @@
 """Module containing the class definition of the Data Quality Factory."""
+
 import importlib.util
 import json
 from datetime import datetime, timezone
@@ -42,7 +43,6 @@ from lakehouse_engine.core.definitions import (
 )
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.table_manager import TableManager
-from lakehouse_engine.dq_processors.assistant import Assistant
 from lakehouse_engine.dq_processors.exceptions import (
     DQCheckpointsResultsException,
     DQValidationsFailedException,
@@ -93,8 +93,6 @@ class DQFactory(object):
 
         batch_request = cls._get_batch_request(dq_spec, data)
 
-        # We only run the checkpoint for the Validator, as we don't want to allow
-        # running this for all the expectations suggested by the Assistant.
         if dq_spec.dq_type == DQType.VALIDATOR.value:
             Validator.get_dq_validator(
                 context,
@@ -119,15 +117,6 @@ class DQFactory(object):
                 and dq_spec.fail_on_error is not True
             ):
                 data = Validator.tag_source_with_dq(source_pk, data, results_df)
-        elif dq_spec.dq_type == DQType.ASSISTANT.value:
-            Assistant.run_data_assistant(
-                context,
-                batch_request,
-                expectation_suite_name,
-                dq_spec.assistant_options or {},
-                data,
-                f"{cls._TIMESTAMP}_{dq_spec.spec_id}_{dq_spec.input_id}_profile",
-            )
         else:
             raise TypeError(
                 f"Type of Data Quality '{dq_spec.dq_type}' is not supported."
@@ -355,9 +344,11 @@ class DQFactory(object):
         return RuntimeBatchRequest(
             datasource_name=f"{dq_spec.spec_id}-{dq_spec.input_id}-datasource",
             data_connector_name=f"{dq_spec.spec_id}-{dq_spec.input_id}-data_connector",
-            data_asset_name=dq_spec.data_asset_name
-            if dq_spec.data_asset_name
-            else f"{dq_spec.spec_id}-{dq_spec.input_id}",
+            data_asset_name=(
+                dq_spec.data_asset_name
+                if dq_spec.data_asset_name
+                else f"{dq_spec.spec_id}-{dq_spec.input_id}"
+            ),
             batch_identifiers={
                 "spec_id": dq_spec.spec_id,
                 "input_id": dq_spec.input_id,
@@ -397,9 +388,11 @@ class DQFactory(object):
                 checkpoint_store_prefix=dq_spec.checkpoint_store_prefix,
                 expectations_store_prefix=dq_spec.expectations_store_prefix,
                 data_docs_prefix=dq_spec.data_docs_prefix,
-                data_docs_bucket_name=dq_spec.data_docs_bucket
-                if dq_spec.data_docs_bucket
-                else dq_spec.bucket,
+                data_docs_bucket_name=(
+                    dq_spec.data_docs_bucket
+                    if dq_spec.data_docs_bucket
+                    else dq_spec.bucket
+                ),
             )
             data_docs_site = cls._get_data_docs_sites(
                 "s3_site", store_backend.data_docs_sites, dq_spec
@@ -462,11 +455,11 @@ class DQFactory(object):
                     "module_name": DQDefaults.DATA_CONNECTORS_MODULE_NAME.value,
                     "class_name": DQDefaults.DATA_CONNECTORS_CLASS_NAME.value,
                     "assets": {
-                        dq_spec.data_asset_name
-                        if dq_spec.data_asset_name
-                        else f"{dq_spec.spec_id}-{dq_spec.input_id}": {
-                            "batch_identifiers": DQDefaults.DQ_BATCH_IDENTIFIERS.value
-                        }
+                        (
+                            dq_spec.data_asset_name
+                            if dq_spec.data_asset_name
+                            else f"{dq_spec.spec_id}-{dq_spec.input_id}"
+                        ): {"batch_identifiers": DQDefaults.DQ_BATCH_IDENTIFIERS.value}
                     },
                 }
             },
@@ -597,9 +590,9 @@ class DQFactory(object):
                     .lower()
                     .startswith(DQDefaults.VALIDATION_COLUMN_IDENTIFIER.value)
                 ):
-                    results_dict[
-                        "validation_result_identifier"
-                    ] = checkpoint_result_identifier
+                    results_dict["validation_result_identifier"] = (
+                        checkpoint_result_identifier
+                    )
                     results_dict["run_results"] = value[checkpoint_result_identifier]
                 else:
                     raise DQCheckpointsResultsException(
@@ -666,14 +659,18 @@ class DQFactory(object):
                     input_id="dq_result",
                     db_table=dq_spec.result_sink_db_table,
                     location=dq_spec.result_sink_location,
-                    partitions=dq_spec.result_sink_partitions
-                    if dq_spec.result_sink_partitions
-                    else [],
+                    partitions=(
+                        dq_spec.result_sink_partitions
+                        if dq_spec.result_sink_partitions
+                        else []
+                    ),
                     write_type=WriteType.APPEND.value,
                     data_format=dq_spec.result_sink_format,
-                    options=options
-                    if dq_spec.result_sink_options is None
-                    else {**dq_spec.result_sink_options, **options},
+                    options=(
+                        options
+                        if dq_spec.result_sink_options is None
+                        else {**dq_spec.result_sink_options, **options}
+                    ),
                 ),
                 df=df,
                 data=data,

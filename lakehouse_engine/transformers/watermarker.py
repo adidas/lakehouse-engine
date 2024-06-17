@@ -1,4 +1,5 @@
 """Watermarker module."""
+
 from typing import Callable
 
 from pyspark.sql import DataFrame

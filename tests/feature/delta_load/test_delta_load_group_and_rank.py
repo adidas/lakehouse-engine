@@ -1,4 +1,5 @@
 """Test delta loads with group and rank."""
+
 from typing import List
 
 import pytest

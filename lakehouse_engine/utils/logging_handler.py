@@ -1,4 +1,5 @@
 """Module to configure project logging."""
+
 import logging
 import re
 

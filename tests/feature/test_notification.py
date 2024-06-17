@@ -1,4 +1,5 @@
 """Mail notifications tests."""
+
 import os
 import re
 import subprocess  # nosec B404

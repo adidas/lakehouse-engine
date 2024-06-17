@@ -1,0 +1,6 @@
+# Dependencies necessary for azure related features to work (ex: mail notifications using o365).
+#
+# ! Do not forget running `make build-lock-files` after updating dependency list !
+#
+msgraph-sdk==1.4.0
+nest_asyncio==1.5.6

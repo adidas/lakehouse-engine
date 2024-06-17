@@ -1,4 +1,5 @@
 """Defines change data feed processor behaviour."""
+
 from datetime import datetime, timedelta
 from typing import OrderedDict
 

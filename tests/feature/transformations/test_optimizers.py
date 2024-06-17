@@ -1,4 +1,5 @@
 """Test Optimizer transformers."""
+
 import pytest
 from pyspark.sql.dataframe import DataFrame
 

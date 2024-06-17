@@ -1,4 +1,5 @@
 """Test extractions from SAP B4."""
+
 from datetime import datetime, timezone
 
 import pytest
@@ -266,9 +267,11 @@ def _execute_load(
     # if it is an init, we need to provide an extraction_timestamp, otherwise the
     # current time would be used and data would be filtered accordingly.
     acon = _get_test_acon(
-        extraction_timestamp="20210713151010"
-        if extraction_type == "init"
-        else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S"),
+        extraction_timestamp=(
+            "20210713151010"
+            if extraction_type == "init"
+            else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        ),
         extraction_type=extraction_type,
         write_type=write_type,
         scenario=scenario,
@@ -349,9 +352,9 @@ def _get_test_acon(
             }
         ],
         "exec_env": {
-            "spark.databricks.delta.schema.autoMerge.enabled": True
-            if scenario["extra_cols_req_status_tbl"]
-            else False
+            "spark.databricks.delta.schema.autoMerge.enabled": (
+                True if scenario["extra_cols_req_status_tbl"] else False
+            )
         },
     }
 

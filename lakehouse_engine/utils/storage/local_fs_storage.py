@@ -1,4 +1,5 @@
 """Module to represent a local file storage system."""
+
 import os
 from typing import TextIO
 from urllib.parse import ParseResult

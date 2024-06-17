@@ -1,4 +1,5 @@
 """Unit tests for notification creation functions."""
+
 from typing import Any
 
 import pytest

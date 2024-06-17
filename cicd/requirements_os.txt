@@ -1,0 +1,7 @@
+# Special requirements from which the project depends on, but for which some use cases might use environments with
+# these dependencies pre-installed from the vendors. Thus, they are delivered as optional OS dependencies.
+#
+# ! Do not forget running `make build-lock-files` after updating dependency list !
+#
+pyspark==3.4.1
+delta-spark==2.4.0

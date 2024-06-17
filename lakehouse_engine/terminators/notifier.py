@@ -1,4 +1,5 @@
 """Module with notification terminator."""
+
 from abc import ABC, abstractmethod
 
 from jinja2 import Template
@@ -93,7 +94,9 @@ class Notifier(ABC):
         return field_template.render(args)
 
     @staticmethod
-    def check_if_notification_is_failure_notification(spec: TerminatorSpec) -> bool:
+    def check_if_notification_is_failure_notification(
+        spec: TerminatorSpec,
+    ) -> bool:
         """Check if given notification is a failure notification.
 
         Args:
@@ -103,6 +106,7 @@ class Notifier(ABC):
             A boolean telling if the notification is a failure notification
         """
         notification = spec.args
+        is_notification_failure_notification: bool = False
 
         if "template" in notification.keys():
             template: dict = NotificationsTemplates.EMAIL_NOTIFICATIONS_TEMPLATES.get(
@@ -110,8 +114,12 @@ class Notifier(ABC):
             )
 
             if template:
-                return notification.get("on_failure", True)
+                is_notification_failure_notification = notification.get(
+                    "on_failure", True
+                )
             else:
                 raise ValueError(f"""Template {notification["template"]} not found.""")
         else:
-            return notification.get("on_failure", True)
+            is_notification_failure_notification = notification.get("on_failure", True)
+
+        return is_notification_failure_notification

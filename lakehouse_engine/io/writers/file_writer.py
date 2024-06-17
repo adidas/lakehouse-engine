@@ -1,4 +1,5 @@
 """Module to define behaviour to write to files."""
+
 from typing import Callable, OrderedDict
 
 from pyspark.sql import DataFrame

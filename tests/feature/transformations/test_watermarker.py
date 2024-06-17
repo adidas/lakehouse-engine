@@ -1,4 +1,5 @@
 """Test Watermarker Transformers."""
+
 import pytest
 
 from lakehouse_engine.core.definitions import OutputFormat

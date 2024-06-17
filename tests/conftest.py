@@ -1,4 +1,5 @@
 """Module to configure the test environment."""
+
 from typing import Any, Generator
 
 import pytest

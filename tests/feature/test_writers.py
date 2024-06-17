@@ -6,6 +6,7 @@ test like delta_load that uses delta_merge_writer.
 Kafka writer weren't added also, because we cannot
 simulate kafka on local tests. All other writers were covered.
 """
+
 import logging
 import os
 import random

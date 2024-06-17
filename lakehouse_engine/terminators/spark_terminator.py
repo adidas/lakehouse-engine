@@ -1,4 +1,5 @@
 """Module with spark terminator."""
+
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 

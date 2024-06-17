@@ -1,4 +1,5 @@
 """Unit tests for the creation of failure notifications."""
+
 import os
 import re
 import subprocess  # nosec B404

@@ -1,4 +1,5 @@
 """Definitions of standard values and structures for core components."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -349,7 +350,6 @@ class DQType(Enum):
     """Available data quality tasks."""
 
     VALIDATOR = "validator"
-    ASSISTANT = "assistant"
 
 
 @dataclass
@@ -413,7 +413,6 @@ class DQSpec(object):
     - data_asset_name - name of the data asset to consider when configuring the great
         expectations' data source.
     - expectation_suite_name - name to consider for great expectations' suite.
-    - assistant_options - additional options to pass to the DQ assistant processor.
     - result_sink_db_table - db.table_name indicating the database and table in which
         to save the results of the DQ process.
     - result_sink_location - file system location in which to save the results of the
@@ -447,7 +446,6 @@ class DQSpec(object):
     tbl_to_derive_pk: Optional[str] = None
     gx_result_format: Optional[str] = "COMPLETE"
     tag_source_data: Optional[bool] = False
-    assistant_options: Optional[dict] = None
     store_backend: str = DQDefaults.STORE_BACKEND.value
     local_fs_root_dir: Optional[str] = None
     data_docs_local_fs: Optional[str] = None

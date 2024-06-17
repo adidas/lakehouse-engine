@@ -1,0 +1,4 @@
+#
+# ! Do not forget running `make build-lock-files` after updating dependency list !
+#
+paramiko==3.4.0

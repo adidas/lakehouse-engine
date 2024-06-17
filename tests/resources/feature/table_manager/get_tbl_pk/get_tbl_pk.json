@@ -1,4 +1,0 @@
-{
-  "function": "get_tbl_pk",
-  "table_or_view": "test_db.DummyTableBronze"
-}

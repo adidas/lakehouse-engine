@@ -1,4 +1,5 @@
 """Tests for the DataLoader algorithm with custom transformations."""
+
 import pytest
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col

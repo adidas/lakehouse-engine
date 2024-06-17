@@ -1,4 +1,5 @@
 """Module to define Sensor algorithm behavior."""
+
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.algorithms.algorithm import Algorithm

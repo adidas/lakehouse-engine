@@ -1,4 +1,5 @@
 """Module to define Gold Asset Builder algorithm behavior."""
+
 import copy
 from datetime import datetime, timedelta
 from typing import Union
@@ -536,7 +537,7 @@ class GAB(Algorithm):
             pendulum.week_starts_at(pendulum.SUNDAY)
             pendulum.week_ends_at(pendulum.SATURDAY)
         else:
-            NotImplementedError(
+            raise NotImplementedError(
                 f"The requested {start_of_week} is not implemented."
                 "Supported `start_of_week` values: [MONDAY, SUNDAY]"
             )

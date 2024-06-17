@@ -1,4 +1,5 @@
 """Module to define behaviour to read from SAP BW sources."""
+
 from logging import Logger
 from typing import Tuple
 
@@ -158,9 +159,9 @@ class SAPBWReader(Reader):
             )
         else:
             if self._input_spec.calculate_upper_bound:
-                options_args[
-                    "upperBound"
-                ] = self.jdbc_utils.get_spark_jdbc_optimal_upper_bound()
+                options_args["upperBound"] = (
+                    self.jdbc_utils.get_spark_jdbc_optimal_upper_bound()
+                )
 
             options_args.update(
                 self.jdbc_utils.get_additional_spark_options(

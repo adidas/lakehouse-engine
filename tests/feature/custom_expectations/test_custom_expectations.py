@@ -1,4 +1,5 @@
 """Test custom expectation validations."""
+
 from json import loads
 from typing import Any, Tuple
 

@@ -1,4 +1,5 @@
 """Unit tests focusing on the logging filter FilterSensitiveData."""
+
 import logging
 from typing import Any
 

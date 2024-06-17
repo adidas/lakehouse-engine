@@ -1,4 +1,5 @@
 """Module to define the behaviour of delta merges."""
+
 from typing import Callable, Optional, OrderedDict
 
 from delta.tables import DeltaMergeBuilder, DeltaTable

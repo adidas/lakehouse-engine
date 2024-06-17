@@ -1,4 +1,5 @@
 """Module representing an executable lakehouse engine component."""
+
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 

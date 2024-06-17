@@ -1,4 +1,5 @@
 """Module with the factory pattern to return terminators."""
+
 from typing import Optional
 
 from pyspark.sql import DataFrame

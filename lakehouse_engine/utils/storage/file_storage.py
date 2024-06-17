@@ -1,4 +1,5 @@
 """Module for abstract representation of a storage system holding files."""
+
 from abc import ABC, abstractmethod
 from typing import Any
 from urllib.parse import ParseResult

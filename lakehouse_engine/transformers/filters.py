@@ -1,4 +1,5 @@
 """Module containing the filters transformers."""
+
 from typing import Any, Callable, List, Optional
 
 from pyspark.sql import DataFrame

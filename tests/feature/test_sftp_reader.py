@@ -5,6 +5,7 @@ the same access and modified time, so we use the biggest dates to cover those
 scenarios. Moreover, we also cover scenarios were no files are expected to be found,
 due to the date filters.
 """
+
 import gzip
 import io
 import os
@@ -111,9 +112,9 @@ def test_sftp_reader_csv(
             "pkey": LocalStorage.read_file(SERVER_KEY_PUBLIC).split()[1],
             "key_filename": SERVER_KEY_PRIVATE,
             "date_time_gt": "2022-01-01",
-            "date_time_lt": "9999-12-31"
-            if "fail" not in scenario["test_name"]
-            else "2021-01-01",
+            "date_time_lt": (
+                "9999-12-31" if "fail" not in scenario["test_name"] else "2021-01-01"
+            ),
             "file_name_contains": f"e{scenario['file_extension']}",
             "args": {"sep": "|"},
         }
@@ -371,9 +372,9 @@ def test_sftp_reader_xml(
             "password": "dummy_password",
             "port": sftpserver.port,
             "add_auto_policy": True,
-            "date_time_lt": "9999-12-31"
-            if "fail" not in scenario["test_name"]
-            else "2022-01-01",
+            "date_time_lt": (
+                "9999-12-31" if "fail" not in scenario["test_name"] else "2022-01-01"
+            ),
             "file_name_contains": scenario["file_extension"],
         }
 

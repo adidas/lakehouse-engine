@@ -1,4 +1,5 @@
 """Utilities for databricks operations."""
+
 import json
 from typing import Any, Tuple
 

@@ -1,5 +1,0 @@
-{
-  "function": "delete_where",
-  "table_or_view": "test_db.DummyTableBronze",
-  "where_clause": "year=2021"
-}

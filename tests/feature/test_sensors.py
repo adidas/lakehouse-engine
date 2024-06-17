@@ -1,4 +1,5 @@
 """Module with integration tests for sensors feature."""
+
 import json
 import os
 from datetime import datetime

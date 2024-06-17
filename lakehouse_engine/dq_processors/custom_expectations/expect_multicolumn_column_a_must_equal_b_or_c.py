@@ -1,4 +1,5 @@
 """Expectation to check if column 'a' equals 'b', or 'c'."""
+
 from typing import Any, Dict, Optional
 
 from great_expectations.core import ExpectationConfiguration

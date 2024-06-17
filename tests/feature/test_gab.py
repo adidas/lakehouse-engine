@@ -1,4 +1,5 @@
 """Module with integration tests for gab feature."""
+
 from typing import Any, Optional
 
 import pendulum

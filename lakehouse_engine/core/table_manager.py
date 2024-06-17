@@ -1,4 +1,5 @@
 """Table manager module."""
+
 from typing import List
 
 from delta.tables import DeltaTable
@@ -173,9 +174,11 @@ class TableManager(object):
 
         optimize_stmt = "{} {} {} {}".format(
             SQLDefinitions.optimize_stmt.value,
-            f"delta.`{self.configs.get('path', None)}`"
-            if not self.configs.get("table_or_view", None)
-            else self.configs.get("table_or_view", None),
+            (
+                f"delta.`{self.configs.get('path', None)}`"
+                if not self.configs.get("table_or_view", None)
+                else self.configs.get("table_or_view", None)
+            ),
             where_exp,
             zorder_exp,
         )

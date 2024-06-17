@@ -303,11 +303,13 @@ class ColumnReshapers(object):
 
             return df.select(  # type: ignore
                 *cols_to_select,
-                from_avro(
-                    col(key_col), key_schema, schema_registry  # type: ignore
-                ).alias(key_col)
-                if key_schema
-                else key_col,
+                (
+                    from_avro(
+                        col(key_col), key_schema, schema_registry  # type: ignore
+                    ).alias(key_col)
+                    if key_schema
+                    else key_col
+                ),
                 from_avro(
                     col(value_col), value_schema, schema_registry  # type: ignore
                 ).alias(value_col),

@@ -1,8 +1,8 @@
 """Contract of the lakehouse engine with all the available functions to be executed."""
+
 from typing import List, Optional, OrderedDict
 
 from lakehouse_engine.algorithms.data_loader import DataLoader
-from lakehouse_engine.algorithms.dq_validator import DQValidator
 from lakehouse_engine.algorithms.gab import GAB
 from lakehouse_engine.algorithms.reconciliator import Reconciliator
 from lakehouse_engine.algorithms.sensor import Sensor, SensorStatus
@@ -16,7 +16,6 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.file_manager import FileManagerFactory
 from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
 from lakehouse_engine.core.table_manager import TableManager
-from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.terminators.sensor_terminator import SensorTerminator
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
@@ -87,6 +86,8 @@ def execute_dq_validation(
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
+    from lakehouse_engine.algorithms.dq_validator import DQValidator
+
     acon = ConfigUtils.get_acon(acon_path, acon)
     ExecEnv.get_or_create(app_name="dq_validator", config=acon.get("exec_env", None))
     EngineUsageStats.store_engine_usage(
@@ -331,6 +332,8 @@ def build_data_docs(
         checkpoint_store_prefix: prefix where to store checkpoints' data.
             Note: only applicable for store_backend s3.
     """
+    from lakehouse_engine.dq_processors.dq_factory import DQFactory
+
     DQFactory.build_data_docs(
         store_backend=store_backend,
         local_fs_root_dir=local_fs_root_dir,

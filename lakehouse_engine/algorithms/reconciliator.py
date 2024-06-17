@@ -1,10 +1,11 @@
 """Module containing the Reconciliator class."""
+
 from enum import Enum
 from typing import List
 
 import pyspark.sql.functions as spark_fns
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import abs, coalesce, col, lit, when
+from pyspark.sql.functions import abs, coalesce, col, lit, when  # noqa: A004
 from pyspark.sql.types import FloatType
 
 from lakehouse_engine.algorithms.exceptions import ReconciliationFailedException
@@ -192,11 +193,11 @@ class Reconciliator(Executable):
             transformed_df = df.transform(Optimizers.cache())
         elif len(preprocess_query_args) > 0:
             for transformation in preprocess_query_args:
-                function = ReconciliationTransformers.AVAILABLE_TRANSFORMERS.value[
+                rec_func = ReconciliationTransformers.AVAILABLE_TRANSFORMERS.value[
                     transformation["function"]
                 ](**transformation.get("args", {}))
 
-                transformed_df = df.transform(function)
+                transformed_df = df.transform(rec_func)
         else:
             transformed_df = df
 

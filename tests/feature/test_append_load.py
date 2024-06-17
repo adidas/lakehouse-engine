@@ -1,4 +1,5 @@
 """Test append loads."""
+
 from typing import Any
 
 import pytest

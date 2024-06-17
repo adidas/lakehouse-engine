@@ -41,11 +41,10 @@ Example: `make test container_cli=nerdctl`
 
 ---
 
-6. (optional) You can build the wheel locally with `make build` or `make build os_deployment=True` (in case the wheel targets an environment, which does not have the dependencies listed in [extra_os_requirements.txt](cicd/extra_os_requirements.txt) pre-installed).
+6. (optional) You can build the wheel locally with `make build`.
 7. (optional) Install the wheel you have just generated and test it.
 8. If you have changed or added new requirements, you should run `make build-lock-files`, to rebuild the lock files. 
-9. If the transitive dependencies have not been updated for a while, and you want to upgrade them, you can use `make upgrade-lock-files` to update them. 
-This will update the transitive dependencies even if you have not changed the requirements.
+9. If the transitive dependencies have not been updated for a while, and you want to upgrade them, you can use `make upgrade-lock-files` to update them. This will update the transitive dependencies even if you have not changed the requirements.
 10. When you're ready with your changes, open a Pull Request (PR) to develop.
 11. Ping the team through the preferred communication channel.
 12. The team will come together to review it and approve it (2 approvals required).

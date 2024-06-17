@@ -1,4 +1,5 @@
 """Module to define DataLoader class."""
+
 from collections import OrderedDict
 from copy import deepcopy
 from logging import Logger
@@ -8,7 +9,6 @@ from lakehouse_engine.algorithms.algorithm import Algorithm
 from lakehouse_engine.core.definitions import (
     DQFunctionSpec,
     DQSpec,
-    DQType,
     InputSpec,
     MergeOptions,
     OutputFormat,
@@ -18,7 +18,6 @@ from lakehouse_engine.core.definitions import (
     TransformerSpec,
     TransformSpec,
 )
-from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.io.reader_factory import ReaderFactory
 from lakehouse_engine.io.writer_factory import WriterFactory
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
@@ -148,13 +147,14 @@ class DataLoader(Algorithm):
         if not self.dq_specs:
             return data
         else:
+            from lakehouse_engine.dq_processors.dq_factory import DQFactory
+
             dq_processed_dfs = OrderedDict(data)
             for spec in self.dq_specs:
                 df_processed_df = dq_processed_dfs[spec.input_id]
                 self._logger.info(f"Found data quality specification: {spec}")
                 if (
                     spec.dq_functions
-                    or spec.dq_type == DQType.ASSISTANT.value
                     and spec.spec_id not in self._streaming_micro_batch_dq_plan
                 ):
                     if spec.cache_df:
@@ -361,9 +361,11 @@ class DataLoader(Algorithm):
                 data_format=spec.get("data_format", OutputFormat.DELTAFILES.value),
                 db_table=spec.get("db_table", None),
                 location=spec.get("location", None),
-                merge_opts=MergeOptions(**spec["merge_opts"])
-                if spec.get("merge_opts")
-                else None,
+                merge_opts=(
+                    MergeOptions(**spec["merge_opts"])
+                    if spec.get("merge_opts")
+                    else None
+                ),
                 partitions=spec.get("partitions", []),
                 streaming_micro_batch_transformers=self._get_streaming_transformer_plan(
                     spec["input_id"], self.dq_specs
@@ -372,13 +374,15 @@ class DataLoader(Algorithm):
                 streaming_processing_time=spec.get("streaming_processing_time", None),
                 streaming_available_now=spec.get(
                     "streaming_available_now",
-                    False
-                    if (
-                        spec.get("streaming_once", None)
-                        or spec.get("streaming_processing_time", None)
-                        or spec.get("streaming_continuous", None)
-                    )
-                    else True,
+                    (
+                        False
+                        if (
+                            spec.get("streaming_once", None)
+                            or spec.get("streaming_processing_time", None)
+                            or spec.get("streaming_continuous", None)
+                        )
+                        else True
+                    ),
                 ),
                 streaming_continuous=spec.get("streaming_continuous", None),
                 streaming_await_termination=spec.get(
@@ -397,7 +401,7 @@ class DataLoader(Algorithm):
         ]
 
     def _get_streaming_transformer_plan(
-        self, input_id: str, dq_specs: List[DQSpec]
+        self, input_id: str, dq_specs: Optional[List[DQSpec]]
     ) -> List[TransformerSpec]:
         """Gets the plan for transformations to be applied on streaming micro batches.
 
@@ -421,7 +425,11 @@ class DataLoader(Algorithm):
             else input_id
         )
 
-        return self._streaming_micro_batch_transformers_plan.get(transformer_id, [])
+        streaming_micro_batch_transformers_plan: list[TransformerSpec] = (
+            self._streaming_micro_batch_transformers_plan.get(transformer_id, [])
+        )
+
+        return streaming_micro_batch_transformers_plan
 
     def _get_terminate_specs(self) -> List[TerminatorSpec]:
         """Get the terminate specifications from an acon.

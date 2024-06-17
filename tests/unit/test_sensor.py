@@ -1,4 +1,5 @@
 """Module with unit tests for Sensor class."""
+
 from datetime import datetime
 from typing import Any
 from unittest.mock import MagicMock, patch

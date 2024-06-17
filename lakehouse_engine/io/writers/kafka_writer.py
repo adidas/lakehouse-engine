@@ -1,4 +1,5 @@
 """Module that defines the behaviour to write to Kafka."""
+
 from typing import Callable, OrderedDict
 
 from pyspark.sql import DataFrame

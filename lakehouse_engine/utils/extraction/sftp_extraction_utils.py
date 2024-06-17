@@ -1,4 +1,5 @@
 """Utilities module for SFTP extraction processes."""
+
 import stat
 from base64 import decodebytes
 from datetime import datetime
@@ -186,7 +187,7 @@ class SFTPExtractionUtils(object):
                 )
             elif options_args.get("add_auto_policy", None):
                 ssh_client.load_system_host_keys()
-                ssh_client.set_missing_host_key_policy(p.WarningPolicy())
+                ssh_client.set_missing_host_key_policy(p.WarningPolicy())  # nosec: B507
             else:
                 ssh_client.load_system_host_keys()
                 ssh_client.set_missing_host_key_policy(p.RejectPolicy())

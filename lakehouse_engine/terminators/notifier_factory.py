@@ -1,4 +1,5 @@
 """Module for notifier factory."""
+
 from abc import ABC
 
 from lakehouse_engine.core.definitions import NotifierType, TerminatorSpec
@@ -63,9 +64,9 @@ class NotifierFactory(ABC):
                 failure_notification_spec["args"] = failure_notification_spec_args
 
                 if generate_failure_notification:
-                    failure_notification_spec[
-                        "template"
-                    ] = f"""failure_notification_{notification_args["type"]}"""
+                    failure_notification_spec["template"] = (
+                        f"""failure_notification_{notification_args["type"]}"""
+                    )
                 elif "template" in notification_args.keys():
                     failure_notification_spec["template"] = notification_args[
                         "template"

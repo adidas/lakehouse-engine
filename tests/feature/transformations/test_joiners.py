@@ -1,4 +1,5 @@
 """Test Join Transformers."""
+
 from typing import List
 
 import pytest

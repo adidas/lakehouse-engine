@@ -203,10 +203,8 @@ documentation.
 
 One of the most relevant features of the lakehouse engine is that you can have data quality guardrails that prevent you
 from loading bad data into your target layer (e.g., bronze, silver or gold). The lakehouse engine data quality process
-includes two main features at the moment:
+includes one main feature at the moment:
 
-- **Assistant**: The capability to profile data out of a read (`input_spec`) or transform (`transform_spec`) stage and based
-  on the profiling, display it and generate expectations that can be used for the validator.
 - **Validator**: The capability to perform data quality checks on that data (e.g., is the max value of a column bigger
   than x?) and even tag your data with the results of the DQ checks.
 

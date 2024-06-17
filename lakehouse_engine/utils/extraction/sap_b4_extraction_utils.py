@@ -1,4 +1,5 @@
 """Utilities module for SAP B4 extraction processes."""
+
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -111,11 +112,12 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
             A string with the data_target.
         """
         exclude_chars = """["'\\\\]"""
-
-        return input_spec_opt.get(
+        data_target: str = input_spec_opt.get(
             "data_target",
             re.sub(exclude_chars, "", input_spec_opt["dbtable"]).split("/")[-1][1:-1],
         )
+
+        return data_target
 
     def _get_init_query(self) -> Tuple[str, str]:
         """Get a query to do an init load based on a ADSO on a SAP B4 system.

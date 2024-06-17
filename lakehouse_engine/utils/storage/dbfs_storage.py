@@ -1,4 +1,5 @@
 """Module to represent a DBFS file storage system."""
+
 from typing import Any
 from urllib.parse import ParseResult, urlunparse
 

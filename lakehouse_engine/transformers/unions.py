@@ -1,4 +1,5 @@
 """Module with union transformers."""
+
 from functools import reduce
 from typing import Callable, List
 

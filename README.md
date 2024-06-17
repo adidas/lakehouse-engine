@@ -103,9 +103,25 @@ pip install lakehouse_engine
 Alternatively, you can also upload the wheel to any target of your like (e.g. S3) and perform a pip installation pointing to that target location.
 
 ---
-> ***Note:*** It is advisable for a Data Product to pin a specific version of the Lakehouse Engine (and have recurring upgrading activities)
-to avoid breaking changes in a new release.
-In case you don't want to be so conservative, you can pin to a major version, which usually shouldn't include changes that break backwards compatibility.
+> ***Note:*** The Lakehouse Engine is packaged with plugins or optional dependencies, which are not installed by default. The goal is
+> to make its installation lighter and to avoid unnecessary dependencies. You can check all the optional dependencies in
+> the [tool.setuptools.dynamic] section of the [pyproject.toml](pyproject.toml) file. They are currently: os, dq, azure and sftp. So,
+> in case you want to make usage of the Data Quality features offered in the Lakehouse Engine, instead of running the previous command, you should run
+> the command below, which will bring the core functionalities, plus DQ.
+> ```
+> pip install lakehouse_engine[dq]
+> ```
+> In case you are in an environment without pre-install spark and delta, you will also want to install the `os` optional dependencies, like so:
+> ```
+> pip install lakehouse_engine[os]
+> ```
+> And in case you want to install several optional dependencies, you can run a command like:
+> ```
+> pip install lakehouse_engine[dq,sftp]
+> ```
+> It is advisable for a Data Product to pin a specific version of the Lakehouse Engine (and have recurring upgrading activities)
+> to avoid breaking changes in a new release.
+> In case you don't want to be so conservative, you can pin to a major version, which usually shouldn't include changes that break backwards compatibility.
 
 ---
 

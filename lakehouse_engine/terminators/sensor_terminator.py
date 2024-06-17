@@ -1,4 +1,5 @@
 """Module with sensor terminator."""
+
 from typing import List
 
 from lakehouse_engine.core.definitions import SensorSpec, SensorStatus

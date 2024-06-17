@@ -1,4 +1,5 @@
 """Module to take care of creating a singleton of the execution environment class."""
+
 import os
 
 from pyspark.sql import SparkSession

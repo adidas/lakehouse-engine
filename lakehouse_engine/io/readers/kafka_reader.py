@@ -1,4 +1,5 @@
 """Module to define behaviour to read from Kafka."""
+
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import InputFormat, InputSpec
@@ -25,7 +26,7 @@ class KafkaReader(Reader):
         """
         df = ExecEnv.SESSION.readStream.load(
             format=InputFormat.KAFKA.value,
-            **self._input_spec.options if self._input_spec.options else {}
+            **self._input_spec.options if self._input_spec.options else {},
         )
 
         return df

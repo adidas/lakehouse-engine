@@ -1,9 +1,9 @@
 pipeline {
     parameters {
-        choice(name: 'DEPLOY_ENV', choices: ['dev', 'prod'], description: 'Deployment environment.')
         string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to use for the deployment process.')
         string(name: 'VERSION', defaultValue: null, description: 'Version to deploy (git tag in master branch without the "v"). E.g., 0.2.0. If you are deploying to dev, from your branch, ignore this.')
         booleanParam(name: 'SKIP_OS_DEPLOYMENT', defaultValue: false, description: 'Whether to skip the OS Deployment related stages or not.')
+        booleanParam(name: 'NOTIFY', defaultValue: true, description: 'Whether to notify the release or not.')
     }
 
     options {
@@ -22,11 +22,10 @@ pipeline {
     }
 
     environment {
-        AWS_CREDENTIALS = credentials('aws-lakehouse-cicd')
         PYPI_CREDENTIALS = credentials('pypi-credentials')
+        ARTIFACTORY_CREDENTIALS = credentials('artifactory-credentials')
         GIT_CREDENTIALS_LAK = credentials('push-to-github-lak')
         GIT_CREDENTIALS_LAK_DOCS = credentials('push-to-github-lak-docs')
-        DEPLOY_ENV = getDeploymentEnv()
         DEPLOY_VERSION = getDeploymentVersion()
         DEPLOY_GIT_OBJECT = getDeploymentGitObject()
     }
@@ -99,13 +98,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    if (params.BRANCH == 'master') {
-                        // if we are deploying from master then we also deploy the artefacts into the latest folder (latest_suffix)
-                        sh 'make deploy latest_suffix="latest" deploy_env=' + "${env.DEPLOY_ENV}" + ' version=' + "${env.DEPLOY_VERSION}" + ' aws_credentials_file=$AWS_CREDENTIALS'
-                    } else {
-                        // else we use latest-feature folder (default latest_suffix)
-                        sh 'make deploy deploy_env=' + "${env.DEPLOY_ENV}" + ' version=' + "${env.DEPLOY_VERSION}" + ' aws_credentials_file=$AWS_CREDENTIALS'
-                    }
+                    sh 'make deploy version=' + "${env.DEPLOY_VERSION}" + ' artifactory_credentials_file=$ARTIFACTORY_CREDENTIALS'
                 }
             }
         }
@@ -113,7 +106,7 @@ pipeline {
         stage('Open Source Deployment') {
             when {
                 expression {
-                    (params.BRANCH == 'master' && env.DEPLOY_ENV == 'prod' && !params.SKIP_OS_DEPLOYMENT)
+                    (params.BRANCH == 'master' && !params.SKIP_OS_DEPLOYMENT)
                 }
             }
             stages {
@@ -136,6 +129,8 @@ pipeline {
                 stage('Deploy to Pypi') {
                     steps {
                         script {
+                            // we are forcing make build as it was not happening sometimes, for no reason.
+                            sh 'make build os_deployment=True'
                             sh 'make deploy-to-pypi-and-clean os_deployment=True version=' + "${env.DEPLOY_VERSION}" + ' pypi_credentials_file=$PYPI_CREDENTIALS'
                         }
                     }
@@ -146,26 +141,21 @@ pipeline {
         stage('Notify') {
             when {
                 expression {
-                    params.BRANCH == 'master'
+                    params.BRANCH == 'master' && params.NOTIFY
                 }
             }
             steps {
                 script {
                     params = readYaml file: 'cicd/meta.yaml'
                     release_notes = sh(script:'cat CHANGELOG.md | cut -d ")" -f 2 | head -n 10', returnStdout: true).trim()
-                    recipients = params["mail_recipients"]["${env.DEPLOY_ENV}"].join(";")
-                    version_deploy_path = sh(script:'make print-variable var="version_deploy_path" deploy_env=' + "${env.DEPLOY_ENV}" + ' version=' + "${env.DEPLOY_VERSION} latest_suffix='latest'", returnStdout: true).trim()
-                    latest_deploy_path = sh(script:'make print-variable var="latest_deploy_path" deploy_env=' + "${env.DEPLOY_ENV}" + ' version=' + "${env.DEPLOY_VERSION} latest_suffix='latest'", returnStdout: true).trim()
+                    recipients = params["mail_recipients"].join(";")
                     emailext(
                             attachLog: false,
                             compressLog: true,
                             body: """
-                            <BR>A new version <b>$env.DEPLOY_VERSION</b> of the <b>Lakehouse Engine</b> was deployed to <b>$env.DEPLOY_ENV</b>.<BR><BR>
-                            The wheel can be found in: 
-                            <ul>
-                                <li>${version_deploy_path}</li>
-                                <li>${latest_deploy_path}</li>
-                            </ul>
+                            <BR>A new version <b>$env.DEPLOY_VERSION</b> of the <b>Lakehouse Engine</b> was deployed into Artifactory.<BR><BR>
+                            You can install it just like any other python library, either notebook scoped with pip install or cluster scoped
+                            by specifying the library in the cluster configuration.: 
                             You can check the lakehouse-engine documentation here: ${params["engine_docs"]}.
                             Check the latest updates here:<BR>
                             <pre>
@@ -187,21 +177,6 @@ pipeline {
                 }
             }
         }
-    }
-}
-
-/**
- * Get deployment environment given certain Jenkins parameters and the team's deployment guidelines.
- * @return adequate deployment environment
- */
-def String getDeploymentEnv() {
-    deployEnv = params.DEPLOY_ENV
-
-    if (params.BRANCH == 'master') {
-        return deployEnv
-    } else {
-        // force 'dev' as deployment environment
-        return 'dev'
     }
 }
 

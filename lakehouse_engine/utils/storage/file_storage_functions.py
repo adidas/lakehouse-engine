@@ -1,4 +1,5 @@
 """Module for common file storage functions."""
+
 import json
 from abc import ABC
 from typing import Any

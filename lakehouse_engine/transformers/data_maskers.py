@@ -1,8 +1,9 @@
 """Module with data masking transformers."""
+
 from typing import Callable, List
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import hash, sha2
+from pyspark.sql.functions import hash, sha2  # noqa: A004
 
 from lakehouse_engine.transformers.exceptions import WrongArgumentsException
 from lakehouse_engine.utils.logging_handler import LoggingHandler

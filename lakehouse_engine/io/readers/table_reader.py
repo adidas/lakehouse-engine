@@ -1,4 +1,5 @@
 """Module to define behaviour to read from tables."""
+
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import InputSpec, ReadType

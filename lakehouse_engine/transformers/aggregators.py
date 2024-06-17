@@ -1,8 +1,9 @@
 """Aggregators module."""
+
 from typing import Callable
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, max
+from pyspark.sql.functions import col, max  # noqa: A004
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 

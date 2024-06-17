@@ -1,0 +1,5 @@
+# Dependencies necessary for the Data Quality features to work.
+#
+# ! Do not forget running `make build-lock-files` after updating dependency list !
+#
+great-expectations==0.18.8

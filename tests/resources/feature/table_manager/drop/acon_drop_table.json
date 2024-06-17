@@ -1,4 +1,0 @@
-{
-  "function": "drop_table",
-  "table_or_view": "test_db.DummyTableBronze"
-}

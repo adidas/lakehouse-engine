@@ -1,4 +1,5 @@
 """Utilities module for SAP BW extraction processes."""
+
 from copy import copy
 from dataclasses import dataclass
 from logging import Logger

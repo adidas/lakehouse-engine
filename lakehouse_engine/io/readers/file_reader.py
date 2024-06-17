@@ -1,4 +1,5 @@
 """Module to define behaviour to read from files."""
+
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import FILE_INPUT_FORMATS, InputSpec, ReadType
@@ -32,7 +33,7 @@ class FileReader(Reader):
                 path=self._input_spec.location,
                 format=self._input_spec.data_format,
                 schema=SchemaUtils.from_input_spec(self._input_spec),
-                **self._input_spec.options if self._input_spec.options else {}
+                **self._input_spec.options if self._input_spec.options else {},
             )
 
             if self._input_spec.with_filepath:
@@ -50,7 +51,7 @@ class FileReader(Reader):
                 path=self._input_spec.location,
                 format=self._input_spec.data_format,
                 schema=SchemaUtils.from_input_spec(self._input_spec),
-                **self._input_spec.options if self._input_spec.options else {}
+                **self._input_spec.options if self._input_spec.options else {},
             )
 
             if self._input_spec.with_filepath:

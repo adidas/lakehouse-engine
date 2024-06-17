@@ -1,4 +1,5 @@
 """Module with join transformers."""
+
 from typing import Callable, List, Optional
 
 from pyspark.sql import DataFrame

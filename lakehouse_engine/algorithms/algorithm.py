@@ -1,4 +1,5 @@
 """Module containing the Algorithm class."""
+
 from typing import List, Tuple
 
 from lakehouse_engine.core.definitions import (
@@ -69,7 +70,6 @@ class Algorithm(Executable):
                 "validations_store_prefix",
                 DQDefaults.VALIDATIONS_STORE_PREFIX.value,
             ),
-            assistant_options=spec.get("assistant_options", {}),
             result_sink_db_table=spec.get(
                 "result_sink_db_table", DQSpec.result_sink_db_table
             ),

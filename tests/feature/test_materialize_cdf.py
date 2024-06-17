@@ -1,4 +1,5 @@
 """Test materialize cdf to external location."""
+
 from typing import Any
 
 import pytest

@@ -1,4 +1,5 @@
 """Test delta loads with different merge options."""
+
 from typing import List
 
 import pytest

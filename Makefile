@@ -3,9 +3,8 @@ SHELL := /bin/bash -euxo pipefail
 container_cli := docker
 image_name := lakehouse-engine
 deploy_env := dev
-project_version := $(shell cat cicd/.bumpversion.cfg | grep current_version | cut -f 3 -d " ")
+project_version := $(shell cat cicd/.bumpversion.cfg | grep "current_version =" | cut -f 3 -d " ")
 version := $(project_version)
-latest_suffix := latest-feature
 # Gets system information in upper case
 system_information := $(shell uname -mvp | tr a-z A-Z)
 meta_conf_file := cicd/meta.yaml
@@ -17,12 +16,12 @@ last_commit_msg := "$(shell git log -1 --pretty=%B)"
 git_tag := $(shell git describe --tags --abbrev=0)
 commits_url := $(shell cat $(meta_conf_file) | grep commits_url | cut -f 2 -d " ")
 
-ifeq ($(deploy_env), dev)
-deploy_bucket := $(shell cat $(meta_conf_file) | grep dev_deploy_bucket | cut -f 2 -d " ")
-else ifeq ($(deploy_env), prod)
-deploy_bucket := $(shell cat $(meta_conf_file) | grep prod_deploy_bucket | cut -f 2 -d " ")
+ifneq ($(project_version), $(version))
+wheel_version := $(project_version)+$(subst _,.,$(version))
+project_name := lakehouse_engine_experimental
 else
-$(error Invalid deployment environment. It must be one of: dev or prod. Received: $(deploy_env))
+wheel_version := $(version)
+project_name := lakehouse_engine
 endif
 
 # Condition to define the Python image to be built based on the machine CPU architecture.
@@ -46,12 +45,16 @@ ifndef $(spark_driver_memory)
 	spark_driver_memory := "2g"
 endif
 
-version_deploy_path := $(deploy_bucket)/lakehouse-engine/lakehouse_engine-$(version)-py3-none-any.whl
-latest_deploy_path := $(deploy_bucket)/lakehouse-engine/lakehouse_engine-$(latest_suffix)-py3-none-any.whl
-
-requirements := cicd/requirements.txt
-extra_requirements := cicd/extra_os_requirements.txt
-cicd_requirements := cicd/requirements_cicd.txt cicd/requirements.lock $(extra_requirements)
+# A requirements_full.lock file is created based on all the requirements of the project (core, dq, os, azure, sftp and cicd).
+# The requirements_full.lock file is then used as a constraints file to build the other lock files so that we ensure dependencies are consistent and compatible
+# with each other, otherwise, the the installations would likely fail.
+# Moreover, the requirement_full.lock file is also used in the dockerfile to install all project dependencies.
+full_requirements := -o requirements_full.lock requirements.txt requirements_os.txt requirements_dq.txt requirements_azure.txt requirements_sftp.txt requirements_cicd.txt
+requirements := -o requirements.lock requirements.txt -c requirements_full.lock
+os_requirements := -o requirements_os.lock requirements_os.txt -c requirements_full.lock
+dq_requirements = -o requirements_dq.lock requirements_dq.txt -c requirements_full.lock
+azure_requirements = -o requirements_azure.lock requirements_azure.txt -c requirements_full.lock
+sftp_requirements = -o requirements_sftp.lock requirements_sftp.txt -c requirements_full.lock
 os_deployment := False
 container_user_dir := /home/appuser
 trust_git_host := ssh -oStrictHostKeyChecking=no -i $(container_user_dir)/.ssh/id_rsa git@github.com
@@ -75,50 +78,29 @@ build-image-windows:
         --build-arg CPU_ARCHITECTURE=$(cpu_architecture) \
         -t $(image_name):$(version) . -f cicd/Dockerfile
 
+# The build target is used to build the wheel package.
+# It makes usage of some `perl` commands to change the project name and the wheel version in the pyproject.toml file,
+# whenever the goal is to build a `project_name` for distribution and testing, instead of an official release.
+# Ex: if you run 'make build-image version=feature-x-1276, and the current project version is 1.20.0, the generated wheel will be: lakehouse_engine_experimental-1.20.0+feature.x.1276-py3-none-any,
+# while for the official 1.20.0 release, the wheel will be: lakehouse_engine-1.20.0-py3-none-any.
 build:
+	perl -pi -e 's/version = "$(project_version)"/version = "$(wheel_version)"/g' pyproject.toml && \
+	perl -pi -e 's/name = "lakehouse-engine"/name = "$(project_name)"/g' pyproject.toml && \
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
-		/bin/bash -c 'export os_deployment=$(os_deployment); python -m build $(build_src_dir)'
+		/bin/bash -c 'python -m build --wheel $(build_src_dir)' && \
+	perl -pi -e 's/version = "$(wheel_version)"/version = "$(project_version)"/g' pyproject.toml && \
+	perl -pi -e 's/name = "$(project_name)"/name = "lakehouse-engine"/g' pyproject.toml
 
 deploy: build
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
-		-v $(aws_credentials_file):$(container_user_dir)/.aws/credentials:ro \
+		-v $(artifactory_credentials_file):$(container_user_dir)/.pypirc \
 		$(image_name):$(version) \
-		/bin/bash -c 'aws s3 --profile $(deploy_env) cp dist/lakehouse_engine-$(project_version)-py3-none-any.whl $(version_deploy_path) && \
-        aws s3 --profile $(deploy_env) cp dist/lakehouse_engine-$(project_version)-py3-none-any.whl $(latest_deploy_path) && \
-        rm dist/lakehouse_engine-$(project_version)-py3-none-any.whl'
-
-test-deps: build-lock-files
-	@GIT_STATUS="$$(git status --porcelain --ignore-submodules cicd/)"; \
-	if [ ! "x$$GIT_STATUS" = "x"  ]; then \
-	    echo "!!! Requirements lists has been updated but lock file was not rebuilt !!!"; \
-	    echo "!!! Run `make build-lock-files` !!!"; \
-	    echo -e "$${GIT_STATUS}"; \
-	    git diff cicd/; \
-	    exit 1; \
-	fi
-
-build-lock-files:
-	$(container_cli) run --rm \
-	    -w /app \
-	    -v "$$PWD":/app \
-	    $(image_name):$(version) \
-	    /bin/bash -c 'pip-compile --resolver=backtracking --output-file=cicd/requirements.lock $(requirements) && \
-	    pip-compile --resolver=backtracking --output-file=cicd/requirements_os.lock $(requirements) $(extra_requirements) && \
-	    pip-compile --resolver=backtracking --output-file=cicd/requirements_cicd.lock $(cicd_requirements)'
-
-upgrade-lock-files:
-	$(container_cli) run --rm \
-	    -w /app \
-	    -v "$$PWD":/app \
-	    $(image_name):$(version) \
-	    /bin/bash -c 'pip-compile --resolver=backtracking --upgrade --output-file=cicd/requirements.lock $(requirements) && \
-	    pip-compile --resolver=backtracking --upgrade --output-file=cicd/requirements_os.lock $(requirements) $(extra_requirements) && \
-	    pip-compile --resolver=backtracking --upgrade --output-file=cicd/requirements_cicd.lock $(cicd_requirements)'
+		/bin/bash -c 'twine upload -r artifactory dist/$(project_name)-$(wheel_version)-py3-none-any.whl --skip-existing'
 
 docs:
 	$(container_cli) run --rm \
@@ -127,20 +109,15 @@ docs:
 		$(image_name):$(version) \
 		/bin/bash -c 'cd $(build_src_dir) && python ./cicd/code_doc/render_doc.py'
 
+# mypy incremental mode is used by default, so in case there is any cache related issue,
+# you can modify the command to include --no-incremental flag or you can delete mypy_cache folder.
 lint:
 	$(container_cli) run --rm \
 		-w /app \
         -v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'flake8 --docstring-convention google --config=cicd/flake8.conf lakehouse_engine tests cicd/code_doc/render_doc.py \
-		&& mypy --no-incremental --config-file cicd/mypy.ini lakehouse_engine tests'
-
-audit-dep-safety:
-	$(container_cli) run --rm \
-		-w /app \
-        -v "$$PWD":/app \
-		$(image_name):$(version) \
-		/bin/bash -c 'pip-audit -r cicd/requirements.txt --desc on -f json --fix --dry-run -o artefacts/safety_analysis.json'
+		&& mypy lakehouse_engine tests'
 
 # useful to print and use make variables. Usage: make print-variable var=variable_to_print.
 print-variable:
@@ -160,14 +137,13 @@ terminal:
 		--rm \
 	  	-w /app \
 		-v "$$PWD":/app \
-		-v $(git_credentials_file):$(container_user_dir)/.ssh/id_rsa \
 		$(image_name):$(version) \
 		/bin/bash
 
 # Can use test only: ```make test test_only="tests/feature/test_delta_load_record_mode_cdc.py"```.
 # You can also hack it by doing ```make test test_only="-rx tests/feature/test_delta_load_record_mode_cdc.py"```
 # to show complete output even of passed tests.
-# We also fix the coverage filepaths, using sed, so that report has the correct paths
+# We also fix the coverage filepaths, using perl, so that report has the correct paths
 test:
 	$(container_cli) run \
 		--rm \
@@ -180,7 +156,74 @@ test:
             --cov-report term-missing --cov=lakehouse_engine \
             --log-cli-level=INFO --color=yes -x -v \
             --spark_driver_memory=$(spark_driver_memory) $(test_only)" && \
-	sed -i'' -e 's/filename=\"/filename=\"lakehouse_engine\//g' artefacts/coverage.xml
+	perl -pi -e 's/filename=\"/filename=\"lakehouse_engine\//g' artefacts/coverage.xml
+
+test-security:
+	$(container_cli) run \
+		--rm \
+		-w /app \
+        -v "$$PWD":/app \
+		$(image_name):$(version) \
+		/bin/bash -c 'bandit -c cicd/bandit.yaml -r lakehouse_engine tests'
+
+#####################################
+##### Dependency Management Targets #####
+#####################################
+
+audit-dep-safety:
+	$(container_cli) run --rm \
+		-w /app \
+        -v "$$PWD":/app \
+		$(image_name):$(version) \
+		/bin/bash -c 'pip-audit -r cicd/requirements_full.lock --desc on -f json --fix --dry-run -o artefacts/safety_analysis.json'
+
+# This target will build the lock files to be used for building the wheel and delivering it.
+build-lock-files:
+	$(container_cli) run --rm \
+	    -w /app \
+	    -v "$$PWD":/app \
+	    $(image_name):$(version) \
+	    /bin/bash -c 'cd cicd && pip-compile --resolver=backtracking $(full_requirements) && \
+	    pip-compile --resolver=backtracking $(requirements) && \
+	    pip-compile --resolver=backtracking $(os_requirements) && \
+	    pip-compile --resolver=backtracking $(dq_requirements) && \
+		pip-compile --resolver=backtracking $(azure_requirements) && \
+		pip-compile --resolver=backtracking $(sftp_requirements)'
+
+# We test the dependencies to check if they need to be updated because requirements.txt files have changed.
+# On top of that, we also test if we will be able to install the base and the extra packages together, 
+# as their lock files are built separately and therefore dependency constraints might be too restricted. 
+# If that happens, pip install will fail because it cannot solve the dependency resolution process, and therefore
+# we need to pin those conflict dependencies in the requirements.txt files to a version that fits both the base and 
+# extra packages.
+test-deps:
+	@GIT_STATUS="$$(git status --porcelain --ignore-submodules cicd/)"; \
+	if [ ! "x$$GIT_STATUS" = "x"  ]; then \
+	    echo "!!! Requirements lists has been updated but lock file was not rebuilt !!!"; \
+	    echo "!!! Run make build-lock-files !!!"; \
+	    echo -e "$${GIT_STATUS}"; \
+	    git diff cicd/; \
+	    exit 1; \
+	fi
+	$(container_cli) run --rm \
+		-w /app \
+        -v "$$PWD":/app \
+		$(image_name):$(version) \
+		/bin/bash -c 'pip install -e .[azure,dq,sftp,os] --dry-run --ignore-installed'
+
+# This will update the transitive dependencies even if there were no changes in the requirements files.
+# This should be a recurrent activity to make sure transitive dependencies are kept up to date.
+upgrade-lock-files:
+	$(container_cli) run --rm \
+	    -w /app \
+	    -v "$$PWD":/app \
+	    $(image_name):$(version) \
+	    /bin/bash -c 'cd cicd && pip-compile --resolver=backtracking --upgrade $(cicd_requirements) && \
+	    pip-compile --resolver=backtracking --upgrade $(requirements) && \
+	    pip-compile --resolver=backtracking --upgrade $(os_requirements) && \
+	    pip-compile --resolver=backtracking --upgrade $(dq_requirements) && \
+		pip-compile --resolver=backtracking --upgrade $(azure_requirements) && \
+		pip-compile --resolver=backtracking --upgrade $(sftp_requirements)'
 
 #####################################
 ##### GitHub Deployment Targets #####
@@ -249,36 +292,28 @@ deploy-to-pypi-and-clean: deploy-to-pypi
 		$(image_name):$(version) \
 		/bin/bash -c 'rm -rf tmp_os/lakehouse-engine'
 
-test-security:
-	$(container_cli) run \
-		--rm \
-		-w /app \
-        -v "$$PWD":/app \
-		$(image_name):$(version) \
-		/bin/bash -c 'bandit -c cicd/bandit.yaml -r lakehouse_engine tests'
-
 ###########################
 ##### Release Targets #####
 ###########################
 create-changelog:
-	echo "# Changelog - $(shell date +"%Y-%m-%d") v$(shell python3 setup.py --version)" > CHANGELOG.md && \
+	echo "# Changelog - $(shell date +"%Y-%m-%d") v$(version)" > CHANGELOG.md && \
 	echo "All notable changes to this project will be documented in this file automatically. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md && \
 	echo "" >> CHANGELOG.md && \
 	git log --no-decorate --pretty=format:"#### [%cs] [%(describe)]%n [%h]($(commits_url)%H) %s" -n 1000 >> CHANGELOG.md
 
-bump-up-version:
+bump-up-version: create-changelog
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'bump2version --config-file cicd/.bumpversion.cfg $(increment)'
 
-prepare-release: bump-up-version create-changelog
+prepare-release: bump-up-version
 	echo "Prepared version and changelog to release!"
 
 commit-release:
-	git commit -a -m 'Create release $(shell python3 setup.py --version)' && \
-    git tag -a 'v$(shell python3 setup.py --version)' -m 'Release $(shell python3 setup.py --version)'
+	git commit -a -m 'Create release $(version)' && \
+    git tag -a 'v$(version)' -m 'Release $(version)'
 
 push-release:
 	git push --follow-tags

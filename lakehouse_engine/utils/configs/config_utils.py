@@ -1,4 +1,5 @@
 """Module to read configurations."""
+
 import importlib.resources
 from typing import Any, Optional, Union
 

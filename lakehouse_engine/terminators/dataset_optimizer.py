@@ -1,4 +1,5 @@
 """Module with dataset optimizer terminator."""
+
 from typing import List, Optional
 
 from pyspark.sql.utils import AnalysisException, ParseException

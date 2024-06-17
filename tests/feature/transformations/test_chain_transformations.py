@@ -1,4 +1,5 @@
 """Test chain transformer."""
+
 from typing import Any
 
 import pytest
