@@ -4,3 +4,11 @@ notif_disallowed_email_servers:
 engine_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
 engine_dev_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
 collect_engine_usage: disabled
+dq_functions_column_list:
+  - dq_rule_id
+  - execution_point
+  - filters
+  - schema
+  - table
+  - column
+  - dimension

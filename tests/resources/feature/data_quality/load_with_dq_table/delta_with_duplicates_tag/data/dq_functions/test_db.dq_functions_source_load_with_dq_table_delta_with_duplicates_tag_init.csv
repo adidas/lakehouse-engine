@@ -1,0 +1,6 @@
+dq_rule_id|dq_tech_function|execution_point|schema|table|column|arguments
+rule_1|expect_table_row_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 19, "max_value": 19}
+rule_2|expect_table_column_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 12, "max_value": 12}
+rule_3|expect_multicolumn_sum_to_equal|in_motion|test_db|dummy_sales|salesorder,request|{"column_list": ["salesorder", "request"], "sum_total": 5}
+rule_4|expect_wrong_expectation|at_rest|test_db|no_table|amount|{"min_value": 3, "max_value": 11}
+rule_5|expect_multicolumn_sum_to_equal|in_motion|test_db|dummy_sales|salesorder,request|{"column_list": ["salesorder", "request"], "sum_total": 5}

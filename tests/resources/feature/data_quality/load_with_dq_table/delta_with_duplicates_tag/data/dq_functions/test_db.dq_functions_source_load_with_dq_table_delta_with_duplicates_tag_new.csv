@@ -1,0 +1,8 @@
+dq_rule_id|dq_tech_function|execution_point|schema|table|column|arguments
+rule_1|expect_table_row_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 9, "max_value": 9}
+rule_2|expect_table_column_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 12, "max_value": 12}
+rule_3|expect_column_values_to_be_in_set|in_motion|test_db|dummy_sales|salesorder|{"column": "salesorder", "value_set": [1, 2, 3, 4, 5]}
+rule_4|expect_column_value_lengths_to_be_between|in_motion|test_db|dummy_sales|amount|{"column": "amount", "min_value": 3, "max_value": 3}
+rule_5|expect_column_to_exist|in_motion|test_db|dummy_sales|fake_column|{"column": "fake_column"}
+rule_6|expect_column_pair_values_to_be_equal|in_motion|test_db|dummy_sales|datapakid, partno|{"column_A": "datapakid", "column_B": "partno"}
+rule_7|expect_wrong_expectation|at_rest|test_db|no_table|amount|{"min_value": 3, "max_value": 11}

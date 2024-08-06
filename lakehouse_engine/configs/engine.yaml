@@ -1,1 +1,9 @@
 dq_bucket: s3://sample-bucket
+dq_functions_column_list:
+  - dq_rule_id
+  - execution_point
+  - filters
+  - schema
+  - table
+  - column
+  - dimension

@@ -1,0 +1,65 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/custom_expectations/expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b/data",
+      "schema": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "VBELN",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "EDATU",
+            "type": "date",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "MBDAT",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "ERDAT",
+            "type": "date",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "ERDATA",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "BPDAT",
+            "type": "date",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      }
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "sales_source",
+      "write_type": "append",
+      "data_format": "delta",
+      "db_table": "test_db.dq_sales",
+      "location": "file:///app/tests/lakehouse/out/feature/custom_expectations/expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b/data"
+    }
+  ]
+}

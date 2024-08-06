@@ -160,7 +160,7 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
-    ) -> dict:
+    ) -> Any:
         """Custom implementation of the GE _validate method.
 
         This method is used on the tests to validate both the result
@@ -178,7 +178,14 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        return validate_result(self, configuration, metrics)
+        return validate_result(
+            self,
+            configuration,
+            metrics,
+            runtime_configuration,
+            execution_engine,
+            MulticolumnMapExpectation,
+        )
 
 
 if __name__ == "__main__":

@@ -46,7 +46,6 @@ class ConfigUtils(object):
         acon = (
             acon if acon else ConfigUtils.read_json_acon(acon_path, disable_dbfs_retry)
         )
-        cls._LOGGER.info(f"Read Algorithm Configuration: {str(acon)}")
         return acon
 
     @staticmethod

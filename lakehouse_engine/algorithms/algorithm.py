@@ -39,6 +39,8 @@ class Algorithm(Executable):
             input_id=spec["input_id"],
             dq_type=spec["dq_type"],
             dq_functions=[],
+            dq_db_table=spec.get("dq_db_table"),
+            execution_point=spec.get("execution_point"),
             unexpected_rows_pk=spec.get(
                 "unexpected_rows_pk", DQSpec.unexpected_rows_pk
             ),

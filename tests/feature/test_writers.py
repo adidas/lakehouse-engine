@@ -11,7 +11,9 @@ import logging
 import os
 import random
 import string
+from collections import namedtuple
 from typing import Any, Optional, OrderedDict
+from unittest.mock import patch
 
 import pytest
 from pyspark.sql import DataFrame
@@ -67,6 +69,30 @@ def test_write_to_files(scenario: dict) -> None:
     )
 
     assert not DataframeHelpers.has_diff(result_df, control_df)
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        {"scenario_name": "write_batch_rest_api"},
+        {"scenario_name": "write_streaming_rest_api"},
+    ],
+)
+def test_write_to_rest_api(scenario: dict) -> None:
+    """Test rest api writer.
+
+    Args:
+        scenario: scenario to test.
+    """
+    _prepare_files()
+
+    RestResponse = namedtuple("RestResponse", "status_code text")
+
+    with patch(
+        "lakehouse_engine.io.writers.rest_api_writer.execute_api_request",
+        return_value=RestResponse(status_code=200, text="ok"),
+    ):
+        load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
 
 
 @pytest.mark.parametrize(

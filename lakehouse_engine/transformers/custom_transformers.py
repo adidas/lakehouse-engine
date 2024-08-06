@@ -2,6 +2,8 @@
 
 from typing import Callable
 
+from pyspark.sql import DataFrame
+
 
 class CustomTransformers(object):
     """Class representing a CustomTransformers."""
@@ -35,3 +37,26 @@ class CustomTransformers(object):
 
         """
         return custom_transformer
+
+    @staticmethod
+    def sql_transformation(sql: str) -> Callable:
+        """Execute a SQL transformation provided by the user.
+
+        This transformer can be very useful whenever the user wants to perform
+        SQL-based transformations that are not natively supported by the
+        lakehouse engine transformers.
+
+        Args:
+            sql: the SQL query to be executed. This can read from any table or
+                view from the catalog, or any dataframe registered as a temp
+                view.
+
+        Returns:
+            Callable: A function to be called in .transform() spark function.
+
+        """
+
+        def inner(df: DataFrame) -> DataFrame:
+            return df.sparkSession.sql(sql)
+
+        return inner

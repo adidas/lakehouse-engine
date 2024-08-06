@@ -18,6 +18,7 @@ from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
 from lakehouse_engine.core.table_manager import TableManager
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.terminators.sensor_terminator import SensorTerminator
+from lakehouse_engine.utils.acon_utils import validate_and_resolve_acon
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.engine_usage_stats import EngineUsageStats
 
@@ -38,11 +39,14 @@ def load_data(
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
-    acon = ConfigUtils.get_acon(acon_path, acon)
-    ExecEnv.get_or_create(app_name="data_loader", config=acon.get("exec_env", None))
-    EngineUsageStats.store_engine_usage(
-        acon, load_data.__name__, collect_engine_usage, spark_confs
-    )
+    try:
+        acon = ConfigUtils.get_acon(acon_path, acon)
+        ExecEnv.get_or_create(app_name="data_loader", config=acon.get("exec_env", None))
+        acon = validate_and_resolve_acon(acon, "in_motion")
+    finally:
+        EngineUsageStats.store_engine_usage(
+            acon, load_data.__name__, collect_engine_usage, spark_confs
+        )
     return DataLoader(acon).execute()
 
 
@@ -62,11 +66,16 @@ def execute_reconciliation(
         spark_confs: optional dictionary with the spark confs to be used when collecting
             the engine usage.
     """
-    acon = ConfigUtils.get_acon(acon_path, acon)
-    ExecEnv.get_or_create(app_name="reconciliator", config=acon.get("exec_env", None))
-    EngineUsageStats.store_engine_usage(
-        acon, execute_reconciliation.__name__, collect_engine_usage, spark_confs
-    )
+    try:
+        acon = ConfigUtils.get_acon(acon_path, acon)
+        ExecEnv.get_or_create(
+            app_name="reconciliator", config=acon.get("exec_env", None)
+        )
+        acon = validate_and_resolve_acon(acon)
+    finally:
+        EngineUsageStats.store_engine_usage(
+            acon, execute_reconciliation.__name__, collect_engine_usage, spark_confs
+        )
     Reconciliator(acon).execute()
 
 
@@ -88,11 +97,16 @@ def execute_dq_validation(
     """
     from lakehouse_engine.algorithms.dq_validator import DQValidator
 
-    acon = ConfigUtils.get_acon(acon_path, acon)
-    ExecEnv.get_or_create(app_name="dq_validator", config=acon.get("exec_env", None))
-    EngineUsageStats.store_engine_usage(
-        acon, execute_dq_validation.__name__, collect_engine_usage, spark_confs
-    )
+    try:
+        acon = ConfigUtils.get_acon(acon_path, acon)
+        ExecEnv.get_or_create(
+            app_name="dq_validator", config=acon.get("exec_env", None)
+        )
+        acon = validate_and_resolve_acon(acon, "at_rest")
+    finally:
+        EngineUsageStats.store_engine_usage(
+            acon, execute_dq_validation.__name__, collect_engine_usage, spark_confs
+        )
     DQValidator(acon).execute()
 
 

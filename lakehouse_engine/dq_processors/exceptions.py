@@ -11,3 +11,9 @@ class DQCheckpointsResultsException(Exception):
     """Exception for when the checkpoint results parsing fail."""
 
     pass
+
+
+class DQSpecMalformedException(Exception):
+    """Exception for when the DQSpec is malformed."""
+
+    pass

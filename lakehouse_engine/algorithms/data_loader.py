@@ -9,6 +9,7 @@ from lakehouse_engine.algorithms.algorithm import Algorithm
 from lakehouse_engine.core.definitions import (
     DQFunctionSpec,
     DQSpec,
+    DQType,
     InputSpec,
     MergeOptions,
     OutputFormat,
@@ -154,9 +155,8 @@ class DataLoader(Algorithm):
                 df_processed_df = dq_processed_dfs[spec.input_id]
                 self._logger.info(f"Found data quality specification: {spec}")
                 if (
-                    spec.dq_functions
-                    and spec.spec_id not in self._streaming_micro_batch_dq_plan
-                ):
+                    spec.dq_type == DQType.PRISMA.value or spec.dq_functions
+                ) and spec.spec_id not in self._streaming_micro_batch_dq_plan:
                     if spec.cache_df:
                         df_processed_df.cache()
                     dq_processed_dfs[spec.spec_id] = DQFactory.run_dq_process(
@@ -326,6 +326,7 @@ class DataLoader(Algorithm):
 
         dq_specs = []
         for spec in self.acon.get("dq_specs", []):
+
             dq_spec, dq_functions, critical_functions = Algorithm.get_dq_spec(spec)
 
             if prev_spec_read_types[dq_spec.input_id] == ReadType.STREAMING.value:

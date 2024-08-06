@@ -114,6 +114,40 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "input_type": "dataframe_reader",
             "custom_expectation_result": "success",
         },
+        {
+            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",  # noqa: E501
+            "arguments": {"column_A": "EDATU", "column_B": "ERDAT"},
+            "read_type": "streaming",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
+        {
+            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",  # noqa: E501
+            "arguments": {"column_A": "MBDAT", "column_B": "ERDATA"},
+            "read_type": "batch",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
+        {
+            "expectation_name": "expect_column_pair_a_to_be_not_equal_to_b",
+            "arguments": {
+                "column_A": "group_article",
+                "column_B": "article_number",
+            },
+            "read_type": "streaming",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
+        {
+            "expectation_name": "expect_column_pair_a_to_be_not_equal_to_b",
+            "arguments": {
+                "column_A": "group_article",
+                "column_B": "article_number",
+            },
+            "read_type": "batch",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
     ],
 )
 def test_custom_expectation(scenario: dict, caplog: Any) -> None:

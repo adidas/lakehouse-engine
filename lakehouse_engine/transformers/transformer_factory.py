@@ -63,6 +63,7 @@ class TransformerFactory(object):
         "rename": ColumnReshapers.rename,
         "repartition": Repartitioners.repartition,
         "replace_nulls": NullHandlers.replace_nulls,
+        "sql_transformation": CustomTransformers.sql_transformation,
         "to_json": ColumnReshapers.to_json,
         "union": Unions.union,
         "union_by_name": Unions.union_by_name,

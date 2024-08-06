@@ -1,3 +1,3 @@
-checkpoint_config|run_name|run_time|run_results|success|validation_result_identifier|spec_id|input_id
-checkpoint_config|20220612-221423-validator-sales_orders-checkpoint|2022-06-12T22:14:23.625852+00:00|run_results_for_all_expectations|true|validation_result_identifier|dq_success|sales_orders
-checkpoint_config2|20220613-221423-validator-sales_orders-checkpoint2|2022-06-12T22:14:23.625852+00:00|run_results_for_all_expectations2|false|validation_result_identifier|dq_failure_error_disabled|sales_orders
+checkpoint_config|run_name|run_time|run_results|success|validation_result_identifier|spec_id|input_id|source_primary_key|processed_keys
+checkpoint_config|20220612-221423-validator-sales_orders-checkpoint|2022-06-12T22:14:23.625852+00:00|run_results_for_all_expectations|true|validation_result_identifier|dq_success|sales_orders|["salesorder", "item", "date", "customer"]|
+checkpoint_config2|20220613-221423-validator-sales_orders-checkpoint2|2022-06-12T22:14:23.625852+00:00|run_results_for_all_expectations2|false|validation_result_identifier|dq_failure_error_disabled|sales_orders|["salesorder", "item", "date", "customer"]|

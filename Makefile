@@ -117,7 +117,7 @@ lint:
         -v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'flake8 --docstring-convention google --config=cicd/flake8.conf lakehouse_engine tests cicd/code_doc/render_doc.py \
-		&& mypy lakehouse_engine tests'
+		&& mypy --no-incremental lakehouse_engine tests'
 
 # useful to print and use make variables. Usage: make print-variable var=variable_to_print.
 print-variable:
@@ -218,7 +218,7 @@ upgrade-lock-files:
 	    -w /app \
 	    -v "$$PWD":/app \
 	    $(image_name):$(version) \
-	    /bin/bash -c 'cd cicd && pip-compile --resolver=backtracking --upgrade $(cicd_requirements) && \
+	    /bin/bash -c 'cd cicd && pip-compile --resolver=backtracking --upgrade $(full_requirements) && \
 	    pip-compile --resolver=backtracking --upgrade $(requirements) && \
 	    pip-compile --resolver=backtracking --upgrade $(os_requirements) && \
 	    pip-compile --resolver=backtracking --upgrade $(dq_requirements) && \
@@ -296,19 +296,19 @@ deploy-to-pypi-and-clean: deploy-to-pypi
 ##### Release Targets #####
 ###########################
 create-changelog:
-	echo "# Changelog - $(shell date +"%Y-%m-%d") v$(version)" > CHANGELOG.md && \
+	echo "# Changelog - $(shell date +"%Y-%m-%d") v$(shell cat cicd/.bumpversion.cfg | grep "current_version =" | cut -f 3 -d " ")" > CHANGELOG.md && \
 	echo "All notable changes to this project will be documented in this file automatically. This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md && \
 	echo "" >> CHANGELOG.md && \
 	git log --no-decorate --pretty=format:"#### [%cs] [%(describe)]%n [%h]($(commits_url)%H) %s" -n 1000 >> CHANGELOG.md
 
-bump-up-version: create-changelog
+bump-up-version:
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'bump2version --config-file cicd/.bumpversion.cfg $(increment)'
 
-prepare-release: bump-up-version
+prepare-release: bump-up-version create-changelog
 	echo "Prepared version and changelog to release!"
 
 commit-release:

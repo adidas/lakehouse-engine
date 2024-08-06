@@ -19,7 +19,10 @@ from great_expectations.data_context.types.base import (
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
     array,
+    coalesce,
     col,
+    collect_list,
+    concat_ws,
     dayofmonth,
     explode,
     from_json,
@@ -93,7 +96,10 @@ class DQFactory(object):
 
         batch_request = cls._get_batch_request(dq_spec, data)
 
-        if dq_spec.dq_type == DQType.VALIDATOR.value:
+        if (
+            dq_spec.dq_type == DQType.VALIDATOR.value
+            or dq_spec.dq_type == DQType.PRISMA.value
+        ):
             Validator.get_dq_validator(
                 context,
                 batch_request,
@@ -106,6 +112,21 @@ class DQFactory(object):
             results, results_df = cls._configure_and_run_checkpoint(
                 dq_spec, context, batch_request, expectation_suite_name, source_pk
             )
+
+            if dq_spec.dq_type == DQType.PRISMA.value:
+
+                results_df = results_df.withColumn("source_primary_key", lit(source_pk))
+
+                processed_keys_df = data.select(
+                    concat_ws(
+                        ", ", *[coalesce(col(c), lit("null")) for c in source_pk]
+                    ).alias("combined_pk")
+                )
+                processed_keys_df = processed_keys_df.agg(
+                    concat_ws("||", collect_list("combined_pk")).alias("processed_keys")
+                )
+
+                results_df = results_df.join(processed_keys_df, lit(1) == lit(1))
 
             cls._write_to_result_sink(dq_spec, results_df)
 
@@ -500,7 +521,7 @@ class DQFactory(object):
             )
 
             if (
-                dq_spec.max_percentage_failure
+                dq_spec.max_percentage_failure is not None
                 and dq_spec.max_percentage_failure < percentage_failure
             ):
                 raise DQValidationsFailedException(
@@ -508,6 +529,7 @@ class DQFactory(object):
                     f"Expected: {dq_spec.max_percentage_failure} "
                     f"Got: {percentage_failure}"
                 )
+
         return failed_expectations
 
     @classmethod

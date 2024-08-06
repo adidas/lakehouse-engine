@@ -1,0 +1,41 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "VBELN",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "EDATU",
+      "type": "date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "MBDAT",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "ERDAT",
+      "type": "date",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "ERDATA",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "BPDAT",
+      "type": "date",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

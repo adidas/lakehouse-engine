@@ -1,5 +1,6 @@
 """Module to take care of creating a singleton of the execution environment class."""
 
+import ast
 import os
 
 from pyspark.sql import SparkSession
@@ -104,3 +105,21 @@ class ExecEnv(object):
             os.environ["AWS_DEFAULT_REGION"] = cls.SESSION.conf.get(
                 "spark.databricks.clusterUsageTags.region", cls.DEFAULT_AWS_REGION
             )
+
+    @classmethod
+    def get_environment(cls) -> str:
+        """Get the environment where the process is running.
+
+        Returns:
+            Name of the environment.
+        """
+        tag_array = ast.literal_eval(
+            cls.SESSION.conf.get(
+                "spark.databricks.clusterUsageTags.clusterAllTags", "[]"
+            )
+        )
+
+        for key_val in tag_array:
+            if key_val["key"] == "environment":
+                return str(key_val["value"])
+        return "prod"

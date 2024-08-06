@@ -186,7 +186,7 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
-    ) -> dict:
+    ) -> Any:
         """Custom implementation of the GE _validate method.
 
         This method is used on the tests to validate both the result
@@ -204,7 +204,14 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        return validate_result(self, configuration, metrics)
+        return validate_result(
+            self,
+            configuration,
+            metrics,
+            runtime_configuration,
+            execution_engine,
+            ColumnMapExpectation,
+        )
 
 
 """Mandatory block of code. If it is removed the expectation will not be available."""

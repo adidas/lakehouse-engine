@@ -1,0 +1,47 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/data_quality/load_with_dq_table/full_overwrite_tag/data"
+    }
+  ],
+  "dq_specs": [
+    {
+      "spec_id": "dq_validator",
+      "input_id": "sales_source",
+      "dq_type": "prisma",
+      "dq_db_table": "test_db.dq_functions_source_load_with_dq_table_full_overwrite_tag_init",
+      "store_backend": "file_system",
+      "local_fs_root_dir": "/app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/full_overwrite_tag/dq",
+      "result_sink_format": "delta",
+      "result_sink_extra_columns": ["validation_results.result.*"],
+      "source": "sales",
+      "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
+      "dq_table_table_filter": "dummy_sales",
+      "tag_source_data": true,
+      "data_product_name": "full_overwrite_tag"
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "dq_validator",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "partitions": [
+        "date",
+        "customer"
+      ],
+      "location": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/full_overwrite_tag/data"
+    }
+  ],
+  "exec_env": {
+    "spark.sql.sources.partitionColumnTypeInference.enabled": false
+  }
+}

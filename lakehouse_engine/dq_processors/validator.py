@@ -143,6 +143,7 @@ class Validator(object):
         Returns: the source_df tagged with the row level failures.
         """
         if "unexpected_index_list" in failures_df.schema.simpleString():
+
             row_failures_df = (
                 failures_df.alias("a")
                 .withColumn("exploded_list", explode(col("unexpected_index_list")))

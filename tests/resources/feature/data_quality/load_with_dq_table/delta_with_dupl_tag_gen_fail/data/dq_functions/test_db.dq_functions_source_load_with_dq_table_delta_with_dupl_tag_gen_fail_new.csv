@@ -1,0 +1,5 @@
+dq_rule_id|dq_tech_function|execution_point|schema|table|column|arguments
+rule_1|expect_table_row_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 9, "max_value": 9}
+rule_2|expect_table_column_count_to_be_between|in_motion|test_db|dummy_sales||{"min_value": 12, "max_value": 12}
+rule_3|expect_column_to_exist|in_motion|test_db|dummy_sales|fake_column|{"column": "fake_column"}
+rule_4|expect_wrong_expectation|at_rest|test_db|no_table|amount|{"min_value": 3, "max_value": 11}

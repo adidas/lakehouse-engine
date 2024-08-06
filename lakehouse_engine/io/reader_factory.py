@@ -29,26 +29,31 @@ class ReaderFactory(ABC):  # noqa: B024
             A dataframe containing the data.
         """
         if spec.db_table:
-            return TableReader(input_spec=spec).read()
+            read_df = TableReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.JDBC.value:
-            return JDBCReader(input_spec=spec).read()
+            read_df = JDBCReader(input_spec=spec).read()
         elif spec.data_format in FILE_INPUT_FORMATS:
-            return FileReader(input_spec=spec).read()
+            read_df = FileReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.KAFKA.value:
-            return KafkaReader(input_spec=spec).read()
+            read_df = KafkaReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SQL.value:
-            return QueryReader(input_spec=spec).read()
+            read_df = QueryReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SAP_BW.value:
-            return SAPBWReader(input_spec=spec).read()
+            read_df = SAPBWReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SAP_B4.value:
-            return SAPB4Reader(input_spec=spec).read()
+            read_df = SAPB4Reader(input_spec=spec).read()
         elif spec.data_format == InputFormat.DATAFRAME.value:
-            return DataFrameReader(input_spec=spec).read()
+            read_df = DataFrameReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SFTP.value:
             from lakehouse_engine.io.readers.sftp_reader import SFTPReader
 
-            return SFTPReader(input_spec=spec).read()
+            read_df = SFTPReader(input_spec=spec).read()
         else:
             raise NotImplementedError(
                 f"The requested input spec format {spec.data_format} is not supported."
             )
+
+        if spec.temp_view:
+            read_df.createOrReplaceTempView(spec.temp_view)
+
+        return read_df

@@ -72,6 +72,7 @@ class LoggingHandler(object):
     def get_logger(self) -> logging.Logger:
         """Get the _logger instance variable.
 
-        :return logging.Logger: the logger object.
+        Returns:
+            logging.Logger: the logger object.
         """
         return self._logger

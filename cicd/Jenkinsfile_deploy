@@ -161,7 +161,7 @@ pipeline {
                             <pre>
                             ${release_notes}
                             </pre><BR>
-                            For more details, please check the complete changelog and/or the additional resources listed below: 
+                            For more details, please check the complete changelog and/or the additional resources listed below:
                             <ul>
                               <li>${params["changelog_url"]}</li>
                               <li>${params["code_url"]}</li>

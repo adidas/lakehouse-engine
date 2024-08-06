@@ -47,6 +47,22 @@
       "name": "input_id",
       "nullable": true,
       "type": "string"
+    },
+    {
+      "metadata": {},
+      "name": "source_primary_key",
+      "nullable": true,
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {},
+      "name": "processed_keys",
+      "nullable": true,
+      "type": "string"
     }
   ],
   "type": "struct"

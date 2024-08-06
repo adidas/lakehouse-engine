@@ -1,0 +1,77 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sales_source",
+      "read_type": "streaming",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/data_quality/load_with_dq_table/delta_with_duplicates_tag/data"
+    }
+  ],
+  "transform_specs": [
+    {
+      "spec_id": "condensed_sales",
+      "input_id": "sales_source",
+      "transformers": [
+        {
+          "function": "condense_record_mode_cdc",
+          "args": {
+            "business_key": [
+              "salesorder",
+              "item"
+            ],
+            "ranking_key_desc": [
+              "actrequest_timestamp",
+              "datapakid",
+              "partno",
+              "record"
+            ],
+            "record_mode_col": "recordmode",
+            "valid_record_modes": [
+              "",
+              "N",
+              "R",
+              "D",
+              "X"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "dq_specs": [
+    {
+      "spec_id": "dq_validator",
+      "input_id": "condensed_sales",
+      "dq_type": "prisma",
+      "dq_db_table": "test_db.dq_functions_source_load_with_dq_table_delta_with_duplicates_tag_init",
+      "cache_df": true,
+      "store_backend": "file_system",
+      "local_fs_root_dir": "/app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/delta_with_duplicates_tag/dq",
+      "result_sink_format": "delta",
+      "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
+      "dq_table_table_filter": "dummy_sales",
+      "tag_source_data": true,
+      "source": "condensed_sales",
+      "data_product_name": "delta_with_duplicates_tag"
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sales_bronze",
+      "input_id": "dq_validator",
+      "write_type": "overwrite",
+      "data_format": "delta",
+      "location": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/delta_with_duplicates_tag/data",
+      "options": {
+        "checkpointLocation": "file:///app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/delta_with_duplicates_tag/checkpoint"
+      }
+    }
+  ],
+  "exec_env": {
+    "spark.sql.streaming.schemaInference": true
+  }
+}

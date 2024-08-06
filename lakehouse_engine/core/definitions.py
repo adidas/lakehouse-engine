@@ -36,20 +36,25 @@ class CollectEngineUsage(Enum):
 class EngineConfig(object):
     """Definitions that can come from the Engine Config file.
 
-    - dq_bucket: S3 bucket used to store data quality related artifacts.
+    - dq_bucket: S3 prod bucket used to store data quality related artifacts.
+    - dq_dev_bucket: S3 dev bucket used to store data quality related artifacts.
     - notif_disallowed_email_servers: email servers not allowed to be used
         for sending notifications.
     - engine_usage_path: path where the engine prod usage stats are stored.
     - engine_dev_usage_path: path where the engine dev usage stats are stored.
     - collect_engine_usage: whether to enable the collection of lakehouse
         engine usage stats or not.
+    - dq_functions_column_list: list of columns to be added to the meta argument
+        of GX when using PRISMA.
     """
 
     dq_bucket: Optional[str] = None
+    dq_dev_bucket: Optional[str] = None
     notif_disallowed_email_servers: Optional[list] = None
     engine_usage_path: Optional[str] = None
     engine_dev_usage_path: Optional[str] = None
     collect_engine_usage: str = CollectEngineUsage.ENABLED.value
+    dq_functions_column_list: Optional[list] = None
 
 
 class EngineStats(Enum):
@@ -135,8 +140,30 @@ class OutputFormat(Enum):
     CONSOLE = "console"
     NOOP = "noop"
     DATAFRAME = "dataframe"
+    REST_API = "rest_api"
     FILE = "file"  # Internal use only
     TABLE = "table"  # Internal use only
+
+    @classmethod
+    def values(cls):  # type: ignore
+        """Generates a list containing all enum values.
+
+        Return:
+            A list with all enum values.
+        """
+        return (c.value for c in cls)
+
+    @classmethod
+    def exists(cls, output_format: str) -> bool:
+        """Checks if the output format exists in the enum values.
+
+        Args:
+            output_format: format to check if exists.
+
+        Return:
+            If the output format exists in our enum.
+        """
+        return output_format in cls.values()
 
 
 # Formats of output that are considered files.
@@ -213,6 +240,8 @@ class DQDefaults(Enum):
         "expect_column_pair_a_to_be_smaller_or_equal_than_b",
         "expect_multicolumn_column_a_must_equal_b_or_c",
         "expect_queried_column_agg_value_to_be",
+        "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",
+        "expect_column_pair_a_to_be_not_equal_to_b",
     ]
     DQ_VALIDATIONS_SCHEMA = StructType(
         [
@@ -287,6 +316,8 @@ class InputSpec(object):
     - calc_upper_bound_schema: specific schema for the calculated upper_bound.
     - generate_predicates: when to generate predicates to extract from SAP BW or not.
     - predicates_add_null: if we want to include is null on partition by predicates.
+    - temp_view: optional name of a view to point to the input dataframe to be used
+        to create or replace a temp view on top of the dataframe.
     """
 
     spec_id: str
@@ -308,6 +339,7 @@ class InputSpec(object):
     calc_upper_bound_schema: Optional[str] = None
     generate_predicates: bool = False
     predicates_add_null: bool = True
+    temp_view: Optional[str] = None
 
 
 @dataclass
@@ -350,6 +382,20 @@ class DQType(Enum):
     """Available data quality tasks."""
 
     VALIDATOR = "validator"
+    PRISMA = "prisma"
+
+
+class DQExecutionPoint(Enum):
+    """Available data quality execution points."""
+
+    IN_MOTION = "in_motion"
+    AT_REST = "at_rest"
+
+
+class DQTableBaseParameters(Enum):
+    """Base parameters for importing DQ rules from a table."""
+
+    PRISMA_BASE_PARAMETERS = ["arguments", "dq_tech_function"]
 
 
 @dataclass
@@ -373,6 +419,13 @@ class DQSpec(object):
     - input_id - id of the input specification.
     - dq_type - type of DQ process to execute (e.g. validator).
     - dq_functions - list of function specifications to execute.
+    - dq_db_table - name of table to derive the dq functions from.
+    - dq_table_table_filter - name of the table which rules are to be applied in the
+        validations (Only used when deriving dq functions).
+    - dq_table_extra_filters - extra filters to be used when deriving dq functions.
+        This is a sql expression to be applied to the dq_db_table.
+    - execution_point - execution point of the dq functions. [at_rest, in_motion].
+        This is set during the load_data or dq_validator functions.
     - unexpected_rows_pk - the list of columns composing the primary key of the
         source data to identify the rows failing the DQ validations. Note: only one
         of tbl_to_derive_pk or unexpected_rows_pk arguments need to be provided. It
@@ -417,6 +470,7 @@ class DQSpec(object):
         to save the results of the DQ process.
     - result_sink_location - file system location in which to save the results of the
         DQ process.
+    - data_product_name - name of the data product.
     - result_sink_partitions - the list of partitions to consider.
     - result_sink_format - format of the result table (e.g. delta, parquet, kafka...).
     - result_sink_options - extra spark options for configuring the result sink.
@@ -442,6 +496,10 @@ class DQSpec(object):
     input_id: str
     dq_type: str
     dq_functions: Optional[List[DQFunctionSpec]] = None
+    dq_db_table: Optional[str] = None
+    dq_table_table_filter: Optional[str] = None
+    dq_table_extra_filters: Optional[str] = None
+    execution_point: Optional[str] = None
     unexpected_rows_pk: Optional[List[str]] = None
     tbl_to_derive_pk: Optional[str] = None
     gx_result_format: Optional[str] = "COMPLETE"
@@ -459,6 +517,7 @@ class DQSpec(object):
     expectation_suite_name: Optional[str] = None
     result_sink_db_table: Optional[str] = None
     result_sink_location: Optional[str] = None
+    data_product_name: Optional[str] = None
     result_sink_partitions: Optional[List[str]] = None
     result_sink_format: str = OutputFormat.DELTAFILES.value
     result_sink_options: Optional[dict] = None

@@ -1,0 +1,3 @@
+dq_rule_id|dq_check_type|dq_tech_function|execution_point|schema|table|column|filters|arguments
+rule_1|COLUMN EXISTS|expect_column_to_exist|at_rest|test_db|dummy_sales|article||{"column": "article"}
+rule_2|ROW COUNT|expect_table_row_count_to_be_between|at_rest|test_db|dummy_sales|||{"min_value": 0, "max_value": 50}

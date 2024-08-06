@@ -150,6 +150,58 @@
     },
     {
       "metadata": {},
+      "name": "meta",
+      "nullable": true,
+      "type": {
+        "fields": [
+          {
+            "metadata": {},
+            "name": "column",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "dq_check_type",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "dq_rule_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "execution_point",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "filters",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "schema",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "metadata": {},
+            "name": "table",
+            "nullable": true,
+            "type": "string"
+          }
+        ],
+        "type": "struct"
+      }
+    },
+    {
+      "metadata": {},
       "name": "observed_value",
       "nullable": true,
       "type": "long"
@@ -175,6 +227,22 @@
     {
       "metadata": {},
       "name": "kwargs",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {},
+      "name": "source_primary_key",
+      "nullable": true,
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {},
+      "name": "processed_keys",
       "nullable": true,
       "type": "string"
     }

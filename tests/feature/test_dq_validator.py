@@ -7,6 +7,7 @@ import pytest
 from pyspark.sql import DataFrame
 from pyspark.sql.utils import StreamingQueryException
 
+from lakehouse_engine.core.definitions import DQType
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
 from lakehouse_engine.engine import execute_dq_validation, load_data
@@ -18,6 +19,7 @@ from tests.conftest import (
     LAKEHOUSE_FEATURE_OUT,
 )
 from tests.utils.dataframe_helpers import DataframeHelpers
+from tests.utils.dq_rules_table_utils import _create_dq_functions_source_table
 from tests.utils.local_storage import LocalStorage
 
 TEST_NAME = "dq_validator"
@@ -31,6 +33,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
     "scenario",
     [
         {
+            "name": "batch_dataframe_success",
             "read_type": "batch",
             "input_type": "dataframe_reader",
             "dq_validator_result": "success",
@@ -40,6 +43,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_dataframe_failure",
             "read_type": "streaming",
             "input_type": "dataframe_reader",
             "dq_validator_result": "failure",
@@ -49,6 +53,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure_disabled",
             "read_type": "streaming",
             "input_type": "table_reader",
             "dq_validator_result": "failure_disabled",
@@ -58,6 +63,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "batch_failure",
             "read_type": "batch",
             "input_type": "table_reader",
             "dq_validator_result": "failure",
@@ -67,6 +73,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure",
             "read_type": "streaming",
             "input_type": "file_reader",
             "dq_validator_result": "failure",
@@ -76,6 +83,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure_critical",
             "read_type": "streaming",
             "input_type": "file_reader",
             "dq_validator_result": "failure",
@@ -90,6 +98,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure_critical_notes",
             "read_type": "streaming",
             "input_type": "file_reader",
             "dq_validator_result": "failure",
@@ -108,6 +117,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure_critical_markdown",
             "read_type": "streaming",
             "input_type": "file_reader",
             "dq_validator_result": "failure",
@@ -128,6 +138,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "max_percentage_failure": None,
         },
         {
+            "name": "streaming_failure_percentage",
             "read_type": "streaming",
             "input_type": "file_reader",
             "dq_validator_result": "failure",
@@ -135,6 +146,78 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "fail_on_error": True,
             "critical_functions": None,
             "max_percentage_failure": 0.2,
+        },
+        {
+            "name": "table_batch_success",
+            "dq_type": "prisma",
+            "read_type": "batch",
+            "input_type": "file_reader",
+            "dq_validator_result": "success_explode",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_success",
+            "max_percentage_failure": None,
+        },
+        {
+            "name": "table_batch_failure_disabled",
+            "dq_type": "prisma",
+            "read_type": "batch",
+            "input_type": "file_reader",
+            "dq_validator_result": "success_explode_disabled",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_failure",
+            "max_percentage_failure": None,
+        },
+        {
+            "name": "table_streaming_success",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "file_reader",
+            "dq_validator_result": "success_explode",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_success",
+            "max_percentage_failure": None,
+        },
+        {
+            "name": "table_streaming_failure_disabled",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "file_reader",
+            "dq_validator_result": "success_explode_disabled",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_failure",
+            "max_percentage_failure": None,
+        },
+        {
+            "name": "table_batch_dataframe_success",
+            "dq_type": "prisma",
+            "read_type": "batch",
+            "input_type": "dataframe_reader",
+            "dq_validator_result": "success_explode",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_success",
+            "max_percentage_failure": None,
+        },
+        {
+            "name": "table_batch_dataframe_failure_disabled",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "dataframe_reader",
+            "dq_validator_result": "success_explode_disabled",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_functions_source_table_failure",
+            "max_percentage_failure": None,
         },
     ],
 )
@@ -200,7 +283,19 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
                 "location": f"{TEST_LAKEHOUSE_OUT}/data/",
             }
 
-    acon = _generate_acon(input_spec, scenario, "validator")
+    if "dq_db_table" in scenario.keys():
+        _create_dq_functions_source_table(
+            test_resources_path=TEST_RESOURCES,
+            lakehouse_in_path=TEST_LAKEHOUSE_IN,
+            lakehouse_out_path=TEST_LAKEHOUSE_OUT,
+            test_name=scenario["name"],
+            scenario=scenario["read_type"],
+            table_name=scenario["dq_db_table"],
+        )
+
+    acon = _generate_acon(
+        input_spec, scenario, scenario.get("dq_type", DQType.VALIDATOR.value)
+    )
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/data/control/*",
@@ -231,7 +326,10 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
         )
 
     dq_result_df, dq_control_df = _get_result_and_control_dfs(
-        "test_db.dq_validator", f'dq_control_{scenario["dq_validator_result"]}', True
+        result=f"{LAKEHOUSE_FEATURE_OUT}/{scenario['name']}/result_sink/",
+        control=f'dq_control_{scenario["dq_validator_result"]}',
+        infer_schema=True,
+        result_is_table=False,
     )
 
     assert not DataframeHelpers.has_diff(
@@ -328,14 +426,18 @@ def _generate_acon(
     else:
         unexpected_rows_pk = {"tbl_to_derive_pk": "test_db.dq_sales"}
 
-    if dq_type == "validator":
+    if dq_type == DQType.VALIDATOR.value or dq_type == DQType.PRISMA.value:
         dq_spec_add_options = {
-            "result_sink_db_table": "test_db.dq_validator",
+            "result_sink_location": f"{LAKEHOUSE_FEATURE_OUT}/"
+            f"{scenario['name']}/result_sink/",
+            "dq_db_table": scenario.get("dq_db_table"),
+            "dq_table_table_filter": "dummy_sales",
             "result_sink_format": "json",
             "fail_on_error": scenario["fail_on_error"],
             "critical_functions": scenario["critical_functions"],
             "max_percentage_failure": scenario["max_percentage_failure"],
             "result_sink_explode": False,
+            "data_product_name": scenario["name"],
             "dq_functions": [
                 {"function": "expect_column_to_exist", "args": {"column": "article"}},
                 {
@@ -393,21 +495,28 @@ def _generate_dataframe(load_type: str) -> DataFrame:
 
 
 def _get_result_and_control_dfs(
-    table: str, file_name: str, infer_schema: bool
+    result: str, control: str, infer_schema: bool, result_is_table: bool = True
 ) -> Tuple[DataFrame, DataFrame]:
     """Helper to get the result and control dataframes.
 
     Args:
-        table: the table to read from.
-        file_name: the file name to read from.
+        result: the table to read from.
+        control: the file name to read from.
         infer_schema: whether to infer the schema or not.
+        result_is_table: whether the result is a table or a file.
 
     Returns: the result and control dataframes.
     """
-    dq_result_df = DataframeHelpers.read_from_table(table)
+    if result_is_table:
+        dq_result_df = DataframeHelpers.read_from_table(result)
+    else:
+        dq_result_df = DataframeHelpers.read_from_file(
+            location=result,
+            file_format="json",
+        )
 
     dq_control_df = DataframeHelpers.read_from_file(
-        f"{TEST_LAKEHOUSE_CONTROL}/data/{file_name}.csv",
+        f"{TEST_LAKEHOUSE_CONTROL}/data/{control}.csv",
         file_format="csv",
         options={"header": True, "delimiter": "|", "inferSchema": infer_schema},
     )
