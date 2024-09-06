@@ -3,7 +3,7 @@
 
 # You can install the Lakehouse Engine framework with below command just like any other python library,
 # or you can also install it as a cluster-scoped library
-pip install lakehouse_engine
+pip install lakehouse-engine
 
 # The ACON (algorithm configuration) is the way how you can interact with the Lakehouse Engine.
 # Note: don't forget to change locations, buckets and databases to match your environment.

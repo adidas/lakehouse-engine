@@ -65,6 +65,10 @@ can create a custom expectation to make this verification.
 The row tagging strategy allows users to tag the rows that failed to be easier to identify the problems 
 in the validations. [Here you can find all the details and examples](data_quality/row_tagging.html).
 
+### Prisma
+Prisma is part of the Lakehouse Engine DQ Framework, and it allows users to read DQ functions dynamically from a table instead of writing them explicitly in the Acons.
+[Here you can find more information regarding Prisma](data_quality/prisma.html).
+
 ## How to check the results of the Data Quality Process?
 
 ### 1. Table/location analysis

@@ -2,6 +2,7 @@ pipeline {
     parameters {
         string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to use for the deployment process.')
         string(name: 'VERSION', defaultValue: null, description: 'Version to deploy (git tag in master branch without the "v"). E.g., 0.2.0. If you are deploying to dev, from your branch, ignore this.')
+        booleanParam(name: 'SKIP_VALIDATIONS', defaultValue: false, description: 'Whether to skip the validations. Only applicable for feature releases to make them faster.')
         booleanParam(name: 'SKIP_OS_DEPLOYMENT', defaultValue: false, description: 'Whether to skip the OS Deployment related stages or not.')
         booleanParam(name: 'NOTIFY', defaultValue: true, description: 'Whether to notify the release or not.')
     }
@@ -58,6 +59,11 @@ pipeline {
         }
 
         stage('Parallel') {
+            when {
+                expression {
+                    (!params.SKIP_VALIDATIONS && params.BRANCH != 'master')
+                }
+            }
             parallel {
 
                 stage('Lint') {

@@ -20,7 +20,9 @@ logo_path = (
 
 def _get_project_version() -> str:
     version = (
-        os.popen('cat cicd/.bumpversion.cfg | grep current_version | cut -f 3 -d " "')
+        os.popen(
+            "cat cicd/.bumpversion.cfg | grep 'current_version =' | cut -f 3 -d ' '"
+        )
         .read()
         .replace("\n", "")
     )

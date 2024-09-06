@@ -17,12 +17,16 @@ git_tag := $(shell git describe --tags --abbrev=0)
 commits_url := $(shell cat $(meta_conf_file) | grep commits_url | cut -f 2 -d " ")
 
 ifneq ($(project_version), $(version))
-wheel_version := $(project_version)+$(subst _,.,$(version))
-project_name := lakehouse_engine_experimental
+wheel_version := $(project_version)+$(subst _,.,$(subst -,.,$(version)))
+project_name := lakehouse-engine-experimental
 else
 wheel_version := $(version)
-project_name := lakehouse_engine
+project_name := lakehouse-engine
 endif
+
+# Add \ to make reg safe comparisons (e.g. in the perl commands)
+wheel_version_reg_safe := $(subst +,\+,$(subst .,\.,$(wheel_version)))
+project_version_reg_safe := $(subst .,\.,$(project_version))
 
 # Condition to define the Python image to be built based on the machine CPU architecture.
 # The base Python image only changes if the identified CPU architecture is ARM.
@@ -79,20 +83,21 @@ build-image-windows:
         -t $(image_name):$(version) . -f cicd/Dockerfile
 
 # The build target is used to build the wheel package.
-# It makes usage of some `perl` commands to change the project name and the wheel version in the pyproject.toml file,
-# whenever the goal is to build a `project_name` for distribution and testing, instead of an official release.
+# It makes usage of some `perl` commands to change the project wheel version in the pyproject.toml file,
+# whenever the goal is to release a package for testing, instead of an official release.
 # Ex: if you run 'make build-image version=feature-x-1276, and the current project version is 1.20.0, the generated wheel will be: lakehouse_engine_experimental-1.20.0+feature.x.1276-py3-none-any,
 # while for the official 1.20.0 release, the wheel will be: lakehouse_engine-1.20.0-py3-none-any.
 build:
-	perl -pi -e 's/version = "$(project_version)"/version = "$(wheel_version)"/g' pyproject.toml && \
+	perl -pi -e 's/version = "$(project_version_reg_safe)"/version = "$(wheel_version)"/g' pyproject.toml && \
 	perl -pi -e 's/name = "lakehouse-engine"/name = "$(project_name)"/g' pyproject.toml && \
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c 'python -m build --wheel $(build_src_dir)' && \
-	perl -pi -e 's/version = "$(wheel_version)"/version = "$(project_version)"/g' pyproject.toml && \
+	perl -pi -e 's/version = "$(wheel_version_reg_safe)"/version = "$(project_version)"/g' pyproject.toml && \
 	perl -pi -e 's/name = "$(project_name)"/name = "lakehouse-engine"/g' pyproject.toml
+
 
 deploy: build
 	$(container_cli) run --rm \
@@ -100,7 +105,7 @@ deploy: build
 		-v "$$PWD":/app \
 		-v $(artifactory_credentials_file):$(container_user_dir)/.pypirc \
 		$(image_name):$(version) \
-		/bin/bash -c 'twine upload -r artifactory dist/$(project_name)-$(wheel_version)-py3-none-any.whl --skip-existing'
+		/bin/bash -c 'twine upload -r artifactory dist/$(subst -,_,$(project_name))-$(wheel_version)-py3-none-any.whl --skip-existing'
 
 docs:
 	$(container_cli) run --rm \
