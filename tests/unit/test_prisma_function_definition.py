@@ -30,7 +30,8 @@ from lakehouse_engine.utils.dq_utils import DQUtils
             "fields defined"
             ": ['dq_rule_id', 'execution_point', 'filters', 'schema', "
             "'table', 'column', 'dimension'].\n"
-            "Found fields: ['table', 'execution_point']",
+            "Found fields: ['table', 'execution_point'].\n"
+            "Diff: ['column', 'dimension', 'dq_rule_id', 'filters', 'schema']",
         },
         {
             "name": "Error: missing meta",
@@ -65,6 +66,30 @@ from lakehouse_engine.utils.dq_utils import DQUtils
                                 "column": "",
                                 "dimension": "",
                                 "filters": "",
+                            },
+                        },
+                    },
+                ],
+            },
+            "expected": None,
+        },
+        {
+            "name": "Definition of DQ Functions with extra params",
+            "dq_spec": {
+                "dq_functions": [
+                    {
+                        "function": "expect_column_to_exist",
+                        "args": {
+                            "column": "test_column",
+                            "meta": {
+                                "dq_rule_id": "rule_2",
+                                "execution_point": "in_motion",
+                                "schema": "test_db",
+                                "table": "dummy_sales",
+                                "column": "",
+                                "dimension": "",
+                                "filters": "",
+                                "note": "Test Notes",
                             },
                         },
                     },

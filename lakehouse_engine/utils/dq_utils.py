@@ -1,6 +1,5 @@
 """Module containing utils for DQ processing."""
 
-from collections import Counter
 from json import loads
 
 from pyspark.sql.functions import col, from_json, schema_of_json, struct
@@ -148,11 +147,14 @@ class DQUtils:
             else:
 
                 meta = dq_function["args"]["meta"]
-                if Counter(meta.keys()) != Counter(extra_meta_arguments):
+                given_keys = meta.keys()
+                missing_keys = sorted(set(extra_meta_arguments) - set(given_keys))
+                if missing_keys:
                     raise DQSpecMalformedException(
                         "The dq function meta field must contain all the "
                         f"fields defined: {extra_meta_arguments}.\n"
-                        f"Found fields: {list(meta.keys())}"
+                        f"Found fields: {list(given_keys)}.\n"
+                        f"Diff: {list(missing_keys)}"
                     )
                 if execution_point and meta["execution_point"] != execution_point:
                     raise DQSpecMalformedException(
