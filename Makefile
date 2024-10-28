@@ -9,6 +9,7 @@ version := $(project_version)
 system_information := $(shell uname -mvp | tr a-z A-Z)
 meta_conf_file := cicd/meta.yaml
 meta_os_conf_file := cicd/meta_os.yaml
+group_id := $(shell id -g ${USER})
 engine_conf_file := lakehouse_engine/configs/engine.yaml
 engine_os_conf_file := lakehouse_engine/configs/engine_os.yaml
 remove_files_from_os := $(engine_conf_file) $(meta_conf_file) CODEOWNERS sonar-project.properties CONTRIBUTING.md CHANGELOG.md assets/img/os_strategy.png
@@ -71,7 +72,7 @@ endif
 build-image:
 	$(container_cli) build \
 		--build-arg USER_ID=$(shell id -u ${USER}) \
-		--build-arg GROUP_ID=$(shell id -g ${USER}) \
+		--build-arg GROUP_ID=$(group_id)  \
 		--build-arg PYTHON_IMAGE=$(python_image) \
 		--build-arg CPU_ARCHITECTURE=$(cpu_architecture) \
 		-t $(image_name):$(version) . -f cicd/Dockerfile

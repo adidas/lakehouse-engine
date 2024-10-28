@@ -19,9 +19,10 @@ class ExecEnvHelpers(object):
                 "spark.sql.shuffle.partitions": "2",
                 "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
                 "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",  # noqa: E501
-                "spark.jars.packages": "io.delta:delta-core_2.12:2.4.0,org.xerial:sqlite-jdbc:3.34.0,com.databricks:spark-xml_2.12:0.13.0",  # noqa: E501
+                "spark.jars.packages": "io.delta:delta-spark_2.12:3.2.0,org.xerial:sqlite-jdbc:3.45.3.0,com.databricks:spark-xml_2.12:0.18.0",  # noqa: E501
                 "spark.jars.excludes": "net.sourceforge.f2j:arpack_combined_all",
                 "spark.sql.sources.parallelPartitionDiscovery.parallelism": "2",
+                "spark.sql.legacy.charVarcharAsString": True,
             },
         )
 

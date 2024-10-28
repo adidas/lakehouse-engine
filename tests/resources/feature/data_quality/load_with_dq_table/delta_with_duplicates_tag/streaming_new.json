@@ -54,6 +54,7 @@
       "result_sink_format": "delta",
       "tag_source_data": true,
       "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
+      "sort_processed_keys": true,
       "dq_table_table_filter": "dummy_sales",
       "source": "condensed_sales",
       "data_product_name": "delta_with_duplicates_tag"

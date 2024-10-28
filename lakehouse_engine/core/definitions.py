@@ -437,6 +437,10 @@ class DQSpec(object):
         be provided. It is mandatory to provide one of these arguments when using
         tag_source_data as True. hen tag_source_data is False, this is not
         mandatory, but still recommended.
+    - sort_processed_keys - when using the `prisma` `dq_type`, a column `processed_keys`
+        is automatically added to give observability over the PK values that were
+        processed during a run. This parameter (`sort_processed_keys`) controls whether
+        the processed keys column value should be sorted or not. Default: False.
     - gx_result_format - great expectations result format. Default: "COMPLETE".
     - tag_source_data - when set to true, this will ensure that the DQ process ends by
         tagging the source data with an additional column with information about the
@@ -502,6 +506,7 @@ class DQSpec(object):
     execution_point: Optional[str] = None
     unexpected_rows_pk: Optional[List[str]] = None
     tbl_to_derive_pk: Optional[str] = None
+    sort_processed_keys: Optional[bool] = False
     gx_result_format: Optional[str] = "COMPLETE"
     tag_source_data: Optional[bool] = False
     store_backend: str = DQDefaults.STORE_BACKEND.value

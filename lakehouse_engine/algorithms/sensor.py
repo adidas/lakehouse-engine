@@ -14,6 +14,7 @@ from lakehouse_engine.core.definitions import (
     SensorSpec,
     SensorStatus,
 )
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.sensor_manager import (
     SensorControlTableManager,
     SensorUpstreamManager,
@@ -93,6 +94,10 @@ class Sensor(Algorithm):
         """Run sensor in streaming mode (internally runs in batch mode)."""
 
         def foreach_batch_check_new_data(df: DataFrame, batch_id: int) -> None:
+            # forcing session to be available inside forEachBatch on
+            # Spark Connect
+            ExecEnv.get_or_create()
+
             Sensor._run_batch_sensor(
                 sensor_spec=sensor_spec,
                 new_data_df=df,

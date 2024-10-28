@@ -46,6 +46,9 @@ class Algorithm(Executable):
             ),
             gx_result_format=spec.get("gx_result_format", DQSpec.gx_result_format),
             tbl_to_derive_pk=spec.get("tbl_to_derive_pk", DQSpec.tbl_to_derive_pk),
+            sort_processed_keys=spec.get(
+                "sort_processed_keys", DQSpec.sort_processed_keys
+            ),
             tag_source_data=spec.get("tag_source_data", DQSpec.tag_source_data),
             data_asset_name=spec.get("data_asset_name", DQSpec.data_asset_name),
             expectation_suite_name=spec.get(

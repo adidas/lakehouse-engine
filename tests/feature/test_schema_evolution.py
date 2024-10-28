@@ -265,7 +265,7 @@ def test_schema_evolution_delta_load(scenario: str) -> None:
             "part-04",
             "batch_append_enabled_cast",
             "control_schema",
-            "Failed to merge incompatible data types",
+            "Failed to merge fields",
         ],
         [
             "auto_merge_disabled_cast_column",

@@ -7,6 +7,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql.functions import lit
 
 from lakehouse_engine.core.definitions import DQSpec, OutputSpec
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.transformers.transformer_factory import TransformerFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
@@ -75,6 +76,9 @@ class Writer(ABC):
         Returns:
             The transformed dataframe.
         """
+        # forcing session to be available inside forEachBatch on
+        # Spark Connect
+        ExecEnv.get_or_create()
         transformed_df = batch_df
         if output_spec.with_batch_id:
             transformed_df = transformed_df.withColumn("lhe_batch_id", lit(batch_id))
@@ -127,6 +131,10 @@ class Writer(ABC):
         Returns: the validated dataframe.
         """
         from lakehouse_engine.dq_processors.dq_factory import DQFactory
+
+        # forcing session to be available inside forEachBatch on
+        # Spark Connect
+        ExecEnv.get_or_create()
 
         validated_df = df
         for spec in dq_spec:

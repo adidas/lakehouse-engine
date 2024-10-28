@@ -1,6 +1,6 @@
 dev_deploy_bucket: s3://sample-dev-bucket
 prod_deploy_bucket: s3://sample-prod-bucket
-arm_python_image: arm64v8/python:3.10-slim-bullseye
-amd_python_image: python:3.10-slim-bullseye
+arm_python_image: arm64v8/python:3.11-slim-bullseye
+amd_python_image: python:3.11-slim-bullseye
 engine_docs: https://adidas.github.io/lakehouse-engine-docs/lakehouse_engine.html
 code_url: https://github.com/adidas/lakehouse-engine

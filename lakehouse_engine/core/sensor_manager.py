@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, Row
-from pyspark.sql.functions import array, lit
+from pyspark.sql.functions import array, col, lit
 
 from lakehouse_engine.core.definitions import (
     SENSOR_SCHEMA,
@@ -210,9 +210,9 @@ class SensorControlTableManager(object):
         ).toDF()
 
         if sensor_id:
-            df = df.where(df.sensor_id == sensor_id)
+            df = df.where(col("sensor_id") == sensor_id)
         elif assets:
-            df = df.where(df.assets == array(*[lit(asset) for asset in assets]))
+            df = df.where(col("assets") == array(*[lit(asset) for asset in assets]))
         else:
             raise ValueError(
                 "Either sensor_id or assets need to be provided as arguments."

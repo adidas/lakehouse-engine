@@ -10,7 +10,7 @@ ARG CPU_ARCHITECTURE
 # Install Prerequisites
 RUN mkdir -p /usr/share/man/man1 && \
     apt-get -y update && \
-    apt-get install -y wget=1.21* gnupg2=2.2.27* unzip=6.0* git=1:2.30* g++=4:10.2.1* rsync=3.2.* && \
+    apt-get install -y wget=1.21* gnupg2=2.2* unzip=6.0* git=1:2* g++=4:10.2.1*  rsync=3.2* && \
     apt-get -y clean
 
 # Install jdk
@@ -22,12 +22,6 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get -y clean
 ENV JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-${CPU_ARCHITECTURE}
 
-# Install AWS CLI
-RUN wget "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.39.zip" -O "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install && \
-    rm -rf .aws
-
 # useradd -l is necessary to avoid docker build hanging in export image phase when using large uids
 RUN groupadd -g ${GROUP_ID} appuser && \
     useradd -rm -l -u ${USER_ID} -d /home/appuser -s /bin/bash -g appuser appuser
@@ -37,7 +31,7 @@ COPY cicd/requirements_full.lock /tmp/requirements.txt
 USER appuser
 
 ENV PATH="/home/appuser/.local/bin:$PATH"
-RUN python -m pip install --upgrade pip==24.0 --user
+RUN python -m pip install --upgrade pip==24.* setuptools==74.* --user
 RUN python -m pip install --user -r /tmp/requirements.txt
 
 RUN mkdir /home/appuser/.ssh/ && touch /home/appuser/.ssh/known_hosts

@@ -42,7 +42,10 @@ class ExecEnv(object):
         """Get or create an execution environment session (currently Spark).
 
         It instantiates a singleton session that can be accessed anywhere from the
-        lakehouse engine.
+        lakehouse engine. By default, if there is an existing Spark Session in
+        the environment (getActiveSession()), this function re-uses it. It can
+        be further extended in the future to support forcing the creation of new
+        isolated sessions even when a Spark Session is already active.
 
         Args:
             session: spark session.
@@ -64,24 +67,22 @@ class ExecEnv(object):
 
         if session:
             cls.SESSION = session
+        elif SparkSession.getActiveSession():
+            cls.SESSION = SparkSession.getActiveSession()
+            for key, value in final_config.items():
+                cls.SESSION.conf.set(key, value)
         else:
-            # with active session we do not need app name
-            if SparkSession.getActiveSession():
-                app_name = SparkSession.getActiveSession().conf.get("spark.app.name")
-                cls._LOGGER.info(f"Detected active session: {app_name}")
-            elif not SparkSession.getActiveSession() and not app_name:
-                cls._LOGGER.info("No active session or appname detected")
-                app_name = "lakehouse_engine"
-            # we will still add this part to set configs
+            cls._LOGGER.info("Creating a new Spark Session")
+
             session_builder = SparkSession.builder.appName(app_name)
-            if config:
-                for k, v in final_config.items():
-                    session_builder.config(k, v)
+            for k, v in final_config.items():
+                session_builder.config(k, v)
 
             if enable_hive_support:
                 session_builder = session_builder.enableHiveSupport()
             cls.SESSION = session_builder.getOrCreate()
 
+        if not session:
             cls._set_environment_variables(final_config.get("os_env_vars"))
 
     @classmethod

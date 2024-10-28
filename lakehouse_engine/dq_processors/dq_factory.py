@@ -29,6 +29,7 @@ from pyspark.sql.functions import (
     lit,
     month,
     schema_of_json,
+    sort_array,
     struct,
     to_json,
     to_timestamp,
@@ -122,8 +123,13 @@ class DQFactory(object):
                         ", ", *[coalesce(col(c), lit("null")) for c in source_pk]
                     ).alias("combined_pk")
                 )
+                comb_pk_expr = (
+                    sort_array(collect_list("combined_pk"))
+                    if dq_spec.sort_processed_keys
+                    else collect_list("combined_pk")
+                )
                 processed_keys_df = processed_keys_df.agg(
-                    concat_ws("||", collect_list("combined_pk")).alias("processed_keys")
+                    concat_ws("||", comb_pk_expr).alias("processed_keys")
                 )
 
                 results_df = results_df.join(processed_keys_df, lit(1) == lit(1))
@@ -625,7 +631,8 @@ class DQFactory(object):
                 results_dict[key] = value
 
         df = ExecEnv.SESSION.createDataFrame(
-            [json.dumps(results_dict)], schema=StringType()
+            [json.dumps(results_dict)],
+            schema=StringType(),
         )
         schema = schema_of_json(df.select("value").head()[0])
         df = df.withColumn("value", from_json("value", schema)).select("value.*")
