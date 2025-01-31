@@ -35,6 +35,7 @@ class CustomTransformers(object):
             Callable: the same function provided as parameter, in order to e called
                 later in the TransformerFactory.
 
+        {{get_example(method_name='custom_transformation')}}
         """
         return custom_transformer
 
@@ -54,6 +55,7 @@ class CustomTransformers(object):
         Returns:
             Callable: A function to be called in .transform() spark function.
 
+        {{get_example(method_name='sql_transformation')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

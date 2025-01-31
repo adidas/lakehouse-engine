@@ -22,7 +22,7 @@ jmespath==1.0.1
     #   -c requirements_full.lock
     #   boto3
     #   botocore
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   -c requirements_full.lock
     #   jinja2
@@ -30,7 +30,7 @@ pendulum==3.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements.txt
-python-dateutil==2.9.0.post0
+python-dateutil==2.8.2
     # via
     #   -c requirements_full.lock
     #   botocore
@@ -40,23 +40,23 @@ pyyaml==6.0.1
     # via
     #   -c requirements_full.lock
     #   -r requirements.txt
-s3transfer==0.10.2
+s3transfer==0.10.4
     # via
     #   -c requirements_full.lock
     #   boto3
-six==1.16.0
+six==1.17.0
     # via
     #   -c requirements_full.lock
     #   python-dateutil
-time-machine==2.15.0
+time-machine==2.16.0
     # via
     #   -c requirements_full.lock
     #   pendulum
-tzdata==2024.1
+tzdata==2024.2
     # via
     #   -c requirements_full.lock
     #   pendulum
-urllib3==1.26.19
+urllib3==2.3.0
     # via
     #   -c requirements_full.lock
     #   botocore

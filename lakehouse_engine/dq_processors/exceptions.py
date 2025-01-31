@@ -17,3 +17,9 @@ class DQSpecMalformedException(Exception):
     """Exception for when the DQSpec is malformed."""
 
     pass
+
+
+class DQDuplicateRuleIdException(Exception):
+    """Exception for when a duplicated rule id is found."""
+
+    pass

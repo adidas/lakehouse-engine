@@ -16,7 +16,8 @@ For this, the ACON specs are :
 - **transform specs** (OPTIONAL): specify how to transform data;
 - **output_specs** (MANDATORY): specify how to write data to the target.
 
-.. note:: Writer to console **is a wrapper for spark.show() function**, if you want to know more about the function itself or the available options, [please check the spark documentation here](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.show.html).
+!!! note
+    Writer to console **is a wrapper for spark.show() function**, if you want to know more about the function itself or the available options, [please check the spark documentation here](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.show.html).
 
 ```python
 from lakehouse_engine.engine import load_data

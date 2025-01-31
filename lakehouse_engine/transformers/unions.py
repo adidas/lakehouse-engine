@@ -27,10 +27,12 @@ class Unions(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='union')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
-            union_df = reduce(DataFrame.union, [df] + union_with)
+            union_df = reduce(lambda x, y: x.union(y), [df] + union_with)
 
             return union_df.distinct() if deduplication else union_df
 
@@ -53,6 +55,8 @@ class Unions(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='union_by_name')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

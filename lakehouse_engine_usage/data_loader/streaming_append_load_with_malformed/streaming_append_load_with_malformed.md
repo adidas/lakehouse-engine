@@ -9,7 +9,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/append_load/streaming_dropmalformed/streaming.json
+{!../../../../tests/resources/feature/append_load/streaming_dropmalformed/streaming.json!}
 ```
 
 ##### Relevant notes:

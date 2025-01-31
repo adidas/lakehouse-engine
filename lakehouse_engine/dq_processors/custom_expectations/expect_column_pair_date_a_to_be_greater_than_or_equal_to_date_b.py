@@ -58,15 +58,15 @@ class ExpectColumnPairDateAToBeGreaterThanOrEqualToDateB(ColumnPairMapExpectatio
         column_B: The second date column name.
 
     Keyword Args:
-        - ignore_row_if: "both_values_are_missing",
+        ignore_row_if: "both_values_are_missing",
             "either_value_is_missing", "neither" (default).
-        - result_format: Which output mode to use:
+        result_format: Which output mode to use:
             `BOOLEAN_ONLY`, `BASIC` (default), `COMPLETE`, or `SUMMARY`.
-        - include_config: If True (default), then include the
+        include_config: If True (default), then include the
             expectation config as part of the result object.
-        - catch_exceptions: If True, then catch exceptions and
+        catch_exceptions: If True, then catch exceptions and
             include them as part of the result object. Default: False.
-        - meta: A JSON-serializable dictionary (nesting allowed)
+        meta: A JSON-serializable dictionary (nesting allowed)
             that will be included in the output without modification.
 
     Returns:

@@ -5,6 +5,7 @@ opportunities, mitigate risks, and optimize their operations. In contrast, low-q
 conclusions, faulty decisions, and wasted resources.
 
 There are several common issues that can compromise data quality, such as:
+
 - data entry errors; 
 - data duplication; 
 - incomplete / inconsistent data; 
@@ -17,6 +18,7 @@ accuracy and completeness is key for any organisation.
 One of these controls that can be applied is the **DQ Row Tagging Strategy** so that you not only apply validations on 
 your data to ensure Data Quality, but you also tag your data with the results of the Data Quality validations 
 providing advantages like:
+
 - Transparency for downstream and upstream consumers; 
 - Data Observability and Reliability; 
 - More trust over the data; 
@@ -24,12 +26,13 @@ providing advantages like:
 - Easier and faster discovery of Data Quality problems, and, consequently faster resolution; 
 - Makes it easier to deal with integrations with other systems and migrations (you can have validations capturing that a column was changed or simply disappeared);
 
-.. note:: 
+!!! note
     When using the DQ Row Tagging approach data availability will take precedence over Data Quality, meaning 
     that all the data will be introduced into the final target (e.g. table or location) no matter what Data Quality
     issues it is having.
 
 Different Types of Expectations:
+
 - Table Level 
 - Column Aggregated Level 
 - Query Level 
@@ -47,7 +50,7 @@ specific rows (they affect the field **run_success** only, so you can even have 
 
 The strategy relies mostly on the 6 below arguments.
 
-.. note:: 
+!!! note
     When you specify `"tag_source_data": True` the arguments **fail_on_error**, **gx_result_format** and 
     **result_sink_explode** are set to the expected values. 
 
@@ -60,7 +63,7 @@ the DQ results in a column `dq_validations`. This column makes it possible to id
 succeeded in general and, if not, it unlocks the insights to know what specific rows have made the DQ validations
 fail and why. Default: `False`.
 
-.. note:: 
+!!! note
     It only works if result_sink_explode is `True`, result_format is `COMPLETE` and 
     fail_on_error is `False. 
 
@@ -68,27 +71,28 @@ fail and why. Default: `False`.
 - **result_sink_explode** - flag to determine if the output table/location should have the columns exploded (as `True`)
 or not (as `False`). Default: `True`.
 
-.. note::
+!!! note
     It is mandatory to provide one of the arguments (**unexpected_rows_pk** or **tbl_to_derive_pk**) when using 
     **tag_source_data** as **True**. 
     When **tag_source_data** is **False**, this is not mandatory, but **still recommended**. 
 
-<img src="../../assets/img/row_tagging.png?raw=true" style="max-width: 800px; height: auto; "/>
+<img src="../../../assets/img/row_tagging.png?raw=true" style="max-width: 800px; height: auto; "/>
 
-.. note::
+!!! note
     The tagging strategy only works when `tag_source_data` is `True`, which automatically
     assigns the expected values for the parameters `result_sink_explode` (True), `fail_on_error` (False)
     and `gx_result_format` ("COMPLETE").
 
-.. note::
+!!! note
     For the DQ Row Tagging to work, in addition to configuring the aforementioned arguments in the dq_specs, 
     you will also need to add the **dq_validations** field into your table (your DDL statements, **recommended**) or 
     enable schema evolution.
 
-.. note::
+!!! note
     Kwargs field is a string, because it can assume different schemas for different expectations and runs. 
     It is useful to provide the complete picture of the **row level failure** and to allow filtering/joining with 
     the result sink table, when there is one. Some examples of kwargs bellow:
+
     - `{"column": "country", "min_value": 1, "max_value": 2, "batch_id": "o723491yyr507ho4nf3"}` → example for 
     expectations starting with `expect_column_values` (they always make use of "column", the other arguments vary). 
     - `{"column_A: "country", "column_B": "city", "batch_id": "o723491yyr507ho4nf3"}` → example for expectations 
@@ -194,7 +198,8 @@ field is filled as True, so that you can easily notice it and debug it.
 Most of the time, if you have such an amount of rows failing, it will probably mean that you did something wrong 
 and want to fix it as soon as possible (you are not really caring about tagging specific rows, because you will 
 not want your consumers to be consuming a million of defective rows). However, if you still want to try to make it 
-pass, you can try to increase your driver and play with some spark configurations like: 
+pass, you can try to increase your driver and play with some spark configurations like:
+
 - `spark.driver.maxResultSize`
 - `spark.task.maxFailures`
 
@@ -203,7 +208,7 @@ https://docs.greatexpectations.io/docs/reference/expectations/result_format/) li
 `"gx_result_format": "SUMMARY"`), so that you get only a partial list of the failures, avoiding surpassing the driver
 capacity. 
 
-.. note:: 
+!!! note
     When using a Result Format different from the default ("COMPLETE"), the flag "tag_source_data" will be 
     overwritten to `False`, as the results of the tagging wouldn't be complete which could lead to erroneous 
     conclusions from stakeholders (but you can always get the details about the result of the DQ execution in

@@ -10,7 +10,7 @@ Transformation, and Loading).
 
 ## How do Sensor-based jobs work?
 
-<img src="../assets/img/sensor_os.png" alt="image" width="1000px" height="auto">
+<img src="../../assets/img/sensor_os.png" alt="image" width="1000px" height="auto">
 
 With the sensors capability, data products in the lakehouse can sense if another data product or an upstream system (source
 system) have new data since the last successful job. We accomplish this through the approach illustrated above, which
@@ -42,7 +42,8 @@ data product. You can refer to the below table to understand the sensor delta ta
 | **upstream_key**            | STRING         | Upstream key (e.g., used to store an attribute name from the upstream so that new data can be detected automatically).<br />This is useful for sensors that do not rely on Spark streaming checkpoints, like the JDBC sensor, as it stores the name of a field in the JDBC upstream that contains the values that will allow us to identify new data (e.g., a timestamp in the upstream that tells us when the record was loaded into the database).                                                                                                                                                   |
 | **upstream_value**          | STRING         | Upstream value (e.g., used to store the max attribute value from the upstream so that new data can be detected automatically). This is the value for upstream_key. <br />This is useful for sensors that do not rely on Spark streaming checkpoints, like the JDBC sensor, as it stores the value of a field in the JDBC upstream that contains the maximum value that was processed by the sensor, and therefore useful for recognizing that there is new data in the upstream (e.g., the value of a timestamp attribute in the upstream that tells us when the record was loaded into the database). |
 
-**Note:** to make use of the sensors you will need to add this table to your data product.
+!!! note
+    To make use of the sensors you will need to add this table to your data product.
 
 ## How is it different from scheduled jobs?
 
@@ -59,11 +60,11 @@ Moreover, if you have very hard SLAs to comply with, you can also play with alte
 ## Sensor Steps
 
 1. Create your sensor task for the upstream source. Examples of available sources:
-    - [Delta Table](sensor/delta_table.html)
-    - [Delta Upstream Sensor Table](sensor/delta_upstream_sensor_table.html)
-    - [File](sensor/file.html)
-    - [JDBC](sensor/jdbc_table.html)
-    - [Kafka](sensor/kafka.html)
-    - [SAP BW/B4](sensor/sap_bw_b4.html)
+    - [Delta Table](delta_table/delta_table.md)
+    - [Delta Upstream Sensor Table](delta_upstream_sensor_table/delta_upstream_sensor_table.md)
+    - [File](file/file.md)
+    - [JDBC](jdbc_table/jdbc_table.md)
+    - [Kafka](kafka/kafka.md)
+    - [SAP BW/B4](sap_bw_b4/sap_bw_b4.md)
 2. Setup/Execute your ETL task based in the Sensor Condition
-3. Update the Sensor Control table status with the [Update Sensor Status](sensor/update_sensor_status.html)
+3. Update the Sensor Control table status with the [Update Sensor Status](update_sensor_status/update_sensor_status.md)

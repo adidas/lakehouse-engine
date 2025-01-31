@@ -1,4 +1,4 @@
-<img align="right" src="assets/img/lakehouse_engine_logo_no_bg_160.png" alt="Lakehouse Engine Logo">
+<img align="right" src="assets/img/lakehouse_engine_logo_symbol_small.png" alt="Lakehouse Engine Logo">
 
 # Lakehouse Engine
 A configuration driven Spark framework, written in Python, serving as a scalable and distributed engine for several lakehouse algorithms, data flows and utilities for Data Products.
@@ -12,6 +12,7 @@ which generate value for their businesses. These Teams should not be focusing on
 
 ## Main Goals
 The goal of the Lakehouse Engine is to bring some advantages, such as:
+
 - offer cutting-edge, standard, governed and battle-tested foundations that several Data Product teams can benefit from;
 - avoid that Data Product teams develop siloed solutions, reducing technical debts and high operating costs (redundant developments across teams);
 - allow Data Product teams to focus mostly on data-related tasks, avoiding wasting time & resources on developing the same code for different use cases;
@@ -39,13 +40,14 @@ Engine supports different types of sources and targets, such as, kafka, jdbc, da
 ⭐ **Transformations:** configuration driven transformations without the need to write any spark code. Transformations can be applied by using the `transform_specs` in the Data Loads.
 
 ---
-> ***Note:*** you can search all the available transformations, as well as checking implementation details and examples [here](https://adidas.github.io/lakehouse-engine-docs/lakehouse_engine/transformers.html).
+> ***Note:*** you can search all the available transformations, as well as checking implementation details and examples [here](reference/packages/transformers/index.md).
 
 ---
 
 ⭐ **Data Quality Validations:** the Lakehouse Engine uses Great Expectations as a backend and abstracts any implementation
 details by offering people the capability to specify what validations to apply on the data, solely using dict/json based configurations.
 The Data Quality validations can be applied on:
+
 - post-mortem (static) data, using the DQ Validator algorithm (`execute_dq_validation`)
 - data in-motion, using the `dq_specs` keyword in the Data Loads, to add it as one more step while loading data. 
 [On the usage section](#load-data-usage-example) you will find an example using this type of Data Quality validations.
@@ -53,13 +55,13 @@ The Data Quality validations can be applied on:
 ⭐ **Reconciliation:** useful algorithm to compare two source of data, by defining one version of the `truth` to compare
 against the `current` version of the data. It can be particularly useful during migrations phases, two compare a few KPIs
 and ensure the new version of a table (`current`), for example, delivers the same vision of the data as the old one (`truth`).
-Find usage examples [here](lakehouse_engine_usage/reconciliator.html).
+Find usage examples [here](lakehouse_engine_usage/reconciliator/reconciliator.md).
 
 ⭐ **Sensors:** an abstraction to otherwise complex spark code that can be executed in very small single-node clusters
 to check if an upstream system or Data Product contains new data since the last execution. With this feature, people can
 trigger jobs to run in more frequent intervals and if the upstream does not contain new data, then the rest of the job
 exits without creating bigger clusters to execute more intensive data ETL (Extraction, Transformation, and Loading).
-Find usage examples [here](lakehouse_engine_usage/sensor.html).
+Find usage examples [here](lakehouse_engine_usage/sensor/sensor.md).
 
 ⭐ **Terminators:** this feature allow people to specify what to do as a last action, before finishing a Data Load.
 Some examples of actions are: optimising target table, vacuum, compute stats, expose change data feed to external location
@@ -67,6 +69,7 @@ or even send e-mail notifications. Thus, it is specifically used in Data Loads, 
 [On the usage section](#load-data-usage-example) you will find an example using terminators.
 
 ⭐ **Table Manager:** function `manage_table`, offers a set of actions to manipulate tables/views in several ways, such as:
+
 - compute table statistics;
 - create/drop tables and views;
 - delete/truncate/repair tables;
@@ -77,6 +80,7 @@ or even send e-mail notifications. Thus, it is specifically used in Data Loads, 
 - execute sql.
 
 ⭐ **File Manager:** function `manage_files`, offers a set of actions to manipulate files in several ways, such as:
+
 - delete Objects in S3;
 - copy Objects in S3;
 - restore Objects from S3 Glacier;
@@ -91,7 +95,7 @@ or even send e-mail notifications. Thus, it is specifically used in Data Loads, 
 
 ---
 
-📖 In case you want to check further details you can check the documentation of the [Lakehouse Engine facade](lakehouse_engine/engine.html).
+📖 In case you want to check further details you can check the documentation of the [Lakehouse Engine facade](reference/packages/engine.md).
 
 ## Installation
 As the Lakehouse Engine is built as wheel (look into our **build** and **deploy** make targets) you can install it as any other python package using **pip**.
@@ -150,17 +154,18 @@ which you can search for in the examples and documentation provided in the [Key 
 
 You can use the Lakehouse Engine in a **pyspark script** or **notebook**.
 Below you can find an example on how to execute a Data Load using the Lakehouse Engine, which is doing the following:
+
 1. Read CSV files, from a specified location, in a streaming fashion and providing a specific schema and some additional 
 options for properly read the files (e.g. header, delimiter...);
 2. Apply two transformations on the input data:
-   1. Add a new column having the Row ID;
-   2. Add a new column `extraction_date`, which extracts the date from the `lhe_extraction_filepath`, based on a regex.
+    1. Add a new column having the Row ID;
+    2. Add a new column `extraction_date`, which extracts the date from the `lhe_extraction_filepath`, based on a regex.
 3. Apply Data Quality validations and store the result of their execution in the table `your_database.order_events_dq_checks`:
-   1. Check if the column `omnihub_locale_code` is not having null values;
-   2. Check if the distinct value count for the column `product_division` is between 10 and 100;
-   3. Check if the max of the column `so_net_value` is between 10 and 1000;
-   4. Check if the length of the values in the column `omnihub_locale_code` is between 1 and 10;
-   5. Check if the mean of the values for the column `coupon_code` is between 15 and 20.
+    1. Check if the column `omnihub_locale_code` is not having null values;
+    2. Check if the distinct value count for the column `product_division` is between 10 and 100;
+    3. Check if the max of the column `so_net_value` is between 10 and 1000;
+    4. Check if the length of the values in the column `omnihub_locale_code` is between 1 and 10;
+    5. Check if the mean of the values for the column `coupon_code` is between 15 and 20.
 4. Write the output into the table `your_database.order_events_with_dq` in a delta format, partitioned by `order_date_header`
 and applying a merge predicate condition, ensuring the data is only inserted into the table if it does not match the predicate
 (meaning the data is not yet available in the table). Moreover, the `insert_only` flag is used to specify that there should not 
@@ -315,6 +320,35 @@ Lakehouse Engine releases when calling internal functions (not exposed in the fa
 ---
 > ***Note:*** ACON structure might change across releases, please test your Data Product first before updating to a 
 new version of the Lakehouse Engine in your Production environment.
+
+---
+## Overwriting default configurations
+
+We use a YAML file to specify various configurations needed for different functionalities. You can overwrite these 
+configurations using a dictionary with new settings or by providing a path to a YAML file.
+
+This functionality can be particularly useful for the open-source community as it unlocks 
+the usage several functionalities like Prisma and engine usage logs.
+
+Check default configurations.
+```
+from lakehouse_engine.core import exec_env
+print(exec_env.ExecEnv.ENGINE_CONFIG.dq_dev_bucket)
+   > default-bucket
+```
+
+Change the dq_dev_bucket configuration.
+```
+exec_env.ExecEnv.set_default_engine_config(custom_configs_dict={"dq_dev_bucket": "your-dq-bucket"})
+print(exec_env.ExecEnv.ENGINE_CONFIG.dq_dev_bucket)
+   > your-dq-bucket
+```
+Reset to default configurations.
+```
+exec_env.ExecEnv.set_default_engine_config()
+print(exec_env.ExecEnv.ENGINE_CONFIG.dq_dev_bucket)
+   > default-bucket
+```
 
 ---
 

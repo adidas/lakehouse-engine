@@ -37,6 +37,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='cast')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -57,6 +59,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='column_selector')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -89,6 +93,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='flatten_schema')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -135,6 +141,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='explode_columns')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -182,6 +190,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='with_expressions')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -206,6 +216,8 @@ class ColumnReshapers(object):
 
         Returns:
             Function to be called in .transform() spark function.
+
+        {{get_example(method_name='rename')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -246,6 +258,8 @@ class ColumnReshapers(object):
 
         Returns:
             Function to be called in .transform() spark function.
+
+        {{get_example(method_name='from_avro')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -294,6 +308,8 @@ class ColumnReshapers(object):
 
         Returns:
             Function to be called in .transform() spark function.
+
+        {{get_example(method_name='from_avro_with_registry')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -352,6 +368,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='from_json')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -403,6 +421,8 @@ class ColumnReshapers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='to_json')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

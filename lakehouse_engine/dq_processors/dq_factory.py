@@ -115,7 +115,6 @@ class DQFactory(object):
             )
 
             if dq_spec.dq_type == DQType.PRISMA.value:
-
                 results_df = results_df.withColumn("source_primary_key", lit(source_pk))
 
                 processed_keys_df = data.select(
@@ -263,7 +262,7 @@ class DQFactory(object):
             name=checkpoint_name,
             class_name=DQDefaults.DATA_CHECKPOINTS_CLASS_NAME.value,
             config_version=DQDefaults.DATA_CHECKPOINTS_CONFIG_VERSION.value,
-            run_name_template=f"%Y%m%d-%H%M%S-{checkpoint_name}",
+            run_name_template=f"%Y%m%d-%H%M%S%f-{checkpoint_name}",
         )
 
         result_format: Dict[str, Any] = {

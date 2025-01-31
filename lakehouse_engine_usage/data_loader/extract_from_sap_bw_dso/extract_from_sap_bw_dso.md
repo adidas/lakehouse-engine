@@ -1,6 +1,6 @@
 # Extract from SAP BW DSOs
 
-.. danger:: **Parallelization Limitations**
+!!! danger "**Parallelization Limitations**"
     Parallel extractions **can bring a jdbc source down** if a lot of stress is put on the system. Be careful choosing the number of partitions. Spark is a distributed system and can lead to many connections.
 
 A custom sap_bw reader and a few utils are offered in the lakehouse-engine framework so that consumption of data from 
@@ -13,13 +13,13 @@ This page also provides you a section to help you figure out a good candidate fo
 
 You can check the code documentation of the reader below:
 
-[**SAP BW Reader**](../../lakehouse_engine/io/readers/sap_bw_reader.html)
+[**SAP BW Reader**](../../../reference/packages/io/readers/sap_bw_reader.md)
 
-[**JDBC Extractions arguments**](../../lakehouse_engine/utils/extraction/jdbc_extraction_utils.html#JDBCExtraction.__init__)
+[**JDBC Extractions arguments**](../../../reference/packages/utils/extraction/jdbc_extraction_utils.md#packages.utils.extraction.jdbc_extraction_utils.JDBCExtraction.__init__)
 
-[**SAP BW Extractions arguments**](../../lakehouse_engine/utils/extraction/sap_bw_extraction_utils.html#SAPBWExtraction.__init__)
+[**SAP BW Extractions arguments**](../../../reference/packages/utils/extraction/sap_bw_extraction_utils.md#packages.utils.extraction.sap_bw_extraction_utils.SAPBWExtraction.__init__)
 
-.. note:: 
+!!! note
     For extractions using the SAP BW reader, you can use the arguments listed in the SAP BW arguments, but also 
     the ones listed in the JDBC extractions, as those are inherited as well. 
 
@@ -27,6 +27,7 @@ You can check the code documentation of the reader below:
 ## Extraction from SAP-BW template
 
 This template covers the following scenarios of extractions from the SAP BW DSOs:
+
 - 1 - The Simplest Scenario (Not parallel - Not Recommended)
 - 2 - Parallel extraction
   - 2.1 - Simplest Scenario
@@ -38,8 +39,8 @@ This template covers the following scenarios of extractions from the SAP BW DSOs
 - 3 - Extraction from Write Optimized DSO
   - 3.1 - Get initial actrequest_timestamp from Activation Requests Table
 
-.. note::
-    Introductory Notes: if you want to have a better understanding about JDBC Spark optimizations, 
+!!! note "Introductory Notes"
+    If you want to have a better understanding about JDBC Spark optimizations, 
     here you have a few useful links:
     - https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
     - https://docs.databricks.com/en/connect/external-systems/jdbc.html
@@ -47,10 +48,12 @@ This template covers the following scenarios of extractions from the SAP BW DSOs
     - https://newbedev.com/how-to-optimize-partitioning-when-migrating-data-from-jdbc-source
 
 ### 1 - The Simplest Scenario (Not parallel - Not Recommended)
-This scenario is the simplest one, not taking any advantage of Spark JDBC optimisation techniques  
+This scenario is the simplest one, not taking any advantage of Spark JDBC optimisation techniques 
 and using a single connection to retrieve all the data from the source. It should only be used in case the DSO 
 you want to extract from SAP BW is a small one, with no big requirements in terms of performance to fulfill.
+
 When extracting from the source DSO, there are two options:
+
 - **Delta Init** - full extraction of the source DSO. You should use it in the first time you extract from the 
 DSO or any time you want to re-extract completely. Similar to a so-called full load.
 - **Delta** - extracts the portion of the data that is new or has changed in the source, since the last
@@ -58,6 +61,7 @@ extraction (using the max `actrequest_timestamp` value in the location of the da
 by default).
 
 Below example is composed of two cells.
+
 - The first cell is only responsible to define the variables `extraction_type` and `write_type`,
 depending on the extraction type **Delta Init** (`LOAD_TYPE = INIT`) or a **Delta** (`LOAD_TYPE = DELTA`).
 The variables in this cell will also be referenced by other acons/examples in this notebook, similar to what
@@ -65,7 +69,7 @@ you would do in your pipelines/jobs, defining this centrally and then re-using i
 - The second cell is where the acon to be used is defined (which uses the two variables `extraction_type` and
 `write_type` defined) and the `load_data` algorithm is executed to perform the extraction.
 
-.. note::
+!!! note
     There may be cases where you might want to always extract fully from the source DSO. In these cases,
     you only need to use a Delta Init every time, meaning you would use `"extraction_type": "init"` and
     `"write_type": "overwrite"` as it is shown below. The explanation about what it is a Delta Init/Delta is
@@ -191,6 +195,7 @@ load_data(acon=acon)
 This scenario performs the extraction from the SAP BW DSO in parallel, but is more concerned with trying to
 optimize and have more control (compared to 2.1 example) on how the extraction is split and performed, using
 the following options:
+
 - `numPartitions` - number of Spark partitions to split the extraction.
 - `partitionColumn` - column used to split the extraction. It must be a numeric, date, or timestamp.
 It should be a column that is able to split the extraction evenly in several tasks. An auto-increment
@@ -208,6 +213,7 @@ When these 4 properties are used, Spark will use them to build several queries t
 
 **Example:** for `"numPartitions": 10`, `"partitionColumn": "record"`, `"lowerBound: 1"`, `"upperBound: 100"`,
 Spark will generate 10 queries like this:
+
 - `SELECT * FROM dummy_table WHERE RECORD < 10 OR RECORD IS NULL`
 - `SELECT * FROM dummy_table WHERE RECORD >= 10 AND RECORD < 20`
 - `SELECT * FROM dummy_table WHERE RECORD >= 20 AND RECORD < 30`
@@ -348,7 +354,7 @@ the timestamps and the `latest_timestamp_data_location` are provided, the last p
 Additionally, `"extraction_type": "delta"` and `"write_type": "append"` is forced, instead of using the
 variables as in the other  examples, because the backfilling scenario only makes sense for delta extractions.
 
-.. note::
+!!! note
     Note: be aware that the backfilling example being shown has no mechanism to enforce that
     you don't generate duplicated data in bronze. For your scenarios, you can either use this example and solve
     any duplication in the silver layer or extract the delta with a merge strategy while writing to bronze,
@@ -412,6 +418,7 @@ load_data(acon=acon)
 #### 2.5 - Parallel Extraction, Provide Predicates (Recommended)
 This scenario performs the extraction from SAP BW DSO in parallel, useful in contexts in which there is no
 numeric, date or timestamp column to parallelize the extraction:
+
 - `partitionColumn` - column used to split the extraction. It can be of any type. 
 
 This is an adequate example for you to follow if you have/know a column in the DSO that is good to be used as
@@ -517,6 +524,7 @@ load_data(acon=acon)
 #### 2.6 - Parallel Extraction, Generate Predicates (Recommended)
 This scenario performs the extraction from SAP BW DSO in parallel, useful in contexts in which there is no
 numeric, date or timestamp column to parallelize the extraction:
+
 - `partitionColumn` - column used to split the extraction. It can be of any type.
 
 This is an adequate example for you to follow if you have/know a column in the DSO that is good to be used as
@@ -536,6 +544,7 @@ these extreme cases are harder to happen when you use the strategy of the scenar
 
 **Example:** for `"partitionColumn": "record"`
 Generate predicates:
+
 - `SELECT DISTINCT(RECORD) as RECORD FROM dummy_table`
 - `1`
 - `2`
@@ -545,6 +554,7 @@ Generate predicates:
 - Predicates List: ['RECORD=1','RECORD=2','RECORD=3',...,'RECORD=100']
 
 Spark will generate 100 queries like this:
+
 - `SELECT * FROM dummy_table WHERE RECORD = 1`
 - `SELECT * FROM dummy_table WHERE RECORD = 2`
 - `SELECT * FROM dummy_table WHERE RECORD = 3`
@@ -746,7 +756,8 @@ One of the most important parameters to optimise the extraction is the **partiti
 
 Basically the partition column needs to be a column which is able to adequately split the processing, which means we can use it to "create" different queries with intervals/filters, so that the Spark tasks process similar amounts of rows/volume. Usually a good candidate is an integer auto-increment technical column.
 
-.. note:: Although RECORD is usually a good candidate, it is usually available on the changelog table only. Meaning that you would need to use a different strategy for the init. In case you don't have good candidates for partitionColumn, you can use the sample acon provided in the **scenario 2.1** in the template above. It might make sense to use **scenario 2.1** for the init and then **scenario 2.2 or 2.3** for the subsequent deltas.
+!!! note
+    Although RECORD is usually a good candidate, it is usually available on the changelog table only. Meaning that you would need to use a different strategy for the init. In case you don't have good candidates for partitionColumn, you can use the sample acon provided in the **scenario 2.1** in the template above. It might make sense to use **scenario 2.1** for the init and then **scenario 2.2 or 2.3** for the subsequent deltas.
 
 **When there is no int, date or timestamp good candidate for partitionColumn:**
 

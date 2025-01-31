@@ -62,16 +62,16 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         column_list: The column names to evaluate.
 
     Keyword Args:
-        - ignore_row_if: default to "never".
-        - result_format:  Which output mode to use:
-           `BOOLEAN_ONLY`, `BASIC`, `COMPLETE`, or `SUMMARY`.
-           Default set to `BASIC`.
-        - include_config: If True, then include the expectation
-           config as part of the result object.
-           Default set to True.
-        - catch_exceptions: If True, then catch exceptions
-           and include them as part of the result object.
-           Default set to False.
+        ignore_row_if: default to "never".
+        result_format:  Which output mode to use:
+            `BOOLEAN_ONLY`, `BASIC`, `COMPLETE`, or `SUMMARY`.
+            Default set to `BASIC`.
+        include_config: If True, then include the expectation
+            config as part of the result object.
+            Default set to True.
+        catch_exceptions: If True, then catch exceptions
+            and include them as part of the result object.
+            Default set to False.
 
     Returns:
         An ExpectationSuiteValidationResult.

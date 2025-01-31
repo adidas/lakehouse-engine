@@ -23,6 +23,8 @@ class Aggregators(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='get_max_value')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

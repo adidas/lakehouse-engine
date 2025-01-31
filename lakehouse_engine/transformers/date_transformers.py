@@ -25,6 +25,8 @@ class DateTransformers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='add_current_date')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -45,6 +47,8 @@ class DateTransformers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='convert_to_date')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -72,6 +76,8 @@ class DateTransformers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='convert_to_timestamp')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -96,6 +102,8 @@ class DateTransformers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='format_date')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -130,6 +138,8 @@ class DateTransformers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='get_date_hierarchy')}}
         """
         if not formats:
             formats = {

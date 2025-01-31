@@ -21,6 +21,8 @@ class Optimizers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='cache')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -39,6 +41,8 @@ class Optimizers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='persist')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -60,6 +64,8 @@ class Optimizers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='unpersist')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

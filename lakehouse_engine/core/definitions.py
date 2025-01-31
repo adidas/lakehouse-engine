@@ -55,13 +55,16 @@ class EngineConfig(object):
     engine_dev_usage_path: Optional[str] = None
     collect_engine_usage: str = CollectEngineUsage.ENABLED.value
     dq_functions_column_list: Optional[list] = None
+    sharepoint_authority: Optional[str] = None
+    sharepoint_company_domain: Optional[str] = None
+    sharepoint_api_domain: Optional[str] = None
 
 
 class EngineStats(Enum):
     """Definitions for collection of Lakehouse Engine Stats.
 
-    .. note::
-        Note: whenever the value comes from a key inside a Spark Config
+    !!! note
+        whenever the value comes from a key inside a Spark Config
         that returns an array, it can be specified with a '#' so that it
         is adequately processed.
     """
@@ -98,7 +101,7 @@ class InputFormat(Enum):
     def values(cls):  # type: ignore
         """Generates a list containing all enum values.
 
-        Return:
+        Returns:
             A list with all enum values.
         """
         return (c.value for c in cls)
@@ -110,7 +113,7 @@ class InputFormat(Enum):
         Args:
             input_format: format to check if exists.
 
-        Return:
+        Returns:
             If the input format exists in our enum.
         """
         return input_format in cls.values()
@@ -143,12 +146,13 @@ class OutputFormat(Enum):
     REST_API = "rest_api"
     FILE = "file"  # Internal use only
     TABLE = "table"  # Internal use only
+    SHAREPOINT = "sharepoint"
 
     @classmethod
     def values(cls):  # type: ignore
         """Generates a list containing all enum values.
 
-        Return:
+        Returns:
             A list with all enum values.
         """
         return (c.value for c in cls)
@@ -160,7 +164,7 @@ class OutputFormat(Enum):
         Args:
             output_format: format to check if exists.
 
-        Return:
+        Returns:
             If the output format exists in our enum.
         """
         return output_format in cls.values()
@@ -242,6 +246,7 @@ class DQDefaults(Enum):
         "expect_queried_column_agg_value_to_be",
         "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",
         "expect_column_pair_a_to_be_not_equal_to_b",
+        "expect_column_values_to_not_be_null_or_empty_string",
     ]
     DQ_VALIDATIONS_SCHEMA = StructType(
         [
@@ -565,6 +570,45 @@ class MergeOptions(object):
 
 
 @dataclass
+class SharepointOptions(object):
+    """options for a sharepoint write operation.
+
+    - client_id (str): azure client ID application.
+    - tenant_id (str): tenant ID associated with the SharePoint site.
+    - site_name (str): name of the SharePoint site where the document library resides.
+    - drive_name (str): name of the document library where the file will be uploaded.
+    - file_name (str): name of the file to be uploaded to local path and to SharePoint.
+    - secret (str): client secret for authentication.
+    - local_path (str): local path (or similar, e.g. mounted file systems like
+        databricks volumes or dbfs) where files will be temporarily stored during
+        the SharePoint write operation.
+    - api_version (str): version of the Graph SharePoint API to be used for operations.
+    - folder_relative_path (Optional[str]): relative folder path within the document
+        library to upload the file.
+    - chunk_size (Optional[int]): Optional; size (in Bytes) of the file chunks for
+        uploading to SharePoint. Default is 100 Mb.
+    - local_options (Optional[dict]): Optional; additional options for customizing
+        write to csv action to local path. You can check the available options
+        here: https://spark.apache.org/docs/3.5.3/sql-data-sources-csv.html
+    - conflict_behaviour (Optional[str]): Optional; behavior to adopt in case
+        of a conflict (e.g., 'replace', 'fail').
+    """
+
+    client_id: str
+    tenant_id: str
+    site_name: str
+    drive_name: str
+    file_name: str
+    secret: str
+    local_path: str
+    api_version: str = "v1.0"
+    folder_relative_path: Optional[str] = None
+    chunk_size: Optional[int] = 100 * 1024 * 1024  # 100 MB
+    local_options: Optional[dict] = None
+    conflict_behaviour: Optional[str] = None
+
+
+@dataclass
 class OutputSpec(object):
     """Specification of an algorithm output.
 
@@ -577,6 +621,7 @@ class OutputSpec(object):
     - data_format: format of the output. Defaults to DELTA.
     - db_table: table name in the form of `<db>.<table>`.
     - location: uri that identifies from where to write data in the specified format.
+    - sharepoint_opts: options to apply on writing on sharepoint operations.
     - partitions: list of partition input_col names.
     - merge_opts: options to apply to the merge operation.
     - streaming_micro_batch_transformers: transformers to invoke for each streaming
@@ -616,6 +661,7 @@ class OutputSpec(object):
     data_format: str = OutputFormat.DELTAFILES.value
     db_table: Optional[str] = None
     location: Optional[str] = None
+    sharepoint_opts: Optional[SharepointOptions] = None
     merge_opts: Optional[MergeOptions] = None
     partitions: Optional[List[str]] = None
     streaming_micro_batch_transformers: Optional[List[TransformerSpec]] = None
@@ -844,7 +890,7 @@ class RestoreType(Enum):
     def values(cls):  # type: ignore
         """Generates a list containing all enum values.
 
-        Return:
+        Returns:
             A list with all enum values.
         """
         return (c.value for c in cls)
@@ -856,7 +902,7 @@ class RestoreType(Enum):
         Args:
             restore_type: restore type to check if exists.
 
-        Return:
+        Returns:
             If the restore type exists in our enum.
         """
         return restore_type in cls.values()
@@ -938,19 +984,19 @@ class GABStartOfWeek(Enum):
 class GABSpec(object):
     """Gab Specification.
 
-    query_label_filter: query use-case label to execute.
-    queue_filter: queue to execute the job.
-    cadence_filter: selected cadences to build the asset.
-    target_database: target database to write.
-    curr_date: current date.
-    start_date: period start date.
-    end_date: period end date.
-    rerun_flag: rerun flag.
-    target_table: target table to write.
-    source_database: source database.
-    gab_base_path: base path to read the use cases.
-    lookup_table: gab configuration table.
-    calendar_table: gab calendar table.
+    - query_label_filter: query use-case label to execute.
+    - queue_filter: queue to execute the job.
+    - cadence_filter: selected cadences to build the asset.
+    - target_database: target database to write.
+    - curr_date: current date.
+    - start_date: period start date.
+    - end_date: period end date.
+    - rerun_flag: rerun flag.
+    - target_table: target table to write.
+    - source_database: source database.
+    - gab_base_path: base path to read the use cases.
+    - lookup_table: gab configuration table.
+    - calendar_table: gab calendar table.
     """
 
     query_label_filter: list[str]

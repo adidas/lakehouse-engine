@@ -142,7 +142,7 @@ class SensorControlTableManager(object):
             status_change_timestamp: timestamp we commit
                 this change in the sensor control table.
 
-        Return:
+        Returns:
             Sensor data as list[dict], used to create a
                 dataframe to store the data into the sensor_control_table.
         """
@@ -174,7 +174,7 @@ class SensorControlTableManager(object):
             - upstream_key
             - upstream_value
 
-        Return:
+        Returns:
             A set containing the fields to update in the control_table.
         """
         sensor_update_set = dict(SENSOR_UPDATE_SET)
@@ -201,7 +201,7 @@ class SensorControlTableManager(object):
             assets: list of assets that are fueled by the pipeline
                 where this sensor is.
 
-        Return:
+        Returns:
             Row containing the data for the provided sensor_id.
         """
         df = DeltaTable.forName(
@@ -260,7 +260,7 @@ class SensorUpstreamManager(object):
                 If none we will set the default value,
                 our `sensor_new_data` view.
 
-        Return:
+        Returns:
             The query string.
         """
         source_table = upstream_table_name if upstream_table_name else "sensor_new_data"
@@ -311,7 +311,7 @@ class SensorUpstreamManager(object):
         Args:
             sensor_id: sensor id.
 
-        Return:
+        Returns:
             The query string.
         """
         query = (
@@ -332,7 +332,7 @@ class SensorUpstreamManager(object):
         Args:
             sensor_spec: sensor spec containing all sensor information.
 
-        Return:
+        Returns:
             An empty dataframe if it doesn't have new data otherwise the new data
         """
         new_data_df = ReaderFactory.get_data(sensor_spec.input_spec)
@@ -353,7 +353,7 @@ class SensorUpstreamManager(object):
         Args:
             new_data_df: DataFrame possibly containing new data.
 
-        Return:
+        Returns:
             Optional row, present if there is new data in the upstream,
             absent otherwise.
         """
@@ -378,7 +378,7 @@ class SensorUpstreamManager(object):
             engine_table_name: table name exposed with the SAP LOGCHAIN data.
                 This table will be used in the jdbc query.
 
-        Return:
+        Returns:
             The query string.
         """
         if not chain_id:

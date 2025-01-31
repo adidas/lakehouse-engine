@@ -29,7 +29,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/transformations/column_reshapers/flatten_schema/batch.json
+{!../../../../tests/resources/feature/transformations/column_reshapers/flatten_schema/batch.json!}
 ```
 
 The scenario of **explode_arrays** is transforming the arrays columns in one or more rows, depending on the number of elements, so, it replicates the row for each array value. In this case we are using explode to all array columns, using `explode_arrays` as `true`.
@@ -41,7 +41,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/transformations/column_reshapers/explode_arrays/batch.json
+{!../../../../tests/resources/feature/transformations/column_reshapers/explode_arrays/batch.json!}
 ```
 
 The scenario of **flatten_and_explode_arrays_and_maps** is using `flatten_schema` and `explode_columns` to have the desired output. In this case, the desired output is to flatten all schema and explode maps and arrays, even having an array inside a struct. Steps:
@@ -58,5 +58,5 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/transformations/column_reshapers/flatten_and_explode_arrays_and_maps/batch.json
+{!../../../../tests/resources/feature/transformations/column_reshapers/flatten_and_explode_arrays_and_maps/batch.json!}
 ```

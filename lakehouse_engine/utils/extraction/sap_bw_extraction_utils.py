@@ -23,6 +23,7 @@ class SAPBWExtraction(JDBCExtraction):
     and/or overwrite those configurations.
 
     These configurations cover:
+
     - latest_timestamp_input_col: the column containing the actrequest timestamp
         in the dataset in latest_timestamp_data_location. Default:
         "actrequest_timestamp".

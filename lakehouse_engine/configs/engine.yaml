@@ -1,4 +1,5 @@
-dq_bucket: s3://sample-bucket
+dq_bucket: s3://sample-dq-bucket
+dq_dev_bucket: s3://sample-dq-dev-bucket
 dq_functions_column_list:
   - dq_rule_id
   - execution_point
@@ -7,3 +8,10 @@ dq_functions_column_list:
   - table
   - column
   - dimension
+sharepoint_authority: https://login.microsoftonline.com
+sharepoint_api_domain: https://graph.microsoft.com
+sharepoint_company_domain: your_company_name.sharepoint.com
+notif_disallowed_email_servers:
+  - sample.blocked.email_server
+engine_usage_path: s3://sample-log-bucket
+engine_dev_usage_path: s3://sample-log-dev-bucket

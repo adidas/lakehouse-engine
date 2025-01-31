@@ -41,6 +41,7 @@ TBLPROPERTIES(
 | 3          | expect_column_values_to_not_be_in_set     | in_motion       | my_database_schema | dummy_sales | ordered_item |         | {"column": "amount", "value_set": [1,2,3]}        | Completeness |
 | 4          | expect_column_pair_a_to_be_not_equal_to_b | at_rest         | my_database_schema | dummy_sales | ordered_item |         | {"column_A": "amount","column_B": "ordered_item"} | Completeness |
 | 5          | expect_table_row_count_to_be_between      | at_rest         | my_database_schema | dummy_sales | ordered_item |         | {"min_value": 1, "max_value": 10}                 | Completeness |
+
 **Table definition:**
 
 | Column Name      | Definition                                                                                                                                                                                                                                                                        |
@@ -93,156 +94,144 @@ The following configurations represent the minimum requirements to make Prisma D
 ],
 ```
 
-.. note::
-  Available extra parameters to use in the DQ Specs for Prisma:
-  - **data_docs_local_fs** - the path for data docs. The parameter is useful in case you want your DQ Results to be reflected on the automatic Data Docs site;
-  - **data_docs_prefix** - prefix where to store data_docs' data. This parameter must be used together with `data_docs_local_fs`;
-  - **dq_table_extra_filters** - extra filters to be used when deriving DQ functions. This is an SQL expression to be applied to `dq_db_table` which means that the statements must use one of the available columns in the table. For example: dq_rule_id in ('rule1','rule2');
-  - **data_docs_bucket** - the bucket name for data docs only. When defined, it will supersede bucket parameter. **Note:** only applicable for store_backend s3;
-  - **expectations_store_prefix** - prefix where to store expectations' data. **Note:** only applicable for store_backend s3;
-  - **validations_store_prefix** - prefix where to store validations' data. **Note:** only applicable for store_backend s3;
-  - **checkpoint_store_prefix** - prefix where to store checkpoints' data. **Note:** only applicable for store_backend s3;
+!!! note
+    Available extra parameters to use in the DQ Specs for Prisma:
+    
+    - **data_docs_local_fs** - the path for data docs. The parameter is useful in case you want your DQ Results to be reflected on the automatic Data Docs site;
+    - **data_docs_prefix** - prefix where to store data_docs' data. This parameter must be used together with `data_docs_local_fs`;
+    - **dq_table_extra_filters** - extra filters to be used when deriving DQ functions. This is an SQL expression to be applied to `dq_db_table` which means that the statements must use one of the available columns in the table. For example: dq_rule_id in ('rule1','rule2');
+    - **data_docs_bucket** - the bucket name for data docs only. When defined, it will supersede bucket parameter. **Note:** only applicable for store_backend s3;
+    - **expectations_store_prefix** - prefix where to store expectations' data. **Note:** only applicable for store_backend s3;
+    - **validations_store_prefix** - prefix where to store validations' data. **Note:** only applicable for store_backend s3;
+    - **checkpoint_store_prefix** - prefix where to store checkpoints' data. **Note:** only applicable for store_backend s3;
 
 ## End2End Example
 Below you can also find an End2End and detailed example of loading data into the DQ Checks table and then using PRISMA both with load_data() and execute_dq_validation().
 
-<details>
-  <summary><b>1 - Load the DQ Checks Table</b></summary>
-
-  This example shows how to insert data into the data_quality_checks table using an Acon with a csv file as a source.
-  The location provided is just an example of a place to store the csv. It is also important that the source file contains the **data_quality_checks** schema.
-  ```python
-  acon = {
-    "input_specs": [
-      {
-      "spec_id": "read_dq_checks",
-      "read_type": "batch",
-      "data_format": "csv",
-      "options": {"header": True, "delimiter": ";"},
-      "location": "s3://my-data-product/local_data/data_quality_checks/",
-      }
-    ],
-    "output_specs": [
-      {
-      "spec_id": "write_dq_checks",
-      "input_id": "read_dq_checks",
-      "write_type": "overwrite",
-      "data_format": "delta",
-      "location": "s3://my-data-product-bucket/inbound/data_quality_checks",
-      }
-    ],
-  }
-  
-  load_data(acon=acon)
-  ```
-</details>
-<details>
-  <summary><b>2 - PRISMA - IN MOTION (load_data)</b></summary>
-  
-  ```python
-  cols_to_rename = {"item": "ordered_item", "date": "order_date", "article": "article_id"}   
-  acon = {
+??? example "**1 - Load the DQ Checks Table**"
+    This example shows how to insert data into the data_quality_checks table using an Acon with a csv file as a source.
+    The location provided is just an example of a place to store the csv. It is also important that the source file contains the **data_quality_checks** schema.
+    ```python
+    acon = {
       "input_specs": [
-          {
-              "spec_id": "dummy_sales_bronze",
-              "read_type": "batch",
-              "data_format": "delta",
-              "location": "s3://my-data-product-bucket/bronze/dummy_sales",
-          }
-      ],
-      "transform_specs": [
-          {
-              "spec_id": "dummy_sales_transform",
-              "input_id": "dummy_sales_bronze",
-              "transformers": [
-                  {
-                      "function": "rename",
-                      "args": {
-                          "cols": cols_to_rename,
-                      },
-                  },
-              ],
-          }
-      ],
-      "dq_specs": [
-          {
-              "spec_id": "dq_validator_in_motion",
-              "input_id": "dummy_sales_transform",
-              "dq_type": "prisma",
-              "store_backend": "file_system",
-              "local_fs_root_dir": "/my-data-product/artefacts/dq",
-              "dq_db_table": DQ_DB_TABLE,
-              "dq_table_table_filter": "dummy_sales",
-              "dq_table_extra_filters": "1 = 1",
-              "data_docs_local_fs": "my-data-product/my-data-product-dq-site",
-              "data_docs_prefix": "{}/my-data-product-bucket/data_docs/site/".format(DQ_PREFIX),
-              "data_product_name": DATA_PRODUCT_NAME,
-              "tbl_to_derive_pk": DB_TABLE,
-          }
+        {
+        "spec_id": "read_dq_checks",
+        "read_type": "batch",
+        "data_format": "csv",
+        "options": {"header": True, "delimiter": ";"},
+        "location": "s3://my-data-product/local_data/data_quality_checks/",
+        }
       ],
       "output_specs": [
-          {
-              "spec_id": "dummy_sales_silver",
-              "input_id": "dq_validator_in_motion",
-              "write_type": "overwrite",
-              "data_format": "delta",
-              "location": "s3://my-data-product-bucket/silver/dummy_sales_dq_template_in_motion",
-          }
+        {
+        "spec_id": "write_dq_checks",
+        "input_id": "read_dq_checks",
+        "write_type": "overwrite",
+        "data_format": "delta",
+        "location": "s3://my-data-product-bucket/inbound/data_quality_checks",
+        }
       ],
-  }
-   
-  load_data(acon=acon)
-  ```
-</details>
-<details>
-  <summary><b>3 - PRISMA - AT REST (exec_dq_validation)</b></summary>
-  
-  ```python
-  acon = {
-      "input_spec": {
-          "spec_id": "dummy_sales_source",
-          "read_type": "batch",
-          "db_table": DB_TABLE,
-      },
-      "dq_spec": {
-          "spec_id": "dq_validator_at_rest",
-          "input_id": "sales_input",
-          "dq_type": "prisma",
-          "store_backend": "file_system",
-          "local_fs_root_dir": "/my-data-product/artefacts/dq",
-          "dq_db_table": DQ_DB_TABLE,
-          "dq_table_table_filter": "dummy_sales",
-          "data_docs_local_fs": "my-data-product/my-data-product-dq-site",
-          "data_docs_prefix": "{}/my-data-product-bucket/data_docs/site/".format(DQ_PREFIX),
-          "data_product_name": DATA_PRODUCT_NAME,
-          "tbl_to_derive_pk": DB_TABLE,
-      },
-  }
-   
-  execute_dq_validation(acon=acon)
-  ```
-</details>
+    }
+    
+    load_data(acon=acon)
+    ```
+
+??? example "**2 - PRISMA - IN MOTION (load_data)**"
+    ```python
+    cols_to_rename = {"item": "ordered_item", "date": "order_date", "article": "article_id"}   
+    acon = {
+        "input_specs": [
+            {
+                "spec_id": "dummy_sales_bronze",
+                "read_type": "batch",
+                "data_format": "delta",
+                "location": "s3://my-data-product-bucket/bronze/dummy_sales",
+            }
+        ],
+        "transform_specs": [
+            {
+                "spec_id": "dummy_sales_transform",
+                "input_id": "dummy_sales_bronze",
+                "transformers": [
+                    {
+                        "function": "rename",
+                        "args": {
+                            "cols": cols_to_rename,
+                        },
+                    },
+                ],
+            }
+        ],
+        "dq_specs": [
+            {
+                "spec_id": "dq_validator_in_motion",
+                "input_id": "dummy_sales_transform",
+                "dq_type": "prisma",
+                "store_backend": "file_system",
+                "local_fs_root_dir": "/my-data-product/artefacts/dq",
+                "dq_db_table": DQ_DB_TABLE,
+                "dq_table_table_filter": "dummy_sales",
+                "dq_table_extra_filters": "1 = 1",
+                "data_docs_local_fs": "my-data-product/my-data-product-dq-site",
+                "data_docs_prefix": "{}/my-data-product-bucket/data_docs/site/".format(DQ_PREFIX),
+                "data_product_name": DATA_PRODUCT_NAME,
+                "tbl_to_derive_pk": DB_TABLE,
+            }
+        ],
+        "output_specs": [
+            {
+                "spec_id": "dummy_sales_silver",
+                "input_id": "dq_validator_in_motion",
+                "write_type": "overwrite",
+                "data_format": "delta",
+                "location": "s3://my-data-product-bucket/silver/dummy_sales_dq_template_in_motion",
+            }
+        ],
+    }
+    
+    load_data(acon=acon)
+    ```
+
+??? example "**3 - PRISMA - AT REST (exec_dq_validation)**"
+    ```python
+    acon = {
+        "input_spec": {
+            "spec_id": "dummy_sales_source",
+            "read_type": "batch",
+            "db_table": DB_TABLE,
+        },
+        "dq_spec": {
+            "spec_id": "dq_validator_at_rest",
+            "input_id": "sales_input",
+            "dq_type": "prisma",
+            "store_backend": "file_system",
+            "local_fs_root_dir": "/my-data-product/artefacts/dq",
+            "dq_db_table": DQ_DB_TABLE,
+            "dq_table_table_filter": "dummy_sales",
+            "data_docs_local_fs": "my-data-product/my-data-product-dq-site",
+            "data_docs_prefix": "{}/my-data-product-bucket/data_docs/site/".format(DQ_PREFIX),
+            "data_product_name": DATA_PRODUCT_NAME,
+            "tbl_to_derive_pk": DB_TABLE,
+        },
+    }
+    
+    execute_dq_validation(acon=acon)
+    ```
 
 ## Troubleshooting/Common issues
 This section provides a summary of common issues and resolutions.
 
-<details>
-  <summary><b>Error type: filter does not get rules from DQ Checks table.</b></summary>   
-  <img src="../../assets/prisma/img/dq_checks_table_w_no_rules.png" alt="image" width="1000px" height="auto">
+??? warning "**Error type: filter does not get rules from DQ Checks table.**"
+    <img src="../../../assets/prisma/img/dq_checks_table_w_no_rules.png" alt="image" width="1000px" height="auto">
 
-  <b>Solution:</b> make sure the records in your DQ Checks table are well-defined. In the Acon, ensure that you have the dq_table_table_filter with the correct table name.
-</details>
+    **Solution**: make sure the records in your DQ Checks table are well-defined. In the Acon, ensure that you have the dq_table_table_filter with the correct table name.
 
-<details>
-  <summary><b>Error type: missing expectation.</b></summary>
-  <img src="../../assets/prisma/img/missing_expectation.png" alt="image" width="1000px" height="auto">
-  
-  <b>Solution:</b> make sure that you are using a valid expectation. See the valid ones on: <a href="https://greatexpectations.io/legacy/v1/expectations/?filterType=Backend+support&viewType=Summary&showFilters=true&subFilterValues=spark">Gallery of Expectations and Packages</a>
-</details>
+??? warning "**Error type: missing expectation.**"
+    <img src="../../../assets/prisma/img/missing_expectation.png" alt="image" width="1000px" height="auto">
 
-<details>
-  <summary><b>Error type: missing expectation parameters.</b></summary>
-  <img src="../../assets/prisma/img/missing_expectation_parameters.png" alt="image" width="1000px" height="auto">
-  
-  <b>Solution:</b> make sure that your "arguments" column in the DQ CHECKS table has all necessary parameters for the expectation. For example, the expectation <a href="https://greatexpectations.io/legacy/v1/expectations/expect_column_values_to_not_be_null?filterType=Backend%20support&gotoPage=1&showFilters=true&viewType=Summary&subFilterValues=spark">expect_column_values_to_not_be_null</a> needs one argument (column (str): The column name).
-</details>
+    **Solution**: make sure that you are using a valid expectation. See the valid ones on: [Gallery of Expectations and Packages](https://greatexpectations.io/legacy/v1/expectations/?filterType=Backend+support&viewType=Summary&showFilters=true&subFilterValues=spark)
+
+??? warning "**Error type: missing expectation parameters.**"
+    <img src="../../../assets/prisma/img/missing_expectation_parameters.png" alt="image" width="1000px" height="auto">
+
+    **Solution**: make sure that your "arguments" column in the DQ CHECKS table has all necessary parameters for the expectation. For example, the expectation [expect_column_values_to_not_be_null](https://greatexpectations.io/legacy/v1/expectations/expect_column_values_to_not_be_null?filterType=Backend%20support&gotoPage=1&showFilters=true&viewType=Summary&subFilterValues=spark) needs one argument (column (str): The column name).

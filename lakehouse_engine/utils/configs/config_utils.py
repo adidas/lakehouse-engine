@@ -59,6 +59,21 @@ class ConfigUtils(object):
             config = yaml.safe_load(config)
         return config
 
+    @staticmethod
+    def get_config_from_file(config_file_path: str) -> Any:
+        """Get the lakehouse engine configurations using a file path.
+
+         Args:
+            config_file_path: a string with a path for a yaml file
+            with custom configurations.
+
+        Returns:
+            Configuration dictionary
+        """
+        with open(config_file_path, "r") as config:
+            config = yaml.safe_load(config)
+        return config
+
     @classmethod
     def get_engine_version(cls) -> str:
         """Get Lakehouse Engine version from the installed packages.

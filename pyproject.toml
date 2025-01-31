@@ -9,7 +9,7 @@ name = "lakehouse-engine"
 requires-python = ">=3.11"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-version = "1.23.0"
+version = "1.24.0"
 authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
 description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
 keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
@@ -39,6 +39,7 @@ optional-dependencies.os = { file = ["cicd/requirements_os.lock"] }
 optional-dependencies.azure = { file = ["cicd/requirements_azure.lock"] }
 optional-dependencies.dq = { file = ["cicd/requirements_dq.lock"] }
 optional-dependencies.sftp = { file = ["cicd/requirements_sftp.lock"] }
+optional-dependencies.sharepoint = { file = ["cicd/requirements_sharepoint.lock"] }
 
 [tool.setuptools.packages.find]
 exclude = ["tests*", "lakehouse_engine_usage*"]
@@ -69,7 +70,8 @@ module = [
     "msgraph.*",
     "pkg_resources.*",
     "yaml.*",
-    "ruamel.*"
+    "ruamel.*",
+    "msal.*"
 ]
 ignore_missing_imports = true
 

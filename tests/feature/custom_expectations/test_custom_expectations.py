@@ -148,6 +148,24 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "input_type": "dataframe_reader",
             "custom_expectation_result": "success",
         },
+        {
+            "expectation_name": "expect_column_values_to_not_be_null_or_empty_string",
+            "arguments": {
+                "column": "number",
+            },
+            "read_type": "streaming",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
+        {
+            "expectation_name": "expect_column_values_to_not_be_null_or_empty_string",
+            "arguments": {
+                "column": "number",
+            },
+            "read_type": "batch",
+            "input_type": "dataframe_reader",
+            "custom_expectation_result": "success",
+        },
     ],
 )
 def test_custom_expectation(scenario: dict, caplog: Any) -> None:

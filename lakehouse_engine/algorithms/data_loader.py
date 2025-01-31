@@ -15,15 +15,18 @@ from lakehouse_engine.core.definitions import (
     OutputFormat,
     OutputSpec,
     ReadType,
+    SharepointOptions,
     TerminatorSpec,
     TransformerSpec,
     TransformSpec,
 )
+from lakehouse_engine.dq_processors.exceptions import DQDuplicateRuleIdException
 from lakehouse_engine.io.reader_factory import ReaderFactory
 from lakehouse_engine.io.writer_factory import WriterFactory
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.terminators.terminator_factory import TerminatorFactory
 from lakehouse_engine.transformers.transformer_factory import TransformerFactory
+from lakehouse_engine.utils.dq_utils import PrismaUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
@@ -124,7 +127,9 @@ class DataLoader(Algorithm):
                 transformed_dfs[spec.spec_id] = transformed_df
             return transformed_dfs
 
-    def process_dq(self, data: OrderedDict) -> OrderedDict:
+    def process_dq(
+        self, data: OrderedDict
+    ) -> tuple[OrderedDict, Optional[dict[str, str]]]:
         """Process the data quality tasks for the data that was read and/or transformed.
 
         It supports multiple input dataframes. Although just one is advisable.
@@ -143,10 +148,17 @@ class DataLoader(Algorithm):
                 run the DQ process on.
 
         Returns:
-            Another ordered dict with the validated dataframes.
+            Another ordered dict with the validated dataframes and
+            a dictionary with the errors if they exist, or None.
         """
         if not self.dq_specs:
-            return data
+            return data, None
+
+        dq_processed_dfs, error = self._verify_dq_rule_id_uniqueness(
+            data, self.dq_specs
+        )
+        if error:
+            return dq_processed_dfs, error
         else:
             from lakehouse_engine.dq_processors.dq_factory import DQFactory
 
@@ -157,6 +169,7 @@ class DataLoader(Algorithm):
                 if (
                     spec.dq_type == DQType.PRISMA.value or spec.dq_functions
                 ) and spec.spec_id not in self._streaming_micro_batch_dq_plan:
+
                     if spec.cache_df:
                         df_processed_df.cache()
                     dq_processed_dfs[spec.spec_id] = DQFactory.run_dq_process(
@@ -164,7 +177,8 @@ class DataLoader(Algorithm):
                     )
                 else:
                     dq_processed_dfs[spec.spec_id] = df_processed_df
-            return dq_processed_dfs
+
+            return dq_processed_dfs, None
 
     def write(self, data: OrderedDict) -> OrderedDict:
         """Write the data that was read and transformed (if applicable).
@@ -218,7 +232,7 @@ class DataLoader(Algorithm):
             self._logger.info("Starting transform stage...")
             transformed_dfs = self.transform(read_dfs)
             self._logger.info("Starting data quality stage...")
-            validated_dfs = self.process_dq(transformed_dfs)
+            validated_dfs, errors = self.process_dq(transformed_dfs)
             self._logger.info("Starting write stage...")
             written_dfs = self.write(validated_dfs)
             self._logger.info("Starting terminate stage...")
@@ -227,6 +241,16 @@ class DataLoader(Algorithm):
         except Exception as e:
             NotifierFactory.generate_failure_notification(self.terminate_specs, e)
             raise e
+
+        if errors:
+            raise DQDuplicateRuleIdException(
+                "Data Written Successfully, but DQ Process Encountered an Issue.\n"
+                "We detected a duplicate dq_rule_id in the dq_spec definition. "
+                "As a result, none of the Data Quality (DQ) processes (dq_spec) "
+                "were executed.\n"
+                "Please review and verify the following dq_rules:\n"
+                f"{errors}"
+            )
 
         return written_dfs
 
@@ -365,6 +389,11 @@ class DataLoader(Algorithm):
                 merge_opts=(
                     MergeOptions(**spec["merge_opts"])
                     if spec.get("merge_opts")
+                    else None
+                ),
+                sharepoint_opts=(
+                    SharepointOptions(**spec["sharepoint_opts"])
+                    if spec.get("sharepoint_opts")
                     else None
                 ),
                 partitions=spec.get("partitions", []),
@@ -543,3 +572,26 @@ class DataLoader(Algorithm):
             combined_read_types[spec_id] = combined_read_types[input_id]
 
         return combined_read_types
+
+    @staticmethod
+    def _verify_dq_rule_id_uniqueness(
+        data: OrderedDict, dq_specs: list[DQSpec]
+    ) -> tuple[OrderedDict, dict[str, str]]:
+        """Verify the uniqueness of dq_rule_id.
+
+        Verify the existence of duplicate dq_rule_id values
+        and prepare the DataFrame for the next stage.
+
+        Args:
+            data: dataframes.
+            dq_specs: a list of DQSpec to be validated.
+
+        Returns:
+             processed df and error if existed.
+        """
+        error_dict = PrismaUtils.validate_rule_id_duplication(dq_specs)
+        dq_processed_dfs = OrderedDict(data)
+        for spec in dq_specs:
+            df_processed_df = dq_processed_dfs[spec.input_id]
+            dq_processed_dfs[spec.spec_id] = df_processed_df
+        return dq_processed_dfs, error_dict

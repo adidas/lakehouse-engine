@@ -7,6 +7,7 @@ bucket that can be used to make your data docs available, in DQ Web App (GX UI),
 The`data_docs_bucket` property supersedes the `bucket` property only for data docs storage.
 
 Regarding the dq_functions, it uses 3 functions (retrieved from the expectations supported by GX), which check:
+
 - **expect_column_to_exist** - if a column exist in the data;
 - **expect_table_row_count_to_be_between** - if the row count of the data is between the defined interval;
 - **expect_table_column_count_to_be_between** - if the number of columns in the data is bellow the max value defined.

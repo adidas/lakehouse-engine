@@ -12,3 +12,6 @@ dq_functions_column_list:
   - table
   - column
   - dimension
+sharepoint_authority: https://login.microsoftonline.com
+sharepoint_api_domain: https://graph.microsoft.com
+sharepoint_company_domain: company_name.sharepoint.com

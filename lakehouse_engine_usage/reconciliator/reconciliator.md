@@ -16,7 +16,7 @@ In the table below, we present how a simple reconciliation would look like:
 | Belgium         | 426           | Belgium       | 425         | 1             | 0.002     | 0.1    | 0.2 | percentage |
 
 The Reconciliator algorithm uses an ACON to configure its execution. You can find the meaning of each ACON property
-in [ReconciliatorSpec object](../lakehouse_engine/core/definitions.html#ReconciliatorSpec).
+in [ReconciliatorSpec object](../../reference/packages/core/definitions.md#packages.core.definitions.ReconciliatorSpec).
 
 Below there is an example of usage of reconciliator.
 ```python

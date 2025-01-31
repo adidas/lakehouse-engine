@@ -164,6 +164,7 @@ class DataFrameWriter(Writer):
         Returns:
             A bool representing if the table/view exists.
         """
+        ExecEnv.get_or_create()
         table_name = table_name.strip("`")
         return (
             len(

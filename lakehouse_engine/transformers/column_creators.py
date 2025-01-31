@@ -29,6 +29,8 @@ class ColumnCreators(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='with_row_id')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -53,6 +55,8 @@ class ColumnCreators(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='with_auto_increment_id')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -90,6 +94,8 @@ class ColumnCreators(object):
 
         Returns:
             Callable: A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='with_literals')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

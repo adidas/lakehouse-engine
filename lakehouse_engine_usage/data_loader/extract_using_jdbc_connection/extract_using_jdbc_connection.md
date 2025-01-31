@@ -1,14 +1,14 @@
 # Extract using JDBC connection
 
-.. danger:: **SAP Extraction**
+!!! danger "**SAP Extraction**"
 
     SAP is only used as an example to demonstrate how we can use a JDBC connection to extract data.
 
     **If you are looking to extract data from SAP, please use our sap_b4 or sap_bw reader.**
 
-    You can find the **sap_b4 reader** documentation: [Extract from SAP B4 ADSOs](../../lakehouse_engine_usage/data_loader/extract_from_sap_b4_adso.html) and the **sap_bw reader** documentarion: [Extract from SAP BW DSOs](../../lakehouse_engine_usage/data_loader/extract_from_sap_bw_dso.html)
+    You can find the **sap_b4 reader** documentation: [Extract from SAP B4 ADSOs](../../data_loader/extract_from_sap_b4_adso/extract_from_sap_b4_adso.md) and the **sap_bw reader** documentarion: [Extract from SAP BW DSOs](../../data_loader/extract_from_sap_bw_dso/extract_from_sap_bw_dso.md)
 
-.. danger:: **Parallel Extraction**
+!!! danger "**Parallel Extraction**"
     Parallel extractions **can bring a jdbc source down** if a lot of stress is put on the system. Be careful choosing the number of partitions. Spark is a distributed system and can lead to many connections.
 
 ## Introduction
@@ -18,7 +18,8 @@ Many databases allow a JDBC connection to extract data. Our engine has one reade
 In the next section you will find several examples about how to do it.
 
 ## The Simplest Scenario using sqlite 
-.. warning:: Not parallel -  Recommended for smaller datasets only, or when stressing the source system is a high concern
+!!! warning "Not parallel"
+    Recommended for smaller datasets only, or when stressing the source system is a high concern
 
 This scenario is the simplest one we can have, not taking any advantage of Spark JDBC optimisation techniques and using a single connection to retrieve all the data from the source.
 
@@ -46,7 +47,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/jdbc_reader/jdbc_function/correct_arguments/batch_init.json
+{!../../../../tests/resources/feature/jdbc_reader/jdbc_function/correct_arguments/batch_init.json!}
 ```
 
 This is same as using the following code in pyspark:
@@ -70,7 +71,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/jdbc_reader/jdbc_format/correct_arguments/batch_init.json
+{!../../../../tests/resources/feature/jdbc_reader/jdbc_format/correct_arguments/batch_init.json!}
 ```
 
 This is same as using the following code in pyspark:
@@ -88,28 +89,32 @@ In this template we will use a **SAP as example** for a more complete and runnab
 These definitions can be used in several databases that allow JDBC connection.
 
 The following scenarios of extractions are covered:
+
 - 1 - The Simplest Scenario (Not parallel -  Recommended for smaller datasets only,
 or when stressing the source system is a high concern)
-- 2 - Parallel extraction 
+- 2 - Parallel extraction
   - 2.1 - Simplest Scenario 
   - 2.2 - Provide upperBound (Recommended)
   - 2.3 - Provide predicates (Recommended)
 
-.. note::
-    Disclaimer: This template only uses **SAP as demonstration example for JDBC connection.**
+!!! note "Disclaimer"
+    This template only uses **SAP as demonstration example for JDBC connection.**
     **This isn't a SAP template!!!**
     **If you are looking to extract data from SAP, please use our sap_b4 reader or the sap_bw reader.**
 
 The JDBC connection has 2 main sections to be filled, the **jdbc_args** and **options**:
+
 - jdbc_args - Here you need to fill everything related to jdbc connection itself, like table/query, url, user,
 ..., password.
 - options - This section is more flexible, and you can provide additional options like "fetchSize", "batchSize",
 "numPartitions", ..., upper and "lowerBound".
 
 If you want to know more regarding jdbc spark options you can follow the link below:
+
 - https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
 
 If you want to have a better understanding about JDBC Spark optimizations, you can find them in the following:
+
 - https://docs.databricks.com/en/connect/external-systems/jdbc.html
 - https://stackoverflow.com/questions/41085238/what-is-the-meaning-of-partitioncolumn-lowerbound-upperbound-numpartitions-pa
 - https://newbedev.com/how-to-optimize-partitioning-when-migrating-data-from-jdbc-source
@@ -118,7 +123,9 @@ If you want to have a better understanding about JDBC Spark optimizations, you c
 This scenario is the simplest one we can have, not taking any advantage of Spark JDBC optimisation techniques
 and using a single connection to retrieve all the data from the source. It should only be used in case the data
 you want to extract from is a small one, with no big requirements in terms of performance to fulfill.
+
 When extracting from the source, we can have two options:
+
 - **Delta Init** - full extraction of the source. You should use it in the first time you extract from the
 source or any time you want to re-extract completely. Similar to a so-called full load.
 - **Delta** - extracts the portion of the data that is new or has changed in the source, since the last
@@ -242,8 +249,8 @@ load_data(acon=acon)
 ### 2 - Parallel extraction
 On this section we present 3 possible scenarios for parallel extractions from JDBC sources.
 
-.. note::
-    Disclaimer for parallel extraction: Parallel extractions can bring a jdbc source down if a lot of stress
+!!! note "Disclaimer for parallel extraction"
+    Parallel extractions can bring a jdbc source down if a lot of stress
     is put on the system. **Be careful when choosing the number of partitions. 
     Spark is a distributed system and can lead to many connections.**
 
@@ -378,6 +385,7 @@ load_data(acon=acon)
 This scenario performs the extraction from the JDBC source in parallel, but has more concerns trying to
 optimize and have more control (compared to 2.1 example) on how the extraction is split and performed,
 using the following options:
+
 - `numPartitions` - number of Spark partitions to split the extraction.
 - `partitionColumn` - column used to split the extraction. It must be a numeric, date, or timestamp.
 It should be a column that is able to split the extraction evenly in several tasks. An auto-increment
@@ -393,6 +401,7 @@ the `numPartitions` and three additional options to fine tune the extraction (`p
 When these 4 properties are used, Spark will use them to build several queries to split the extraction.
 **Example:** for `"numPartitions": 10`, `"partitionColumn": "record"`, `"lowerBound: 1"`, `"upperBound: 100"`,
 Spark will generate 10 queries like:
+
 - `SELECT * FROM dummy_table WHERE RECORD < 10 OR RECORD IS NULL`
 - `SELECT * FROM dummy_table WHERE RECORD >= 10 AND RECORD < 20`
 - `SELECT * FROM dummy_table WHERE RECORD >= 20 AND RECORD < 30`
@@ -524,6 +533,7 @@ load_data(acon=acon)
 #### 2.3 - Parallel Extraction with Predicates (Recommended)
 This scenario performs the extraction from JDBC source in parallel, useful in contexts where there aren't
 numeric, date or timestamp columns to parallelize the extraction:
+
 - `partitionColumn` - column used to split the extraction (can be of any type).
 
 - This is an adequate example to be followed if there is a column in the data source that is good to be

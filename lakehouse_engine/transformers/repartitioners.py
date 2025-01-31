@@ -22,6 +22,8 @@ class Repartitioners(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='coalesce')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -44,6 +46,8 @@ class Repartitioners(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='repartition')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

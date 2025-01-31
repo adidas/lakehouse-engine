@@ -12,7 +12,7 @@ annotated-types==0.7.0
     # via
     #   -c requirements_full.lock
     #   pydantic
-anyio==4.4.0
+anyio==4.8.0
     # via
     #   -c requirements_full.lock
     #   httpx
@@ -29,7 +29,7 @@ arrow==1.3.0
     # via
     #   -c requirements_full.lock
     #   isoduration
-asttokens==2.4.1
+asttokens==3.0.0
     # via
     #   -c requirements_full.lock
     #   stack-data
@@ -37,7 +37,7 @@ async-lru==2.0.4
     # via
     #   -c requirements_full.lock
     #   jupyterlab
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -50,26 +50,26 @@ beautifulsoup4==4.12.3
     # via
     #   -c requirements_full.lock
     #   nbconvert
-bleach==6.1.0
+bleach[css]==6.2.0
     # via
     #   -c requirements_full.lock
     #   nbconvert
-certifi==2024.7.4
+certifi==2024.12.14
     # via
     #   -c requirements_full.lock
     #   httpcore
     #   httpx
     #   requests
-cffi==1.17.0
+cffi==1.17.1
     # via
     #   -c requirements_full.lock
     #   argon2-cffi-bindings
     #   cryptography
-charset-normalizer==3.3.2
+charset-normalizer==3.4.1
     # via
     #   -c requirements_full.lock
     #   requests
-click==8.1.7
+click==8.1.8
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -82,11 +82,11 @@ comm==0.2.2
     #   -c requirements_full.lock
     #   ipykernel
     #   ipywidgets
-cryptography==43.0.1
+cryptography==44.0.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
-debugpy==1.8.5
+debugpy==1.8.12
     # via
     #   -c requirements_full.lock
     #   ipykernel
@@ -102,11 +102,11 @@ entrypoints==0.4
     # via
     #   -c requirements_full.lock
     #   altair
-executing==2.0.1
+executing==2.1.0
     # via
     #   -c requirements_full.lock
     #   stack-data
-fastjsonschema==2.20.0
+fastjsonschema==2.21.1
     # via
     #   -c requirements_full.lock
     #   nbformat
@@ -122,15 +122,15 @@ h11==0.14.0
     # via
     #   -c requirements_full.lock
     #   httpcore
-httpcore==1.0.5
+httpcore==1.0.7
     # via
     #   -c requirements_full.lock
     #   httpx
-httpx==0.27.0
+httpx==0.28.1
     # via
     #   -c requirements_full.lock
     #   jupyterlab
-idna==3.7
+idna==3.10
     # via
     #   -c requirements_full.lock
     #   anyio
@@ -141,13 +141,13 @@ ipykernel==6.29.5
     # via
     #   -c requirements_full.lock
     #   jupyterlab
-ipython==8.26.0
+ipython==8.31.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
     #   ipykernel
     #   ipywidgets
-ipywidgets==8.1.3
+ipywidgets==8.1.5
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -155,7 +155,7 @@ isoduration==20.11.0
     # via
     #   -c requirements_full.lock
     #   jsonschema
-jedi==0.19.1
+jedi==0.19.2
     # via
     #   -c requirements_full.lock
     #   ipython
@@ -168,7 +168,7 @@ jinja2==3.1.4
     #   jupyterlab
     #   jupyterlab-server
     #   nbconvert
-json5==0.9.25
+json5==0.10.0
     # via
     #   -c requirements_full.lock
     #   jupyterlab-server
@@ -189,11 +189,11 @@ jsonschema[format-nongpl]==4.23.0
     #   jupyter-events
     #   jupyterlab-server
     #   nbformat
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via
     #   -c requirements_full.lock
     #   jsonschema
-jupyter-client==8.6.2
+jupyter-client==8.6.3
     # via
     #   -c requirements_full.lock
     #   ipykernel
@@ -209,7 +209,7 @@ jupyter-core==5.7.2
     #   nbclient
     #   nbconvert
     #   nbformat
-jupyter-events==0.10.0
+jupyter-events==0.11.0
     # via
     #   -c requirements_full.lock
     #   jupyter-server
@@ -217,7 +217,7 @@ jupyter-lsp==2.2.5
     # via
     #   -c requirements_full.lock
     #   jupyterlab
-jupyter-server==2.14.2
+jupyter-server==2.15.0
     # via
     #   -c requirements_full.lock
     #   jupyter-lsp
@@ -229,7 +229,7 @@ jupyter-server-terminals==0.5.3
     # via
     #   -c requirements_full.lock
     #   jupyter-server
-jupyterlab==4.2.4
+jupyterlab==4.3.4
     # via
     #   -c requirements_full.lock
     #   notebook
@@ -242,20 +242,20 @@ jupyterlab-server==2.27.3
     #   -c requirements_full.lock
     #   jupyterlab
     #   notebook
-jupyterlab-widgets==3.0.11
+jupyterlab-widgets==3.0.13
     # via
     #   -c requirements_full.lock
     #   ipywidgets
-makefun==1.15.4
+makefun==1.15.6
     # via
     #   -c requirements_full.lock
     #   great-expectations
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   -c requirements_full.lock
     #   jinja2
     #   nbconvert
-marshmallow==3.21.3
+marshmallow==3.25.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -269,11 +269,11 @@ mistune==3.0.2
     #   -c requirements_full.lock
     #   great-expectations
     #   nbconvert
-nbclient==0.10.0
+nbclient==0.10.2
     # via
     #   -c requirements_full.lock
     #   nbconvert
-nbconvert==7.16.4
+nbconvert==7.16.5
     # via
     #   -c requirements_full.lock
     #   jupyter-server
@@ -288,7 +288,7 @@ nest-asyncio==1.5.6
     # via
     #   -c requirements_full.lock
     #   ipykernel
-notebook==7.2.1
+notebook==7.3.2
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -297,7 +297,7 @@ notebook-shim==0.2.4
     #   -c requirements_full.lock
     #   jupyterlab
     #   notebook
-numpy==1.26.4
+numpy==2.2.2
     # via
     #   -c requirements_full.lock
     #   altair
@@ -308,7 +308,7 @@ overrides==7.7.0
     # via
     #   -c requirements_full.lock
     #   jupyter-server
-packaging==24.1
+packaging==24.2
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -318,7 +318,7 @@ packaging==24.1
     #   jupyterlab-server
     #   marshmallow
     #   nbconvert
-pandas==2.2.2
+pandas==2.2.3
     # via
     #   -c requirements_full.lock
     #   altair
@@ -335,19 +335,19 @@ pexpect==4.9.0
     # via
     #   -c requirements_full.lock
     #   ipython
-platformdirs==4.2.2
+platformdirs==4.3.6
     # via
     #   -c requirements_full.lock
     #   jupyter-core
-prometheus-client==0.20.0
+prometheus-client==0.21.1
     # via
     #   -c requirements_full.lock
     #   jupyter-server
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.50
     # via
     #   -c requirements_full.lock
     #   ipython
-psutil==6.0.0
+psutil==6.1.1
     # via
     #   -c requirements_full.lock
     #   ipykernel
@@ -364,35 +364,35 @@ pycparser==2.22
     # via
     #   -c requirements_full.lock
     #   cffi
-pydantic==2.8.2
+pydantic==2.10.5
     # via
     #   -c requirements_full.lock
     #   great-expectations
-pydantic-core==2.20.1
+pydantic-core==2.27.2
     # via
     #   -c requirements_full.lock
     #   pydantic
-pygments==2.18.0
+pygments==2.19.1
     # via
     #   -c requirements_full.lock
     #   ipython
     #   nbconvert
-pyparsing==3.1.2
+pyparsing==3.2.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
-python-dateutil==2.9.0.post0
+python-dateutil==2.8.2
     # via
     #   -c requirements_full.lock
     #   arrow
     #   great-expectations
     #   jupyter-client
     #   pandas
-python-json-logger==2.0.7
+python-json-logger==3.2.1
     # via
     #   -c requirements_full.lock
     #   jupyter-events
-pytz==2024.1
+pytz==2024.2
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -407,7 +407,7 @@ pyzmq==26.1.0
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -428,7 +428,7 @@ rfc3986-validator==0.1.1
     #   -c requirements_full.lock
     #   jsonschema
     #   jupyter-events
-rpds-py==0.20.0
+rpds-py==0.22.3
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -437,7 +437,7 @@ ruamel-yaml==0.17.17
     # via
     #   -c requirements_full.lock
     #   great-expectations
-scipy==1.14.0
+scipy==1.15.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -445,19 +445,16 @@ send2trash==1.8.3
     # via
     #   -c requirements_full.lock
     #   jupyter-server
-six==1.16.0
+six==1.17.0
     # via
     #   -c requirements_full.lock
-    #   asttokens
-    #   bleach
     #   python-dateutil
     #   rfc3339-validator
 sniffio==1.3.1
     # via
     #   -c requirements_full.lock
     #   anyio
-    #   httpx
-soupsieve==2.5
+soupsieve==2.6
     # via
     #   -c requirements_full.lock
     #   beautifulsoup4
@@ -470,15 +467,15 @@ terminado==0.18.1
     #   -c requirements_full.lock
     #   jupyter-server
     #   jupyter-server-terminals
-tinycss2==1.3.0
+tinycss2==1.4.0
     # via
     #   -c requirements_full.lock
-    #   nbconvert
-toolz==0.12.1
+    #   bleach
+toolz==1.0.0
     # via
     #   -c requirements_full.lock
     #   altair
-tornado==6.4.1
+tornado==6.4.2
     # via
     #   -c requirements_full.lock
     #   ipykernel
@@ -487,7 +484,7 @@ tornado==6.4.1
     #   jupyterlab
     #   notebook
     #   terminado
-tqdm==4.66.5
+tqdm==4.67.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -507,18 +504,20 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-types-python-dateutil==2.9.0.20240316
+types-python-dateutil==2.9.0.20241206
     # via
     #   -c requirements_full.lock
     #   arrow
 typing-extensions==4.12.2
     # via
     #   -c requirements_full.lock
+    #   anyio
     #   great-expectations
     #   ipython
     #   pydantic
     #   pydantic-core
-tzdata==2024.1
+    #   referencing
+tzdata==2024.2
     # via
     #   -c requirements_full.lock
     #   pandas
@@ -530,7 +529,7 @@ uri-template==1.3.0
     # via
     #   -c requirements_full.lock
     #   jsonschema
-urllib3==1.26.19
+urllib3==2.3.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -539,7 +538,7 @@ wcwidth==0.2.13
     # via
     #   -c requirements_full.lock
     #   prompt-toolkit
-webcolors==24.8.0
+webcolors==24.11.1
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -552,7 +551,7 @@ websocket-client==1.8.0
     # via
     #   -c requirements_full.lock
     #   jupyter-server
-widgetsnbextension==4.0.11
+widgetsnbextension==4.0.13
     # via
     #   -c requirements_full.lock
     #   ipywidgets

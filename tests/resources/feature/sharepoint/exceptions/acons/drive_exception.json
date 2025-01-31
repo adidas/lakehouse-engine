@@ -1,0 +1,74 @@
+{
+  "input_specs": [
+    {
+      "spec_id": "sharepoint_input",
+      "read_type": "batch",
+      "data_format": "csv",
+      "options": {
+        "header": true,
+        "delimiter": "|"
+      },
+      "location": "file:///app/tests/lakehouse/in/feature/sharepoint/data/",
+      "schema": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "salesorder",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "item",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "date",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "customer",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "article",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "amount",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      }
+    }
+  ],
+  "output_specs": [
+    {
+      "spec_id": "sharepoint_output",
+      "input_id": "sharepoint_input",
+      "data_format": "sharepoint",
+      "sharepoint_opts":
+      {
+        "client_id": "CLIENT_ID",
+        "tenant_id": "TENANT_TEST",
+        "secret": "CLIENT_SECRET",
+        "site_name": "mock_site",
+        "drive_name": "",
+        "folder_relative_path": "sp_test",
+        "file_name": "sharepoint_test",
+        "local_path": "mock_path",
+        "conflict_behaviour": "replace"
+      }
+    }
+  ]
+}

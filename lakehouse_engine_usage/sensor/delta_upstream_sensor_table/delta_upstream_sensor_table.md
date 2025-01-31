@@ -11,14 +11,14 @@ This shows how to create a **Sensor to detect new data from another Sensor Delta
 - **input_spec**: Input spec with the upstream source.
 - **preprocess_query**: Query to filter data returned by the upstream.
 
-.. note:: This parameter is only needed when the upstream data have to be filtered,
-  in this case a custom query should be created with the source table as `sensor_new_data`.
+!!! note
+    This parameter is only needed when the upstream data have to be filtered, in this case a custom query should be created with the source table as `sensor_new_data`.
 
 - **base_checkpoint_location**: Spark streaming checkpoints to identify if the upstream has new data.
 - **fail_on_empty_result**: Flag representing if it should raise `NoNewDataException` when
 there is no new data detected from upstream.
 
-If you want to know more please visit the definition of the class [here](../../lakehouse_engine/core/definitions.html#SensorSpec).
+If you want to know more please visit the definition of the class [here](../../../reference/packages/core/definitions.md#packages.core.definitions.SensorSpec).
 
 ## Scenarios
 
@@ -28,7 +28,7 @@ This covers the following scenarios of using the Sensor:
 2. [The `fail_on_empty_result=False`.](#fail_on_empty_result-as-false)
 
 It makes use of `generate_sensor_query` to generate the `preprocess_query`,
-different from [delta_table](../sensor/delta_table.html).
+different from [delta_table](../delta_table/delta_table.md).
 
 Data from other sensor delta table, in streaming mode, will be consumed. If there is any new data it will trigger 
 the condition to proceed to the next task.

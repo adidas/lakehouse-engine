@@ -4,10 +4,8 @@ There may appear a scenario where the data product dev team faces the need to pe
 
 Below you'll find a notebook where you can pass your own PySpark or Spark SQL logic into the ACON, by dynamically injecting a python function into the ACON dictionary. The lakehouse engine will take care of executing those transformations in the transformation step of the data loader algorithm. Please read the notebook's comments carefully to understand how it works, or simply open it in your notebook environment, which will make the notebook's code and comments more readable.
 
-.. warning:: Force Streaming Micro Batch Processing.
-   When you use streaming mode, with a custom transformer, it’s
-   highly advisable that you set the `force_streaming_microbatch_processing` flag to `True` in the transform specification, as
-   explained above!
+!!! warning "Force Streaming Micro Batch Processing."
+    When you use streaming mode, with a custom transformer, it’s highly advisable that you set the `force_streaming_microbatch_processing` flag to `True` in the transform specification, as explained above!
 
 ## What is a custom transformer in the Lakehouse Engine and how you can use it to write your own pyspark logic?
 
@@ -21,16 +19,15 @@ approach and all the nice off-the-shelf features of the lakehouse engine, we hav
 allows us to **pass custom transformers where you put your entire pyspark logic and can pass it as an argument
 in the ACON** (the configuration file that configures every lakehouse engine algorithm).
 
-### Motivation:
-
-Doing that, you let the ACON guide your read, data quality, write and terminate processes, and you just focus on transforming data :)
+!!! note "Motivation"
+    Doing that, you let the ACON guide your read, data quality, write and terminate processes, and you just focus on transforming data :)
 
 ## Custom transformation Function
 
 The function below is the one that encapsulates all your defined pyspark logic and sends it as a python function to the lakehouse engine. This function will then be invoked internally in the lakehouse engine via a df.transform() function. If you are interested in checking the internals of the lakehouse engine, our codebase is openly available here: https://github.com/adidas/lakehouse-engine
 
-.. warning:: Attention!!!
-   For this process to work, your function defined below needs to receive a DataFrame and return a DataFrame. Attempting any other method signature (e.g., defining more parameters) will not work, unless you use something like [python partials](https://docs.python.org/3/library/functools.html#functools.partial), for example.
+!!! warning "Attention!!!"
+    For this process to work, your function defined below needs to receive a DataFrame and return a DataFrame. Attempting any other method signature (e.g., defining more parameters) will not work, unless you use something like [python partials](https://docs.python.org/3/library/functools.html#functools.partial), for example.
 
 ```python
 def get_new_data(df: DataFrame) -> DataFrame:
@@ -110,8 +107,8 @@ def calculate_kpi(df: DataFrame) -> DataFrame:
 
 If you notice the ACON below, everything is the same as you would do in a Data Product, but the `transform_specs` section of the ACON has a difference, which is a function called `"custom_transformation"` where we supply as argument the function defined above with the pyspark code.
 
-.. warning:: Attention!!!
-   Do not pass the function as calculate_kpi(), but as calculate_kpi, otherwise you are telling python to invoke the function right away, as opposed to pass it as argument to be invoked later by the lakehouse engine.
+!!! warning "Attention!!!"
+    Do not pass the function as calculate_kpi(), but as calculate_kpi, otherwise you are telling python to invoke the function right away, as opposed to pass it as argument to be invoked later by the lakehouse engine.
 
 ```python
 from lakehouse_engine.engine import load_data

@@ -8,8 +8,12 @@ from lakehouse_engine.algorithms.algorithm import Algorithm
 from lakehouse_engine.core.definitions import DQSpec, DQValidatorSpec, InputSpec
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.dq_processors.dq_factory import DQFactory
-from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
+from lakehouse_engine.dq_processors.exceptions import (
+    DQDuplicateRuleIdException,
+    DQValidationsFailedException,
+)
 from lakehouse_engine.io.reader_factory import ReaderFactory
+from lakehouse_engine.utils.dq_utils import PrismaUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
@@ -28,16 +32,16 @@ class DQValidator(Algorithm):
     def __init__(self, acon: dict):
         """Construct DQValidator algorithm instances.
 
-        A data quality validator needs the following specifications to work
-        properly:
-            - input specification (mandatory): specify how and what data to
-            read.
-            - data quality specification (mandatory): specify how to execute
-            the data quality process.
-            - restore_prev_version (optional): specify if, having
-            delta table/files as input, they should be restored to the
-            previous version if the data quality process fails. Note: this
-            is only considered if fail_on_error is kept as True.
+        A data quality validator needs the following specifications to work properly:
+
+        - input specification (mandatory): specify how and what data to
+        read.
+        - data quality specification (mandatory): specify how to execute
+        the data quality process.
+        - restore_prev_version (optional): specify if, having
+        delta table/files as input, they should be restored to the
+        previous version if the data quality process fails. Note: this
+        is only considered if fail_on_error is kept as True.
 
         Args:
             acon: algorithm configuration.
@@ -86,6 +90,17 @@ class DQValidator(Algorithm):
         read_df = self.read()
 
         self._LOGGER.info("Starting data quality validator...")
+
+        self._LOGGER.info("Validating DQ definitions")
+        error_dict = PrismaUtils.validate_rule_id_duplication(specs=[self.spec.dq_spec])
+        if error_dict:
+            raise DQDuplicateRuleIdException(
+                "Duplicate dq_rule_id detected in dq_spec definition.\n"
+                "We have identified one or more duplicate dq_rule_id "
+                "entries in the dq_spec definition. "
+                "Please review and verify the following dq_rules:\n"
+                f"{error_dict}"
+            )
         try:
             if read_df.isStreaming:
                 # To handle streaming, and although we are not interested in

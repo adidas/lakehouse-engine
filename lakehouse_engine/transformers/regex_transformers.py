@@ -31,7 +31,9 @@ class RegexTransformers(object):
             idx: index to return.
 
         Returns:
-             A function to be executed in the .transform() spark function.
+            A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='with_regex_value')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

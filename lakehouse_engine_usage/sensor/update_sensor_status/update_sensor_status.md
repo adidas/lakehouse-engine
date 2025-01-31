@@ -14,4 +14,4 @@ update_sensor_status(
 )
 ```
 
-If you want to know more please visit the definition of the class [here](../../lakehouse_engine/core/definitions.html#SensorSpec).
+If you want to know more please visit the definition of the class [here](../../../reference/packages/core/definitions.md#packages.core.definitions.SensorSpec).

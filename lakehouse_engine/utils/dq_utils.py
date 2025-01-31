@@ -4,7 +4,7 @@ from json import loads
 
 from pyspark.sql.functions import col, from_json, schema_of_json, struct
 
-from lakehouse_engine.core.definitions import DQTableBaseParameters
+from lakehouse_engine.core.definitions import DQSpec, DQTableBaseParameters, DQType
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.dq_processors.exceptions import DQSpecMalformedException
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -91,7 +91,7 @@ class DQUtils:
         duplicated_rows = processed_dq_functions.subtract(unique_dq_functions)
 
         if duplicated_rows.count() > 0:
-            _LOGGER.warn("Found Duplicates Rows:")
+            _LOGGER.warning("Found Duplicates Rows:")
             duplicated_rows.show(truncate=False)
 
         processed_dq_functions_list = unique_dq_functions.collect()
@@ -232,3 +232,50 @@ class PrismaUtils:
                 "tbl_to_derive_pk or unexpected_rows_pk need to be defined."
             )
         return spec
+
+    @staticmethod
+    def validate_rule_id_duplication(
+        specs: list[DQSpec],
+    ) -> dict[str, str]:
+        """Verify uniqueness of the dq_rule_id.
+
+        Args:
+            specs: a list of DQSpec to be validated
+
+        Returns:
+             A dictionary with the spec_id as key and
+             rule_id as value for any duplicates.
+        """
+        error_dict = {}
+
+        for spec in specs:
+            dq_db_table = spec.dq_db_table
+            dq_functions = spec.dq_functions
+            spec_id = spec.spec_id
+
+            if spec.dq_type == DQType.PRISMA.value and dq_db_table:
+                dq_rule_id_query = f"""
+                    SELECT dq_rule_id, COUNT(*) AS count
+                    FROM {dq_db_table}
+                    GROUP BY dq_rule_id
+                    HAVING COUNT(*) > 1;
+                    """  # nosec: B608
+
+                duplicate_rule_id_table = ExecEnv.SESSION.sql(dq_rule_id_query)
+
+                if not duplicate_rule_id_table.isEmpty():
+                    rows = duplicate_rule_id_table.collect()
+                    df_str = "; ".join([str(row) for row in rows])
+                    error_dict[f"dq_spec_id: {spec_id}"] = df_str
+
+            elif spec.dq_type == DQType.PRISMA.value and dq_functions:
+                dq_rules_id_list = []
+                for dq_function in dq_functions:
+                    dq_rules_id_list.append(dq_function.args["meta"]["dq_rule_id"])
+
+                if len(dq_rules_id_list) != len(set(dq_rules_id_list)):
+                    error_dict[f"dq_spec_id: {spec_id}"] = "; ".join(
+                        [str(dq_rule_id) for dq_rule_id in dq_rules_id_list]
+                    )
+
+        return error_dict

@@ -46,6 +46,8 @@ class Joiners(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='join')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

@@ -14,7 +14,7 @@ This shows how to create a **Sensor to detect new data from a JDBC table**.
     - **upstream_value**: the **first** upstream value to identify new data from the upstream (e.g., the value of a time present in the upstream). ***Note:*** This parameter will have effect just in the first run to detect if the upstream have new data. If it's empty the default value applied is `-2147483647`.
     - **upstream_table_name**: Table name to consume the upstream value. If it's empty the default value applied is `sensor_new_data`.
 
-If you want to know more please visit the definition of the class [here](../../lakehouse_engine/core/definitions.html#SensorSpec).
+If you want to know more please visit the definition of the class [here](../../../reference/packages/core/definitions.md#packages.core.definitions.SensorSpec).
 
 ## Scenarios 
 

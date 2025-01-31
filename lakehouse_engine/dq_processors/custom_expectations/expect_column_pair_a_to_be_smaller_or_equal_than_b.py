@@ -71,18 +71,18 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
         margin: additional approximation to column B value.
 
     Keyword Args:
-        - allow_cross_type_comparisons: If True, allow
+        allow_cross_type_comparisons: If True, allow
             comparisons between types (e.g. integer and string).
             Otherwise, attempting such comparisons will raise an exception.
-        - ignore_row_if: "both_values_are_missing",
+        ignore_row_if: "both_values_are_missing",
             "either_value_is_missing", "neither" (default).
-        - result_format: Which output mode to use:
+        result_format: Which output mode to use:
             `BOOLEAN_ONLY`, `BASIC` (default), `COMPLETE`, or `SUMMARY`.
-        - include_config: If True (default), then include the expectation config
+        include_config: If True (default), then include the expectation config
             as part of the result object.
-        - catch_exceptions: If True, then catch exceptions and
+        catch_exceptions: If True, then catch exceptions and
             include them as part of the result object. Default: False.
-        - meta: A JSON-serializable dictionary (nesting allowed)
+        meta: A JSON-serializable dictionary (nesting allowed)
             that will be included in the output without modification.
 
     Returns:

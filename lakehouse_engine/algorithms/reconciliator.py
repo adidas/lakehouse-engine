@@ -58,14 +58,14 @@ class Reconciliator(Executable):
     All of these configurations are passed via the ACON to instantiate a
     ReconciliatorSpec object.
 
-    .. note::
+    !!! note
         It is crucial that both the current and truth datasets have exactly the same
         structure.
-    .. note::
+    !!! note
         You should not use 0 as yellow or red threshold, as the algorithm will verify
         if the difference between the truth and current values is bigger
         or equal than those thresholds.
-    .. note::
+    !!! note
         The reconciliation does not produce any negative values or percentages, as we
         use the absolute value of the differences. This means that the recon result
         will not indicate if it was the current values that were bigger or smaller

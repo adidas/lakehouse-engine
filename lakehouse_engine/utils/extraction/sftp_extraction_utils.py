@@ -47,6 +47,7 @@ class SFTPExtractionUtils(object):
         """Get a list of files to be extracted from SFTP.
 
         The arguments (options_args) to list files are:
+
         - date_time_gt(str):
             Filter the files greater than the string datetime
             formatted as "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS".
@@ -111,46 +112,47 @@ class SFTPExtractionUtils(object):
         Args:
             options_args: dictionary containing SFTP connection parameters.
                 The Paramiko arguments expected to connect are:
-                    - "hostname": the server to connect to.
-                    - "port": the server port to connect to.
-                    - "username": the username to authenticate as.
-                    - "password": used for password authentication.
-                    - "pkey": optional - an optional public key to use for
-                        authentication.
-                    - "passphrase" – optional - options used for decrypting private
-                        keys.
-                    - "key_filename" – optional - the filename, or list of filenames,
-                        of optional private key(s) and/or certs to try for
-                        authentication.
-                    - "timeout" – an optional timeout (in seconds) for the TCP connect.
-                    - "allow_agent" – optional - set to False to disable
-                        connecting to the SSH agent.
-                    - "look_for_keys" – optional - set to False to disable searching
-                        for discoverable private key files in ~/.ssh/.
-                    - "compress" – optional - set to True to turn on compression.
-                    - "sock" - optional - an open socket or socket-like object
-                        to use for communication to the target host.
-                    - "gss_auth" – optional - True if you want to use GSS-API
-                        authentication.
-                    - "gss_kex" – optional - Perform GSS-API Key Exchange and
-                        user authentication.
-                    - "gss_deleg_creds" – optional - Delegate GSS-API client
-                        credentials or not.
-                    - "gss_host" – optional - The targets name in the kerberos database.
-                    - "gss_trust_dns" – optional - Indicates whether or
-                        not the DNS is trusted to securely canonicalize the name of the
-                        host being connected to (default True).
-                    - "banner_timeout" – an optional timeout (in seconds)
-                        to wait for the SSH banner to be presented.
-                    - "auth_timeout" – an optional timeout (in seconds)
-                        to wait for an authentication response.
-                    - "disabled_algorithms" – an optional dict passed directly to
-                        Transport and its keyword argument of the same name.
-                    - "transport_factory" – an optional callable which is handed a
-                        subset of the constructor arguments (primarily those related
-                        to the socket, GSS functionality, and algorithm selection)
-                        and generates a Transport instance to be used by this client.
-                        Defaults to Transport.__init__.
+
+                - "hostname": the server to connect to.
+                - "port": the server port to connect to.
+                - "username": the username to authenticate as.
+                - "password": used for password authentication.
+                - "pkey": optional - an optional public key to use for
+                    authentication.
+                - "passphrase" – optional - options used for decrypting private
+                    keys.
+                - "key_filename" – optional - the filename, or list of filenames,
+                    of optional private key(s) and/or certs to try for
+                    authentication.
+                - "timeout" – an optional timeout (in seconds) for the TCP connect.
+                - "allow_agent" – optional - set to False to disable
+                    connecting to the SSH agent.
+                - "look_for_keys" – optional - set to False to disable searching
+                    for discoverable private key files in ~/.ssh/.
+                - "compress" – optional - set to True to turn on compression.
+                - "sock" - optional - an open socket or socket-like object
+                    to use for communication to the target host.
+                - "gss_auth" – optional - True if you want to use GSS-API
+                    authentication.
+                - "gss_kex" – optional - Perform GSS-API Key Exchange and
+                    user authentication.
+                - "gss_deleg_creds" – optional - Delegate GSS-API client
+                    credentials or not.
+                - "gss_host" – optional - The targets name in the kerberos database.
+                - "gss_trust_dns" – optional - Indicates whether or
+                    not the DNS is trusted to securely canonicalize the name of the
+                    host being connected to (default True).
+                - "banner_timeout" – an optional timeout (in seconds)
+                    to wait for the SSH banner to be presented.
+                - "auth_timeout" – an optional timeout (in seconds)
+                    to wait for an authentication response.
+                - "disabled_algorithms" – an optional dict passed directly to
+                    Transport and its keyword argument of the same name.
+                - "transport_factory" – an optional callable which is handed a
+                    subset of the constructor arguments (primarily those related
+                    to the socket, GSS functionality, and algorithm selection)
+                    and generates a Transport instance to be used by this client.
+                    Defaults to Transport.__init__.
 
                 The parameter to specify the private key is expected to be in
                 RSA format. Attempting a connection with a blank host key is
@@ -291,6 +293,7 @@ class SFTPExtractionUtils(object):
 
         The logic is applied based on the arguments greater_than and lower_than.
         i.e:
+
         - if greater_than and lower_than have values,
         then it performs a between.
         - if only lower_than has values,

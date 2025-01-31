@@ -6,7 +6,7 @@ An algorithm (e.g., data load) in the lakehouse-engine is configured using an AC
 configuration-driven framework, so people don't have to write code to execute a Spark algorithm. In contrast, the
 algorithm is written in pyspark and accepts configurations through a JSON file (an ACON - algorithm configuration). The
 ACON is the configuration providing the behaviour of a lakehouse engine algorithm. [You can check the algorithm code, and
-how it interprets the ACON here](../lakehouse_engine/algorithms/algorithm.html).
+how it interprets the ACON here](../../reference/packages/algorithms/algorithm.md).
 In this page we will go through the structure of an ACON file and what are the most suitable ACON files for common data
 engineering scenarios.
 Check the underneath pages to find several **ACON examples** that cover many data extraction, transformation and loading scenarios.
@@ -25,7 +25,7 @@ specifications are:
 
 Below is an example of a complete ACON file that reads from a s3 folder with CSVs and incrementally loads that data (using a merge) into a delta lake table.
 
-.. note::
+!!! info "What is the **spec_id**?"
     **spec_id** is one of the main concepts to ensure you can chain the steps of the algorithm, so, for example, you can specify the transformations (in transform_specs) of a DataFrame that was read in the input_specs. Check ACON below to see how the spec_id of the input_specs is used as input_id in one transform specification.
 
 ```python
@@ -170,7 +170,7 @@ list, as, in the lakehouse, you are generally focused on reading data from one l
 gold) and put it on the next layer. However, there may be scenarios where you would like to combine two datasets (e.g.,
 joins or incremental filtering on one dataset based on the values of another
 one), therefore you can use one or more elements.
-[More information about InputSpecs](../lakehouse_engine/core/definitions.html#InputSpec).
+[More information about InputSpecs](../../reference/packages/core/definitions.md#packages.core.definitions.InputSpec).
 
 ##### Relevant notes
 
@@ -186,7 +186,7 @@ data: `with_row_id` and `with_regex_value`. Those functions can of course receiv
 available transformation functions (transformers) here `lakehouse_engine.transformers`. Then, you just invoke them in
 your ACON as demonstrated above, following exactly the same function name and parameters name as described in the code
 documentation. 
-[More information about TransformSpec](../lakehouse_engine/core/definitions.html#TransformSpec).
+[More information about TransformSpec](../../reference/packages/core/definitions.md#packages.core.definitions.TransformSpec).
 
 ##### Relevant notes
 
@@ -208,14 +208,14 @@ includes one main feature at the moment:
 - **Validator**: The capability to perform data quality checks on that data (e.g., is the max value of a column bigger
   than x?) and even tag your data with the results of the DQ checks.
 
-The output of the data quality process can be written into a [**Result Sink**](data_quality/result_sink.html) target (e.g. table or files) and is integrated with a [Data Docs website](data_quality.html#3-data-docs-website), which can be a company-wide available website for people to check the quality of their data and share with others.
+The output of the data quality process can be written into a [**Result Sink**](../data_quality/result_sink/result_sink.md) target (e.g. table or files) and is integrated with a [Data Docs website](../data_quality/data_quality.md#3-data-docs-website), which can be a company-wide available website for people to check the quality of their data and share with others.
 
 To achieve all of this functionality the lakehouse engine uses [Great Expectations](https://greatexpectations.io/) internally. To hide the Great Expectations internals from our user base and provide friendlier abstractions using the ACON, we have developed the concept of DQSpec that can contain many DQFunctionSpec objects, which is very similar to the relationship between the TransformSpec and TransformerSpec, which means you can have multiple Great Expectations functions executed inside a single data quality specification (as in the ACON above).
 
-.. note::
-   The names of the functions and args are a 1 to 1 match of [Great Expectations API](https://greatexpectations.io/expectations/).
+!!! note
+    The names of the functions and args are a 1 to 1 match of [Great Expectations API](https://greatexpectations.io/expectations/).
 
-[More information about DQSpec](../lakehouse_engine/core/definitions.html#DQSpec).
+[More information about DQSpec](../../reference/packages/core/definitions.md#packages.core.definitions.DQSpec).
 
 ##### Relevant notes
 
@@ -252,7 +252,7 @@ To achieve all of this functionality the lakehouse engine uses [Great Expectatio
 
 ## Output Specifications
 
-The output_specs section of an ACON is relatively similar to the input_specs section, but of course focusing on how to write the results of the algorithm, instead of specifying the input for the algorithm, hence the name output_specs (output specifications). [More information about OutputSpec](../lakehouse_engine/core/definitions.html#OutputSpec).
+The output_specs section of an ACON is relatively similar to the input_specs section, but of course focusing on how to write the results of the algorithm, instead of specifying the input for the algorithm, hence the name output_specs (output specifications). [More information about OutputSpec](../../reference/packages/core/definitions.md#packages.core.definitions.OutputSpec).
 
 ##### Relevant notes
 
@@ -265,16 +265,16 @@ The output_specs section of an ACON is relatively similar to the input_specs sec
 
 The terminate_specs section of the ACON is responsible for some "wrapping up" activities like optimising a table,
 vacuuming old files in a delta table, etc. With time the list of available terminators will likely increase (e.g.,
-reconciliation processes), but for now we have the [following terminators](../lakehouse_engine/terminators.html).
+reconciliation processes), but for now we have the [following terminators](../../reference/packages/terminators/index.md).
 This stage is fully optional, you can omit it from the ACON.
 The most relevant now in the context of the lakehouse initiative are the following:
 
-- [dataset_optimizer](../lakehouse_engine/terminators/dataset_optimizer.html)
-- [cdf_processor](../lakehouse_engine/terminators/cdf_processor.html)
-- [sensor_terminator](../lakehouse_engine/terminators/sensor_terminator.html)
-- [notifier_terminator](../lakehouse_engine/terminators/notifiers/email_notifier.html)
+- [dataset_optimizer](../../reference/packages/terminators/dataset_optimizer.md)
+- [cdf_processor](../../reference/packages/terminators/cdf_processor.md)
+- [sensor_terminator](../../reference/packages/terminators/sensor_terminator.md)
+- [notifier_terminator](../../reference/packages/terminators/notifiers/email_notifier.md)
 
-[More information about TerminatorSpec](../lakehouse_engine/core/definitions.html#TerminatorSpec).
+[More information about TerminatorSpec](../../reference/packages/core/definitions.md#packages.core.definitions.TerminatorSpec).
 
 ## Execution Environment
 
@@ -282,10 +282,10 @@ In the exec_env section of the ACON you can pass any Spark Session configuration
 execution of your algorithm. This is basically just a JSON structure that takes in any Spark Session property, so no
 custom lakehouse engine logic. This stage is fully optional, you can omit it from the ACON.
 
-.. note::
-   Please be aware that Spark Session configurations that are not allowed to be changed when the Spark cluster is already
-   running need to be passed in the configuration of the job/cluster that runs this algorithm, not here in this section.
-   This section only accepts Spark Session configs that can be changed in runtime. Whenever you introduce an option make
-   sure that it takes effect during runtime, as to the best of our knowledge there's no list of allowed Spark properties
-   to be changed after the cluster is already running. Moreover, typically Spark algorithms fail if you try to modify a
-   config that can only be set up before the cluster is running.
+!!! note
+    Please be aware that Spark Session configurations that are not allowed to be changed when the Spark cluster is already
+    running need to be passed in the configuration of the job/cluster that runs this algorithm, not here in this section.
+    This section only accepts Spark Session configs that can be changed in runtime. Whenever you introduce an option make
+    sure that it takes effect during runtime, as to the best of our knowledge there's no list of allowed Spark properties
+    to be changed after the cluster is already running. Moreover, typically Spark algorithms fail if you try to modify a
+    config that can only be set up before the cluster is running.

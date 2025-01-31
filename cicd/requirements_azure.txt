@@ -4,3 +4,4 @@
 #
 msgraph-sdk==1.4.0
 nest_asyncio==1.5.6
+msal==1.31.0

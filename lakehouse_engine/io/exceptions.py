@@ -22,3 +22,33 @@ class NotSupportedException(RuntimeError):
     """Exception for when a user provides a not supported operation."""
 
     pass
+
+
+class InputNotFoundException(Exception):
+    """Exception for when a user does not provide a mandatory input."""
+
+    pass
+
+
+class EndpointNotFoundException(Exception):
+    """Exception for when the endpoint is not found by the Graph API."""
+
+    pass
+
+
+class LocalPathNotFoundException(Exception):
+    """Exception for when a local path is not found."""
+
+    pass
+
+
+class WriteToLocalException(Exception):
+    """Exception for when an error occurs when trying to write to the local path."""
+
+    pass
+
+
+class SharePointAPIError(Exception):
+    """Custom exception class to handle errors SharePoint API requests."""
+
+    pass

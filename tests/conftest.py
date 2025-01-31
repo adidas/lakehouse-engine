@@ -10,6 +10,7 @@ from tests.utils.local_storage import LocalStorage
 
 RESOURCES = "/app/tests/resources/"
 FEATURE_RESOURCES = RESOURCES + "feature"
+UNIT_RESOURCES = RESOURCES + "unit"
 LAKEHOUSE = "/app/tests/lakehouse/"
 LAKEHOUSE_FEATURE_IN = LAKEHOUSE + "in/feature"
 LAKEHOUSE_FEATURE_CONTROL = LAKEHOUSE + "control/feature"

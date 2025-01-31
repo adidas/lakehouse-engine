@@ -5,6 +5,7 @@ the specific table and location (`result_sink_db_table` and `result_sink_locatio
 are expected to be stored. With this configuration, people can, later on, check the history of the DQ
 executions using the configured table/location, as shown bellow. You can configure saving the output of the
 results in the result sink following two approaches:
+
 - [**Denormalized/exploded Data Model (recommended)**](#1-result-sink-exploded-recommended) - the results are stored in a detailed format in which
 people are able to analyse them by Data Quality Run, by expectation_type and by keyword arguments.
 
@@ -23,9 +24,10 @@ harder.
 |----------------------|----------------------------|----------------------------------|-------------------------------|------------------------|------------------------------|---------|----------|
 | entire configuration | 20230323-...-dq_validation | 2023-03-23T15:11:32.225354+00:00 | results of the 3 expectations | true/false for the run | identifier                   | spec_id | input_id |
 
-.. note::
+!!! note
     - More configurations can be applied in the result sink, as the file format and partitions.
     - It is recommended to:
+
         - Use the same result sink table/location for all dq_specs across different data loads, from different 
         sources, in the same Data Product.
         - Use the parameter `source` (only available with `"result_sink_explode": True`), in the dq_specs, as
@@ -100,6 +102,7 @@ load_data(acon=acon)
 ```
 
 To check the history of the DQ results, you can run commands like:
+
 - the table: `display(spark.table("my_database.dq_result_sink"))`
 - the location: `display(spark.read.format("delta").load("my_dq_path/dq_result_sink/"))`
 
@@ -137,7 +140,7 @@ acon = {
             "result_sink_db_table": "my_database.dq_result_sink_raw",
             "result_sink_location": "my_dq_path/dq_result_sink_raw/",
             "result_sink_explode": False,
-            "tbl_to_derive_pk": "{{ configs.database }}.dummy_deliveries",
+            "tbl_to_derive_pk": "my_database.dummy_deliveries",
             "source": "deliveries_success_raw",
             "dq_functions": [
                 {"function": "expect_column_to_exist", "args": {"column": "salesorder"}},
@@ -161,5 +164,6 @@ load_data(acon=acon)
 ```
 
 To check the history of the DQ results, you can run commands like:
+
 - the table: `display(spark.table("my_database.dq_result_sink_raw"))`
 - the location: `display(spark.read.format("delta").load("my_dq_path/dq_result_sink_raw/"))`

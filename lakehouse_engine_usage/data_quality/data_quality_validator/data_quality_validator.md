@@ -3,11 +3,11 @@
 DQValidator algorithm allows DQ Validations isolated from the data load (only read and apply data quality validations).
 With this algorithm you have the capacity to apply the Lakehouse-Engine Data Quality Process,
 using [Great Expectations](https://greatexpectations.io/expectations/) functions directly into a specific dataset also
-making use of all the [InputSpecs](../../lakehouse_engine/core/definitions.html#InputSpec) available in the engine.
+making use of all the [InputSpecs](../../../reference/packages/core/definitions.md#packages.core.definitions.InputSpec) available in the engine.
 
 Validating the Data Quality, using this algorithm, is a matter of defining the data you want to read and the validations you want to do to your data, detailing the great expectations functions you want to apply on the data to assess its quality.
 
-.. warning::
+!!! warning
     **This algorithm also gives the possibility to restore a previous version of a delta table or delta files in case the DQ
     process raises any exception. Please use it carefully!!** You may lose important commits and data. Moreover, this will
     highly depend on the frequency that you run your Data Quality validations. If you run your data loads daily and Data
@@ -30,8 +30,8 @@ This algorithm also gives teams some freedom to:
 ## How to use?
 
 All of these configurations are passed via the ACON to instantiate
-a [DQValidatorSpec object](../../lakehouse_engine/core/definitions.html#DQValidatorSpec). The DQValidator algorithm uses an
-ACON to configure its execution. In [DQValidatorSpec](../../lakehouse_engine/core/definitions.html#DQValidatorSpec) you can
+a [DQValidatorSpec object](../../../reference/packages/core/definitions.md#packages.core.definitions.DQValidatorSpec). The DQValidator algorithm uses an
+ACON to configure its execution. In [DQValidatorSpec](../../../reference/packages/core/definitions.md#packages.core.definitions.DQValidatorSpec) you can
 find the meaning of each ACON property.
 
 Here is an example of ACON configuration:
@@ -70,6 +70,7 @@ load_data(acon=acon)
 ```
 
 On this page you will also find the following examples of usage:
+
 1. Dataframe as input & Success on the DQ Validation
 2. Table as input & Failure on DQ Validation & Restore previous version
 3. Files as input & Failure on DQ Validation & Fail_on_error disabled
@@ -126,7 +127,7 @@ execute_dq_validation(acon=acon)
 
 In this example we are using a table as input to validate the data that was loaded. Here, we are forcing the DQ Validations to fail in order to show the possibility of restoring the table to the previous version.
 
-.. warning::
+!!! warning
     **Be careful when using the feature of restoring a previous version of a delta table or delta files.** You may
     lose important commits and data. Moreover, this will highly depend on the frequency that you run your Data Quality
     validations. If you run your data loads daily and Data Quality validations weekly, and you define the
@@ -134,6 +135,7 @@ In this example we are using a table as input to validate the data that was load
     could have happened 4 or 5 versions before (because loads are daily, validations are weekly).
 
 Steps followed in this example to show how the restore_prev_version feature works.
+
 1. **Insert rows into the dummy_deliveries table** to adjust the total numbers of rows and **make the DQ process fail**.
 2. **Use the "DESCRIBE HISTORY" statement to check the number of versions available on the table** and check the version
    number resulting from the insertion to the table.

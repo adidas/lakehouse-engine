@@ -23,6 +23,8 @@ class Watermarker(object):
 
         Returns:
             A function to be executed on other transformers.
+
+        {{get_example(method_name='with_watermark')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

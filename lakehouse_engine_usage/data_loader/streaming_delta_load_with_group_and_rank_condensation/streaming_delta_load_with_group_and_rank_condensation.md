@@ -9,7 +9,7 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/delta_load/group_and_rank/with_duplicates_in_same_file/streaming_delta.json
+{!../../../../tests/resources/feature/delta_load/group_and_rank/with_duplicates_in_same_file/streaming_delta.json!}
 ```
 
 ##### Relevant notes:

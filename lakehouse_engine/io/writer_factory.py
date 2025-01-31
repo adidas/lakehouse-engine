@@ -19,6 +19,7 @@ from lakehouse_engine.io.writers.file_writer import FileWriter
 from lakehouse_engine.io.writers.jdbc_writer import JDBCWriter
 from lakehouse_engine.io.writers.kafka_writer import KafkaWriter
 from lakehouse_engine.io.writers.rest_api_writer import RestApiWriter
+from lakehouse_engine.io.writers.sharepoint_writer import SharepointWriter
 from lakehouse_engine.io.writers.table_writer import TableWriter
 
 
@@ -34,6 +35,7 @@ class WriterFactory(ABC):  # noqa: B024
         OutputFormat.CONSOLE.value: ConsoleWriter,
         OutputFormat.DATAFRAME.value: DataFrameWriter,
         OutputFormat.REST_API.value: RestApiWriter,
+        OutputFormat.SHAREPOINT.value: SharepointWriter,
     }
 
     @classmethod

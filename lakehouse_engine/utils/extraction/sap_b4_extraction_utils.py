@@ -31,6 +31,7 @@ class SAPB4Extraction(JDBCExtraction):
     and/or overwrite those configurations.
 
     These configurations cover:
+
     - latest_timestamp_input_col: the column containing the request timestamps
         in the dataset in latest_timestamp_data_location. Default: REQTSN.
     - request_status_tbl: the name of the SAP B4 table having information

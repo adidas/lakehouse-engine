@@ -1,0 +1,173 @@
+site_name: Lakehouse Engine Documentation
+site_url: https://adidas.github.io/lakehouse-engine-docs
+repo_url: https://github.com/adidas/lakehouse-engine
+repo_name: lakehouse-engine
+docs_dir: "mkdocs/docs"
+
+nav:
+  - Lakehouse Engine: index.md
+  - How to use the Lakehouse Engine?:
+    - Overview: lakehouse_engine_usage/lakehouse_engine_usage.md
+    - Algorithms:
+      - Data Loader:
+        - Overview: lakehouse_engine_usage/data_loader/data_loader.md
+        - Scenarios:
+          - Append Load from JDBC with PERMISSIVE mode (default): lakehouse_engine_usage/data_loader/append_load_from_jdbc_with_permissive_mode/append_load_from_jdbc_with_permissive_mode.md
+          - Append Load with FAILFAST: lakehouse_engine_usage/data_loader/append_load_with_failfast/append_load_with_failfast.md
+          - Batch Delta Load Init, Delta and Backfill with Merge: lakehouse_engine_usage/data_loader/batch_delta_load_init_delta_backfill_with_merge/batch_delta_load_init_delta_backfill_with_merge.md
+          - Custom Transformer: lakehouse_engine_usage/data_loader/custom_transformer/custom_transformer.md
+          - Custom Transformer (SQL): lakehouse_engine_usage/data_loader/custom_transformer_sql/custom_transformer_sql.md
+          - Extract from SAP B4 ADSOs: lakehouse_engine_usage/data_loader/extract_from_sap_b4_adso/extract_from_sap_b4_adso.md
+          - Extract from SAP BW DSOs: lakehouse_engine_usage/data_loader/extract_from_sap_bw_dso/extract_from_sap_bw_dso.md
+          - Extract from SFTP: lakehouse_engine_usage/data_loader/extract_from_sftp/extract_from_sftp.md
+          - Extract using JDBC connection: lakehouse_engine_usage/data_loader/extract_using_jdbc_connection/extract_using_jdbc_connection.md
+          - Filtered Full Load: lakehouse_engine_usage/data_loader/filtered_full_load/filtered_full_load.md
+          - Filtered Full Load with Selective Replace: lakehouse_engine_usage/data_loader/filtered_full_load_with_selective_replace/filtered_full_load_with_selective_replace.md
+          - Flatten Schema and Explode Columns: lakehouse_engine_usage/data_loader/flatten_schema_and_explode_columns/flatten_schema_and_explode_columns.md
+          - Full Load: lakehouse_engine_usage/data_loader/full_load/full_load.md
+          - Read from Dataframe: lakehouse_engine_usage/data_loader/read_from_dataframe/read_from_dataframe.md
+          - Streaming Append Load with DROPMALFORMED: lakehouse_engine_usage/data_loader/streaming_append_load_with_malformed/streaming_append_load_with_malformed.md
+          - Streaming Append Load with Optimize Dataset Terminator: lakehouse_engine_usage/data_loader/streaming_append_load_with_terminator/streaming_append_load_with_terminator.md
+          - Streaming Delta Load with Group and Rank Condensation: lakehouse_engine_usage/data_loader/streaming_delta_load_with_group_and_rank_condensation/streaming_delta_load_with_group_and_rank_condensation.md
+          - Streaming Delta Load with Late Arriving and Out of Order Events (with and without watermarking): lakehouse_engine_usage/data_loader/streaming_delta_with_late_arriving_and_out_of_order_events/streaming_delta_with_late_arriving_and_out_of_order_events.md
+          - Write and Read Dataframe: lakehouse_engine_usage/data_loader/write_and_read_dataframe/write_and_read_dataframe.md
+          - Write to Console: lakehouse_engine_usage/data_loader/write_to_console/write_to_console.md
+          - Write to REST API: lakehouse_engine_usage/data_loader/write_to_rest_api/write_to_rest_api.md
+      - Data Quality: 
+        - Overview: lakehouse_engine_usage/data_quality/data_quality.md
+        - Scenarios:
+          - Custom Expectations: lakehouse_engine_usage/data_quality/custom_expectations/custom_expectations.md
+          - Data Quality Validator: lakehouse_engine_usage/data_quality/data_quality_validator/data_quality_validator.md
+          - Minimal Example: lakehouse_engine_usage/data_quality/minimal_example/minimal_example.md
+          - Prisma: lakehouse_engine_usage/data_quality/prisma/prisma.md
+          - Result Sink: lakehouse_engine_usage/data_quality/result_sink/result_sink.md
+          - Row Tagging: lakehouse_engine_usage/data_quality/row_tagging/row_tagging.md
+          - Validations Failing: lakehouse_engine_usage/data_quality/validations_failing/validations_failing.md
+      - Reconciliator: 
+        - Overview: lakehouse_engine_usage/reconciliator/reconciliator.md
+      - Sensor: 
+        - Overview: lakehouse_engine_usage/sensor/sensor.md
+        - Scenarios:
+          - Delta Table: lakehouse_engine_usage/sensor/delta_table/delta_table.md
+          - Sensor from other Sensor Delta Table: lakehouse_engine_usage/sensor/delta_upstream_sensor_table/delta_upstream_sensor_table.md
+          - Sensor from Files: lakehouse_engine_usage/sensor/file/file.md
+          - Sensor from JDBC: lakehouse_engine_usage/sensor/jdbc_table/jdbc_table.md
+          - Sensor from Kafka: lakehouse_engine_usage/sensor/kafka/kafka.md
+          - Sensor from SAP: lakehouse_engine_usage/sensor/sap_bw_b4/sap_bw_b4.md
+          - Update Sensor control Delta Table after processing the data: lakehouse_engine_usage/sensor/update_sensor_status/update_sensor_status.md
+      - GAB: 
+        - Overview: lakehouse_engine_usage/gab/gab.md
+        - Step-by-Step: lakehouse_engine_usage/gab/step_by_step/step_by_step.md
+  - API Documentation: reference/ # (1)!
+
+theme:
+  name: material
+  language: en
+  logo: assets/img/lakehouse_engine_logo.png
+  favicon: assets/img/lakehouse_engine_logo_symbol_large.png
+  icon:
+    repo: fontawesome/brands/github-alt
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: yellow
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+      scheme: slate
+      primary: blue
+      accent: yellow
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to light mode
+  features:
+    - content.code.annotate
+    - content.code.annotation
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - navigation.indexes
+    - navigation.path
+    - navigation.tabs
+    - navigation.tabs.instant
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.sections
+    - toc.follow
+    - toc.integrate
+    - search.highlight
+    - search.suggest
+
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://adidas.github.io/lakehouse-engine
+  version:
+    provider: mike
+    name: Version
+
+plugins:
+  - search
+  - markdown-exec
+  - offline
+  - section-index
+  - mkdocstrings:
+      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+      default_handler: python
+      handlers:
+        python:
+          paths: [mkdocs/lakehouse_engine]
+          options:
+            show_source: true
+  - macros:
+      module_name: custom_example_macros
+  - gen-files:
+      scripts:
+        - gen_ref_nav.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mike:
+      alias_type: symlink
+      canonical_version: latest
+
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://adidas.github.io/lakehouse-engine
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - extra
+  - footnotes
+  - markdown_include.include:
+      base_path: mkdocs/docs
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.mark
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format ''
+  - toc:
+      permalink: true
+
+copyright: |
+  &copy; 2025 <a href="https://github.com/adidas"  target="_blank" rel="noopener">adidas</a>

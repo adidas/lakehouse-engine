@@ -10,8 +10,8 @@ acon = {...}
 load_data(acon=acon)
 ```
 Example of ACON configuration:
-```python
-.. include:: ../../../tests/resources/feature/delta_load/record_mode_cdc/late_arriving_changes/streaming_delta.json
+```json
+{!../../../../tests/resources/feature/delta_load/record_mode_cdc/late_arriving_changes/streaming_delta.json!}
 ```
 
 ##### Relevant notes:
@@ -20,12 +20,13 @@ Example of ACON configuration:
 * However, when the source cannot fully ensure ordering (e.g., Kafka) and we want to make sure we don't load temporarily inconsistent data into the target table, we can pay extra special attention, as we do here, to our update and insert predicates, that will enable us to only insert or update data if the new event meets the respective predicates:
     * In this scenario, we will only update if the `update_predicate` is true, and that long predicate we have here ensures that the change that we are receiving is likely the latest one;
     * In this scenario, we will only insert the record if the record is not marked for deletion (this can happen if the new event is a record that is marked for deletion, but the record was not in the target table (late arriving changes where the delete came before the insert), and therefore, without the `insert_predicate`, the algorithm would still try to insert the row, even if the `record_mode` indicates that that row is for deletion. By using the `insert_predicate` above we avoid that to happen. However, even in such scenario, to prevent the algorithm to insert the data that comes later (which is old, as we said, the delete came before the insert and was actually the latest status), we would even need a more complex predicate based on your data's nature. Therefore, please read the disclaimer below.
-.. note:: **Disclaimer**! The scenario illustrated in this page is purely fictional, designed for the Lakehouse Engine local tests specifically. Your data source changelogs may be different and the scenario and predicates discussed here may not make sense to you. Consequently, the data product team should reason about the adequate merge predicate and insert, update and delete predicates, that better reflect how they want to handle the delta loads for their data.
+!!! note "**Disclaimer**!" The scenario illustrated in this page is purely fictional, designed for the Lakehouse Engine local tests specifically. Your data source changelogs may be different and the scenario and predicates discussed here may not make sense to you. Consequently, the data product team should reason about the adequate merge predicate and insert, update and delete predicates, that better reflect how they want to handle the delta loads for their data.
 * We use spark.sql.streaming.schemaInference in our local tests only. We don't encourage you to use it in your data product.
 
 
-.. note:: **Documentation**
+!!! note "**Documentation**"
     [Feature Deep Dive: Watermarking in Apache Spark Structured Streaming - The Databricks Blog](https://www.databricks.com/blog/feature-deep-dive-watermarking-apache-spark-structured-streaming)
+    
     [Structured Streaming Programming Guide - Spark 3.4.0 Documentation](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)
 
 ## How to Deal with Late Arriving Data using Watermark
@@ -36,7 +37,7 @@ Imagine a scenario where we will need to perform stateful aggregations on the st
 
 ##### Approach 1 - Use a pre-defined fixed window (Bad)
 
-<img src="../../assets/img/fixed_window.png?raw=true" style="max-width: 800px; height: auto; "/>
+<img src="../../../assets/img/fixed_window.png?raw=true" style="max-width: 800px; height: auto; "/>
 
 Credits: [Image source](https://www.databricks.com/blog/feature-deep-dive-watermarking-apache-spark-structured-streaming)
 
@@ -48,7 +49,7 @@ In this first picture, we have the tumbling windows trigger at 11:00 AM, 11:10 A
 
 We can define a **watermark** that will allow Spark to understand when to close the aggregate window and produce the correct aggregate result. In Structured Streaming applications, we can ensure that all relevant data for the aggregations we want to calculate is collected by using a feature called **watermarking**. In the most basic sense, by defining a **watermark** Spark Structured Streaming then knows when it has ingested all data up to some time, **T**, (based on a set lateness expectation) so that it can close and produce windowed aggregates up to timestamp **T**.
 
-<img src="../../assets/img/watermarking.png?raw=true" style="max-width: 800px; height: auto; "/>
+<img src="../../../assets/img/watermarking.png?raw=true" style="max-width: 800px; height: auto; "/>
 
 Credits: [Image source](https://www.databricks.com/blog/feature-deep-dive-watermarking-apache-spark-structured-streaming)
 

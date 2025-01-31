@@ -9,8 +9,12 @@ from pyspark.sql.utils import StreamingQueryException
 
 from lakehouse_engine.core.definitions import DQType
 from lakehouse_engine.core.exec_env import ExecEnv
-from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
+from lakehouse_engine.dq_processors.exceptions import (
+    DQDuplicateRuleIdException,
+    DQValidationsFailedException,
+)
 from lakehouse_engine.engine import execute_dq_validation, load_data
+from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -22,11 +26,141 @@ from tests.utils.dataframe_helpers import DataframeHelpers
 from tests.utils.dq_rules_table_utils import _create_dq_functions_source_table
 from tests.utils.local_storage import LocalStorage
 
+_LOGGER = LoggingHandler(__name__).get_logger()
+
 TEST_NAME = "dq_validator"
 TEST_RESOURCES = f"{FEATURE_RESOURCES}/{TEST_NAME}"
 TEST_LAKEHOUSE_IN = f"{LAKEHOUSE_FEATURE_IN}/{TEST_NAME}"
 TEST_LAKEHOUSE_CONTROL = f"{LAKEHOUSE_FEATURE_CONTROL}/{TEST_NAME}"
 TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        {
+            "spec_id": "spec_without_duplicate",
+            "name": "table_batch_dq_rule",
+            "dq_type": "prisma",
+            "read_type": "batch",
+            "input_type": "file_reader",
+            "dq_table_table_filter": "dummy_sales",
+            "dq_validator_result": "success",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_table_rule_id_success",
+            "max_percentage_failure": None,
+        },
+        {
+            "spec_id": "spec_with_duplicate",
+            "name": "table_batch_dq_rule",
+            "dq_type": "prisma",
+            "read_type": "batch",
+            "input_type": "file_reader",
+            "dq_table_table_filter": "dummy_sales",
+            "dq_validator_result": "failed",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_table_rule_id_failure",
+            "max_percentage_failure": None,
+        },
+        {
+            "spec_id": "streaming_spec_without_duplicate",
+            "name": "table_streaming_dq_rule",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "file_reader",
+            "dq_table_table_filter": "dummy_sales",
+            "dq_validator_result": "success",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_table_rule_id_success",
+            "max_percentage_failure": None,
+        },
+        {
+            "spec_id": "streaming_spec_with_duplicate",
+            "name": "table_streaming_dq_rule",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "file_reader",
+            "dq_table_table_filter": "dummy_sales",
+            "dq_validator_result": "failed",
+            "restore_prev_version": False,
+            "fail_on_error": False,
+            "critical_functions": None,
+            "dq_db_table": "test_db.dq_table_rule_id_failure",
+            "max_percentage_failure": None,
+        },
+    ],
+)
+def test_dq_rule_id_uniqueness(scenario: dict, caplog: Any) -> None:
+    """Test the function to detect duplicate dq_rule_id.
+
+    Dq_rule_id scenarios:
+    - scenario 1: using the file reader in batch to test if the dq_db_table
+    has duplicated dq_rule_id. This scenario do not have duplicates.
+    - scenario 2: Using the file reader in batch mode to check for duplicate
+    dq_rule_id values in the dq_db_table. In this scenario, duplicates are found
+    in rule_3 and rule_4.
+    - scenario 3: using the file reader in streaming to test if the dq_db_table
+    has duplicated dq_rule_id. This scenario do not have duplicates.
+    - scenario 4: using the file reader in streaming mode to check for duplicate
+    dq_rule_id values in the dq_db_table. In this scenario, duplicates are found
+    in rule_3 and rule_5.
+
+    Args:
+        scenario: scenario to test.
+        caplog: captured log.
+    """
+    _clean_folders()
+
+    _create_table("dq_sales")
+
+    _execute_load(scenario["read_type"])
+
+    input_spec = {
+        "spec_id": "sales_source",
+        "data_format": "delta",
+        "read_type": scenario["read_type"],
+        "location": f"{TEST_LAKEHOUSE_OUT}/data/",
+    }
+
+    _create_dq_functions_source_table(
+        test_resources_path=TEST_RESOURCES,
+        lakehouse_in_path=TEST_LAKEHOUSE_IN,
+        lakehouse_out_path=TEST_LAKEHOUSE_OUT,
+        test_name=scenario["name"],
+        scenario=scenario["read_type"],
+        table_name=scenario["dq_db_table"],
+    )
+
+    acon = _generate_acon(
+        input_spec, scenario, scenario.get("dq_type", DQType.VALIDATOR.value)
+    )
+
+    LocalStorage.copy_file(
+        f"{TEST_RESOURCES}/data/control/*",
+        f"{TEST_LAKEHOUSE_CONTROL}/data/",
+    )
+
+    if (scenario["dq_validator_result"] == "failed") and ("batch" in scenario["name"]):
+        with pytest.raises(DQDuplicateRuleIdException) as error:
+            execute_dq_validation(acon=acon)
+        assert "rule_3" and "rule_4" in error.value.args[0]
+        _LOGGER.critical(error.value.args[0])
+    elif (scenario["dq_validator_result"] == "failed") and (
+        "streaming" in scenario["name"]
+    ):
+        with pytest.raises(DQDuplicateRuleIdException) as error:
+            execute_dq_validation(acon=acon)
+        assert "rule_3" and "rule_5" in error.value.args[0]
+        _LOGGER.critical(error.value.args[0])
+    else:
+        execute_dq_validation(acon=acon)
+        assert "A duplicate dq_rule_id was found!!!" not in caplog.text
 
 
 @pytest.mark.parametrize(

@@ -8,7 +8,7 @@ delta-spark==3.2.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_os.txt
-importlib-metadata==8.0.0
+importlib-metadata==8.5.0
     # via
     #   -c requirements_full.lock
     #   delta-spark
@@ -21,7 +21,7 @@ pyspark==3.5.0
     #   -c requirements_full.lock
     #   -r requirements_os.txt
     #   delta-spark
-zipp==3.20.0
+zipp==3.21.0
     # via
     #   -c requirements_full.lock
     #   importlib-metadata

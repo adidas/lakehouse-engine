@@ -50,16 +50,17 @@ ifndef $(spark_driver_memory)
 	spark_driver_memory := "2g"
 endif
 
-# A requirements_full.lock file is created based on all the requirements of the project (core, dq, os, azure, sftp and cicd).
-# The requirements_full.lock file is then used as a constraints file to build the other lock files so that we ensure dependencies are consistent and compatible
+# A requirements_full.lock file is created based on all the requirements of the project (core, dq, os, azure, sftp, cicd and sharepoint).
+# The requirements_full.lock file is then used as a constraints file to build the other lock file so that we ensure dependencies are consistent and compatible
 # with each other, otherwise, the the installations would likely fail.
 # Moreover, the requirement_full.lock file is also used in the dockerfile to install all project dependencies.
-full_requirements := -o requirements_full.lock requirements.txt requirements_os.txt requirements_dq.txt requirements_azure.txt requirements_sftp.txt requirements_cicd.txt
+full_requirements := -o requirements_full.lock requirements.txt requirements_os.txt requirements_dq.txt requirements_azure.txt requirements_sftp.txt requirements_cicd.txt requirements_sharepoint.txt
 requirements := -o requirements.lock requirements.txt -c requirements_full.lock
 os_requirements := -o requirements_os.lock requirements_os.txt -c requirements_full.lock
 dq_requirements = -o requirements_dq.lock requirements_dq.txt -c requirements_full.lock
 azure_requirements = -o requirements_azure.lock requirements_azure.txt -c requirements_full.lock
 sftp_requirements = -o requirements_sftp.lock requirements_sftp.txt -c requirements_full.lock
+sharepoint_requirements = -o requirements_sharepoint.lock requirements_sharepoint.txt -c requirements_full.lock
 os_deployment := False
 container_user_dir := /home/appuser
 trust_git_host := ssh -oStrictHostKeyChecking=no -i $(container_user_dir)/.ssh/id_rsa git@github.com
@@ -113,7 +114,7 @@ docs:
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
-		/bin/bash -c 'cd $(build_src_dir) && python ./cicd/code_doc/render_doc.py'
+		/bin/bash -c 'cd $(build_src_dir) && python ./cicd/code_doc/render_docs.py'
 
 # mypy incremental mode is used by default, so in case there is any cache related issue,
 # you can modify the command to include --no-incremental flag or you can delete mypy_cache folder.
@@ -122,7 +123,7 @@ lint:
 		-w /app \
         -v "$$PWD":/app \
 		$(image_name):$(version) \
-		/bin/bash -c 'flake8 --docstring-convention google --config=cicd/flake8.conf lakehouse_engine tests cicd/code_doc/render_doc.py \
+		/bin/bash -c 'flake8 --docstring-convention google --config=cicd/flake8.conf lakehouse_engine tests cicd/code_doc/render_docs.py \
 		&& mypy --no-incremental lakehouse_engine tests'
 
 # useful to print and use make variables. Usage: make print-variable var=variable_to_print.
@@ -134,8 +135,8 @@ style:
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
-		/bin/bash -c '''isort lakehouse_engine tests cicd/code_doc/render_doc.py && \
-        black lakehouse_engine tests cicd/code_doc/render_doc.py'''
+		/bin/bash -c '''isort lakehouse_engine tests cicd/code_doc/render_docs.py && \
+        black lakehouse_engine tests cicd/code_doc/render_docs.py'''
 
 terminal:
 	$(container_cli) run \
@@ -160,7 +161,7 @@ test:
             --junitxml=artefacts/tests.xml \
             --cov-report xml --cov-report xml:artefacts/coverage.xml \
             --cov-report term-missing --cov=lakehouse_engine \
-            --log-cli-level=INFO --color=yes -x -v \
+            --log-cli-level=INFO --color=yes -x -vv \
             --spark_driver_memory=$(spark_driver_memory) $(test_only)" && \
 	perl -pi -e 's/filename=\"/filename=\"lakehouse_engine\//g' artefacts/coverage.xml
 
@@ -194,7 +195,8 @@ build-lock-files:
 	    pip-compile --resolver=backtracking $(os_requirements) && \
 	    pip-compile --resolver=backtracking $(dq_requirements) && \
 		pip-compile --resolver=backtracking $(azure_requirements) && \
-		pip-compile --resolver=backtracking $(sftp_requirements)'
+		pip-compile --resolver=backtracking $(sftp_requirements) && \
+		pip-compile --resolver=backtracking $(sharepoint_requirements)'
 
 # We test the dependencies to check if they need to be updated because requirements.txt files have changed.
 # On top of that, we also test if we will be able to install the base and the extra packages together, 
@@ -229,7 +231,8 @@ upgrade-lock-files:
 	    pip-compile --resolver=backtracking --upgrade $(os_requirements) && \
 	    pip-compile --resolver=backtracking --upgrade $(dq_requirements) && \
 		pip-compile --resolver=backtracking --upgrade $(azure_requirements) && \
-		pip-compile --resolver=backtracking --upgrade $(sftp_requirements)'
+		pip-compile --resolver=backtracking --upgrade $(sftp_requirements) && \
+		pip-compile --resolver=backtracking --upgrade $(sharepoint_requirements)'
 
 #####################################
 ##### GitHub Deployment Targets #####
@@ -275,7 +278,7 @@ deploy-docs-to-github: docs prepare-github-repo
 		-v "$$PWD":/app \
 		-v $(git_credentials_file):$(container_user_dir)/.ssh/id_rsa \
 		$(image_name):$(version) \
-		/bin/bash -c """cp -r tmp_os/lakehouse-engine/artefacts/docs/* tmp_os/lakehouse-engine-docs/ ; \
+		/bin/bash -c """cp -r tmp_os/lakehouse-engine/artefacts/docs/site/* tmp_os/lakehouse-engine-docs/ ; \
 		cd tmp_os/lakehouse-engine-docs; \
 		$(trust_git_host); \
 		git add . ; \

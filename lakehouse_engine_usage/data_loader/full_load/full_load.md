@@ -16,5 +16,5 @@ load_data(acon=acon)
 ```
 Example of ACON configuration:
 ```json
-.. include:: ../../../tests/resources/feature/full_load/full_overwrite/batch.json
+{!../../../../tests/resources/feature/full_load/full_overwrite/batch.json!}
 ```

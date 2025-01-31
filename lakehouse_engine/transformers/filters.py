@@ -63,6 +63,8 @@ class Filters(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='incremental_filter')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -92,6 +94,8 @@ class Filters(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='expression_filter')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -108,6 +112,8 @@ class Filters(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='column_filter_exp')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -138,6 +144,8 @@ class Filters(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='drop_duplicate_rows')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

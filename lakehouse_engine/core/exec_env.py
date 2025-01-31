@@ -2,6 +2,7 @@
 
 import ast
 import os
+from dataclasses import replace
 
 from pyspark.sql import SparkSession
 
@@ -23,13 +24,33 @@ class ExecEnv(object):
     ENGINE_CONFIG: EngineConfig = EngineConfig(**ConfigUtils.get_config())
 
     @classmethod
-    def set_default_engine_config(cls, package: str) -> None:
-        """Set default engine configurations by reading them from a specified package.
+    def set_default_engine_config(
+        cls,
+        package: str = "lakehouse_engine.configs",
+        custom_configs_dict: dict = None,
+        custom_configs_file_path: str = None,
+    ) -> None:
+        """Set default engine configurations.
+
+        The function set the default engine configurations by reading
+        them from a specified package and overwrite them if the user
+        pass a dictionary or a file path with new configurations.
 
         Args:
-            package: package where the engine configurations can be found.
+            package: package where the engine default configurations can be found.
+            custom_configs_dict: a dictionary with custom configurations
+            to overwrite the default ones.
+            custom_configs_file_path: path for the file with custom
+            configurations to overwrite the default ones.
         """
         cls.ENGINE_CONFIG = EngineConfig(**ConfigUtils.get_config(package))
+        if custom_configs_dict:
+            cls.ENGINE_CONFIG = replace(cls.ENGINE_CONFIG, **custom_configs_dict)
+        if custom_configs_file_path:
+            cls.ENGINE_CONFIG = replace(
+                cls.ENGINE_CONFIG,
+                **ConfigUtils.get_config_from_file(custom_configs_file_path),
+            )
 
     @classmethod
     def get_or_create(

@@ -248,7 +248,7 @@ def generate_sensor_query(
             If none we will set the default value,
             our `sensor_new_data` view.
 
-    Return:
+    Returns:
         The query string.
     """
     ExecEnv.get_or_create(app_name="generate_sensor_preprocess_query")
@@ -284,7 +284,7 @@ def generate_sensor_sap_logchain_query(
         engine_table_name: table name exposed with the SAP LOGCHAIN data.
             This table will be used in the jdbc query.
 
-    Return:
+    Returns:
         The query string.
     """
     ExecEnv.get_or_create(app_name="generate_sensor_sap_logchain_query")

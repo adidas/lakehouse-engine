@@ -23,6 +23,7 @@ class JDBCExtraction(object):
     """Configurations available for an Extraction from a JDBC source.
 
     These configurations cover:
+
     - user: username to connect to JDBC source.
     - password: password to connect to JDBC source (always use secrets,
         don't use text passwords in your code).

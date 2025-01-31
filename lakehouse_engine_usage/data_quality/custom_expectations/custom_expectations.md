@@ -14,9 +14,11 @@ from lakehouse_engine.engine import load_data
 acon = {...}
 load_data(acon=acon)
 ```
+
 Example of ACON configuration:
-```python
-.. include:: ../../../lakehouse_engine/dq_processors/custom_expectations/expect_column_pair_a_to_be_smaller_or_equal_than_b.py
+
+```python 
+{!../../../../lakehouse_engine/dq_processors/custom_expectations/expect_column_pair_a_to_be_smaller_or_equal_than_b.py!}
 ```
 
 ### Naming Conventions
@@ -28,6 +30,7 @@ The name of the class **must** be the name of the expectation written in camel c
 
 ### File Structure
 The file contains two main sections:
+
 - the definition of the metric that we are tracking (where we define the logic of the expectation);
 - the definition of the expectation
 
@@ -103,7 +106,7 @@ In this section we define the expectation. This needs to follow a certain struct
 2) You must define an "examples" object where you define at least one success and one failure of your expectation to 
 demonstrate its logic. The result format must be set to complete, and you must set the [unexpected_index_name](#result-format) variable.
 
-.. note:: 
+!!! note
     For any examples where you will have unexpected results you must define  unexpected_index_list in your "out" element.
     This will be validated during the testing phase.
 
@@ -116,7 +119,7 @@ demonstrate its logic. The result format must be set to complete, and you must s
 6) You must **define** the `_validate` method like shown in the example. You **must** call the `validate_result` function 
 inside your validate method, this process adds a validation to the unexpected index list in the examples.
 
-.. note::
+!!! note
     If your custom expectation requires any extra validations, or you require additional fields to be returned on 
     the final dataframe, you can add them in this function. 
     The validate_result method has two optional parameters (`partial_success` and `partial_result) that can be used to 
@@ -259,10 +262,12 @@ if __name__ == "__main__":
 1) Create a branch from lakehouse engine.
 
 2) Create a custom expectation with your specific logic:
+
    1. All new expectations must be placed inside folder `/lakehouse_engine/dq_processors/custom_expectations`.
    2. The name of the expectation must be added to the file `/lakehouse_engine/core/definitions.py`, to the variable: `CUSTOM_EXPECTATION_LIST`.
    3. All new expectations must be tested on `/tests/feature/custom_expectations/test_custom_expectations.py`.
    In order to create a new test for your custom expectation it is necessary to:
+   
    - Copy one of the expectation folders in `tests/resources/feature/custom_expectations` renaming it to your custom expectation.
    - Make any necessary changes on the data/schema file present.
    - On `/tests/feature/custom_expectations/test_custom_expectations.py` add a scenario to test your expectation, all expectations 

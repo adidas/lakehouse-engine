@@ -40,6 +40,10 @@ class Algorithm(Executable):
             dq_type=spec["dq_type"],
             dq_functions=[],
             dq_db_table=spec.get("dq_db_table"),
+            dq_table_table_filter=spec.get("dq_table_table_filter"),
+            dq_table_extra_filters=spec.get(
+                "dq_table_extra_filters", DQSpec.dq_table_extra_filters
+            ),
             execution_point=spec.get("execution_point"),
             unexpected_rows_pk=spec.get(
                 "unexpected_rows_pk", DQSpec.unexpected_rows_pk

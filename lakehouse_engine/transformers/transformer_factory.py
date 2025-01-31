@@ -88,6 +88,8 @@ class TransformerFactory(object):
 
         Returns:
             Transformer function to be executed in .transform() spark function.
+
+        {{get_example(method_name='get_transformer')}}
         """
         if spec.function == "incremental_filter":
             # incremental_filter optionally expects a DataFrame as input, so find it.

@@ -7,34 +7,38 @@ only requiring a few parameters that are explained and exemplified in the
 [template](#extraction-from-sap-b4-adsos-template) scenarios that we have created.
 
 
-.. note:: This custom reader is very similar and uses most features from the sap_bw reader, so if you were using specific filters/parameters with the sap_bw reader, there is a high chance you can keep using it in a very similar way with the sap_b4 reader. The main concepts are applied to both readers, as the strategies on how to parallelize the extractions, for example.
+!!! note
+    This custom reader is very similar and uses most features from the sap_bw reader, so if you were using specific filters/parameters with the sap_bw reader, there is a high chance you can keep using it in a very similar way with the sap_b4 reader. The main concepts are applied to both readers, as the strategies on how to parallelize the extractions, for example.
 
-How can I find a good candidate column for [partitioning the extraction from S4Hana?](../../lakehouse_engine_usage/data_loader/extract_from_sap_bw_dso.html#how-can-we-decide-the-partitionColumn)
+How can I find a good candidate column for [partitioning the extraction from S4Hana?](../extract_from_sap_bw_dso/extract_from_sap_bw_dso.md#how-can-we-decide-the-partitionColumn)
 
-.. danger:: **Parallelization Limitations**
+!!! danger "**Parallelization Limitations**"
     There are no limits imposed by the Lakehouse-Engine framework, but you need to consider that there might be differences imposed by the source.
 
     E.g. Each User might be restricted on utilisation of about 100GB memory at a time from the source.
 
     Parallel extractions ***can bring a jdbc source down*** if a lot of stress is put on the system. Be careful choosing the number of partitions. Spark is a distributed system and can lead to many connections.
 
-.. danger:: **In case you want to perform further filtering in the REQTSN field, please be aware that it is not being pushed down to SAP B4 by default (meaning it will have bad performance).** 
+!!! danger 
+    **In case you want to perform further filtering in the REQTSN field, please be aware that it is not being pushed down to SAP B4 by default (meaning it will have bad performance).** 
     In that case, you will need to use customSchema option while reading, so that you are able to enable filter push down for those.
 
 
 You can check the code documentation of the reader below:
 
-[**SAP B4 Reader**](../../lakehouse_engine/io/readers/sap_b4_reader.html)
+[**SAP B4 Reader**](../../../reference/packages/io/readers/sap_b4_reader.md)
 
-[**JDBC Extractions arguments**](../../lakehouse_engine/utils/extraction/jdbc_extraction_utils.html#JDBCExtraction.__init__)
+[**JDBC Extractions arguments**](../../../reference/packages/utils/extraction/jdbc_extraction_utils.md#packages.utils.extraction.jdbc_extraction_utils.JDBCExtraction.__init__)
 
-[**SAP B4 Extractions arguments**](../../lakehouse_engine/utils/extraction/sap_b4_extraction_utils.html#SAPB4Extraction.__init__)
+[**SAP B4 Extractions arguments**](../../../reference/packages/utils/extraction/sap_b4_extraction_utils.md#packages.utils.extraction.sap_b4_extraction_utils.SAPB4Extraction.__init__)
 
-.. note:: For extractions using the SAP B4 reader, you can use the arguments listed in the SAP B4 arguments, but also the ones listed in the JDBC extractions, as those are inherited as well.
+!!! note 
+    For extractions using the SAP B4 reader, you can use the arguments listed in the SAP B4 arguments, but also the ones listed in the JDBC extractions, as those are inherited as well.
 
 
 ## Extraction from SAP B4 ADSOs Template
 This template covers the following scenarios of extractions from the SAP B4Hana ADSOs:
+
 - 1 - The Simplest Scenario (Not parallel - Not Recommended)
 - 2 - Parallel extraction
   - 2.1 - Simplest Scenario
@@ -43,8 +47,9 @@ This template covers the following scenarios of extractions from the SAP B4Hana 
   - 2.4 - Provide predicates (Recommended)
   - 2.5 - Generate predicates (Recommended)
 
-.. note::
-    Note: the template will cover two ADSO Types:
+!!! note
+    The template will cover two ADSO Types:
+
     - **AQ**: ADSO which is of append type and for which a single ADSO/tables holds all the information, like an
     event table. For this type, the same ADSO is used for reading data both for the inits and deltas. Usually, these
     ADSOs end with the digit "6".
@@ -61,6 +66,7 @@ One of the fields used for this joining is the `data_target`, which has a relati
 
 Based on the previous insights, the queries that the lakehouse-engine generates under the hood translate to
 (this is a simplified version, for more details please refer to the lakehouse-engine code documentation):
+
 **AQ Init Extraction:**
 `SELECT t.*, CAST({self._SAP_B4_EXTRACTION.extraction_timestamp} AS DECIMAL(15,0)) AS extraction_start_timestamp
 FROM my_database.my_table t`
@@ -90,8 +96,9 @@ WHERE STORAGE = 'AT' AND REQUEST_IS_IN_PROCESS = 'N' AND LAST_OPERATION_TYPE IN 
 AND REQUEST_STATUS IN ('GG') AND UPPER(DATATARGET) = UPPER('my_data_target')
 AND req.REQUEST_TSN > max_timestamp_in_bronze AND req.REQUEST_TSN <= max_timestamp_in_requests_status_table`
 
-.. note::
-    Introductory Notes:If you want to have a better understanding about JDBC Spark optimizations, here you have a few useful links:
+!!! note "Introductory Notes"
+    If you want to have a better understanding about JDBC Spark optimizations, here you have a few useful links:
+    
     - https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
     - https://docs.databricks.com/en/connect/external-systems/jdbc.html
     - https://bit.ly/3x2eCEm
@@ -102,6 +109,7 @@ This scenario is the simplest one, not taking any advantage of Spark JDBC optimi
 and using a single connection to retrieve all the data from the source. It should only be used in case the ADSO
 you want to extract from SAP B4Hana is a small one, with no big requirements in terms of performance to fulfill.
 When extracting from the source ADSO, there are two options:
+
 - **Delta Init** - full extraction of the source ADSO. You should use it in the first time you extract from the
 ADSO or any time you want to re-extract completely. Similar to a so-called full load.
 - **Delta** - extracts the portion of the data that is new or has changed in the source, since the last
@@ -109,6 +117,7 @@ extraction (using the `max_timestamp` value in the location of the data already 
 `latest_timestamp_data_location`).
 
 Below example is composed of two cells.
+
 - The first cell is only responsible to define the variables `extraction_type` and `write_type`,
 depending on the extraction type: **Delta Init** (`load_type = "init"`) or a **Delta** (`load_type = "delta"`).
 The variables in this cell will also be referenced by other acons/examples in this notebook, similar to what
@@ -116,7 +125,7 @@ you would do in your pipelines/jobs, defining this centrally and then re-using i
 - The second cell is where the acon to be used is defined (which uses the two variables `extraction_type` and
 `write_type` defined) and the `load_data` algorithm is executed to perform the extraction.
 
-.. note::
+!!! note
     There may be cases where you might want to always extract fully from the source ADSO. In these cases,
     you only need to use a Delta Init every time, meaning you would use `"extraction_type": "init"` and
     `"write_type": "overwrite"` as it is shown below. The explanation about what it is a Delta Init/Delta is
@@ -240,6 +249,7 @@ load_data(acon=acon)
 This scenario performs the extraction from the SAP B4 ADSO in parallel, but is more concerned with trying to
 optimize and have more control (compared to 2.1 example) on how the extraction is split and performed,
 using the following options:
+
 - `numPartitions` - number of Spark partitions to split the extraction.
 - `partitionColumn` - column used to split the extraction. It must be a numeric, date, or timestamp.
 It should be a column that is able to split the extraction evenly in several tasks. An auto-increment
@@ -256,6 +266,7 @@ When these 4 properties are used, Spark will use them to build several queries t
 
 **Example:** for `"numPartitions": 10`, `"partitionColumn": "record"`, `"lowerBound: 1"`, `"upperBound: 100"`,
 Spark will generate 10 queries like this:
+
 - `SELECT * FROM dummy_table WHERE RECORD < 10 OR RECORD IS NULL`
 - `SELECT * FROM dummy_table WHERE RECORD >= 10 AND RECORD < 20`
 - `SELECT * FROM dummy_table WHERE RECORD >= 20 AND RECORD < 30`
@@ -381,6 +392,7 @@ load_data(acon=acon)
 This scenario performs the extraction from SAP B4 ADSO in parallel, useful in contexts in which there is no
 numeric, date or timestamp column to parallelize the extraction (e.g. when extracting from ADSO of Type `CL`,
 the active table does not have the `RECORD` column, which is usually a good option for scenarios 2.2 and 2.3):
+
 - `partitionColumn` - column used to split the extraction. It can be of any type.
 
 This is an adequate example for you to follow if you have/know a column in the ADSO that is good to be used as
@@ -506,6 +518,7 @@ to extract everything. In this extreme case you would probably need to change yo
 these extreme cases are harder to happen when you use the strategy of the scenarios 2.2/2.3.
 
 **Example:** for `"partitionColumn": "record"`
+
 Generate predicates:
 - `SELECT DISTINCT(RECORD) as RECORD FROM dummy_table`
 - `1`
@@ -516,6 +529,7 @@ Generate predicates:
 - Predicates List: ['RECORD=1','RECORD=2','RECORD=3',...,'RECORD=100']
 
 Spark will generate 100 queries like this:
+
 - `SELECT * FROM dummy_table WHERE RECORD = 1`
 - `SELECT * FROM dummy_table WHERE RECORD = 2`
 - `SELECT * FROM dummy_table WHERE RECORD = 3`
@@ -523,6 +537,7 @@ Spark will generate 100 queries like this:
 - `SELECT * FROM dummy_table WHERE RECORD = 100`
 
 Generate predicates will also consider null by default:
+
 - `SELECT * FROM dummy_table WHERE RECORD IS NULL`
 
 To disable this behaviour the following variable value should be changed to false: `"predicates_add_null": False`

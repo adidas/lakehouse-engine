@@ -33,6 +33,8 @@ class DataMaskers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='hash_masker')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
@@ -58,6 +60,8 @@ class DataMaskers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='column_dropper')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

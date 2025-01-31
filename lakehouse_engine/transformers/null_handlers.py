@@ -34,6 +34,8 @@ class NullHandlers(object):
 
         Returns:
             A function to be called in .transform() spark function.
+
+        {{get_example(method_name='replace_nulls')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:

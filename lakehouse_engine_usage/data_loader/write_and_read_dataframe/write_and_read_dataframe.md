@@ -22,11 +22,8 @@ In these examples we will cover the following scenarios of using the output `dat
 If you want/need, you can add as many dataframes as you want in the output spec
 referencing the spec_id you want to add.
 
-.. warning::
-  **This is not intended to replace the other capabilities offered by the
-  lakehouse-engine** and in case **other feature can cover your use case**,
-  you should **use it instead of using the Dataframe writer**, as they
-  are much **more extensively tested on different type of operations**.
+!!! warning
+    **This is not intended to replace the other capabilities offered by the lakehouse-engine** and in case **other feature can cover your use case**, you should **use it instead of using the Dataframe writer**, as they are much **more extensively tested on different type of operations**.
   
   *Additionally, please always introspect if the problem that you are trying to resolve and for which no lakehouse-engine feature is available, could be a common problem and thus deserve a common solution and feature.*
   
@@ -45,7 +42,8 @@ In this example we will cover the Dummy Sales write to a result containing the o
     - 2 - Transformation of data (rename relevant columns);
     - 3 - Write the data to dict containing the dataframe;
 
-.. note:: If you are trying to retrieve more than once the same data using checkpoint it will return an empty dataframe with empty schema as we don't have new data to read.
+!!! note
+    If you are trying to retrieve more than once the same data using checkpoint it will return an empty dataframe with empty schema as we don't have new data to read.
 
 
 ```python
@@ -177,7 +175,8 @@ In this example we will cover the Dummy Deliveries table read and incremental lo
 - Second ACON is used to consume the bronze data and the latest data to perform silver transformation, in this ACON we are using as **input the two dataframes computed by the first ACON.**
 - Third ACON is used to write the silver computed data from the previous ACON to the target.
 
-.. note:: This example is not a recommendation on how to deal with incremental loads, the ACON was split in 3 for demo purposes.
+!!! note
+    This example is not a recommendation on how to deal with incremental loads, the ACON was split in 3 for demo purposes.
 
 Consume bronze data, generate the latest data and return a dictionary with bronze and transformed dataframes:
 

@@ -14,7 +14,8 @@ Furthermore, this feature provides several filters on the directories that makes
 There are important parameters that must be added to **input specs** in order to make the SFTP extraction work properly:
 
 
-.. note:: **Read type** <br> The engine supports only **BATCH** mode for this feature.
+!!! note "**Read type**"
+    The engine supports only **BATCH** mode for this feature.
 
 
 **sftp_files_format** - File format that will be used to read data from SFTP. **The engine supports: CSV, FWF, JSON and XML**.
@@ -49,7 +50,8 @@ The scenario below shows the extraction of a CSV file using most part of the ava
 
 For an incremental load approach, it is advised to use the "modification_time" column created by the option `file_metadata`. Since it has the original file date of modification, this date can be used in the logic to control what is new and has been changed recently.
 
-.. note:: Below scenario uses **"add_auto_policy": true**, which is **not recommended**.
+!!! note
+    Below scenario uses **"add_auto_policy": true**, which is **not recommended**.
 
 ```python
 from lakehouse_engine.engine import load_data
@@ -106,7 +108,8 @@ The following scenario shows the extraction of a JSON file using an RSA pkey aut
 
 For the pkey file location, it is important to have the file in a location accessible by the cluster. This can be achieved either by mounting the location or with volumes.
 
-.. note:: This scenario uses a more secure authentication, thus it is the recommended option, instead of the previous scenario.
+!!! note
+    This scenario uses a more secure authentication, thus it is the recommended option, instead of the previous scenario.
 
 ```python
 from lakehouse_engine.engine import load_data

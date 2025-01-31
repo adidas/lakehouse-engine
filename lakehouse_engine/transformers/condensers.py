@@ -45,6 +45,8 @@ class Condensers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='condense_record_mode_cdc')}}
         """
         if not ranking_key_desc and not ranking_key_asc:
             raise WrongArgumentsException(
@@ -100,6 +102,8 @@ class Condensers(object):
 
         Returns:
             A function to be executed in the .transform() spark function.
+
+        {{get_example(method_name='group_and_rank')}}
         """
 
         def inner(df: DataFrame) -> DataFrame:
