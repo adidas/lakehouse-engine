@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import shutil
 
-import msal
 import requests
 from pyspark.sql import DataFrame
 from requests import RequestException
@@ -96,6 +95,8 @@ class SharepointUtils(object):
 
         This is used to handle authentication and authorization with Azure AD.
         """
+        import msal
+
         self.app = msal.ConfidentialClientApplication(
             client_id=self.client_id,
             authority=f"{ExecEnv.ENGINE_CONFIG.sharepoint_authority}/{self.tenant_id}",
@@ -311,7 +312,7 @@ class SharepointUtils(object):
             IOError: If there is an issue during the file writing process.
         """
         try:
-            df.coalesce(1).write.save(
+            df.coalesce(1).write.mode("overwrite").save(
                 path=self.local_path,
                 format="csv",
                 **self.local_options if self.local_options else {},
