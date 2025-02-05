@@ -109,7 +109,7 @@ Alternatively, you can also upload the wheel to any target of your like (e.g. S3
 ---
 > ***Note:*** The Lakehouse Engine is packaged with plugins or optional dependencies, which are not installed by default. The goal is
 > to make its installation lighter and to avoid unnecessary dependencies. You can check all the optional dependencies in
-> the [tool.setuptools.dynamic] section of the [pyproject.toml](pyproject.toml) file. They are currently: os, dq, azure and sftp. So,
+> the [tool.setuptools.dynamic] section of the [pyproject.toml](pyproject.toml) file. They are currently: os, dq, azure, sharepoint and sftp. So,
 > in case you want to make usage of the Data Quality features offered in the Lakehouse Engine, instead of running the previous command, you should run
 > the command below, which will bring the core functionalities, plus DQ.
 > ```

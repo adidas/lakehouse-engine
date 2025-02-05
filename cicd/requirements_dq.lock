@@ -297,9 +297,10 @@ notebook-shim==0.2.4
     #   -c requirements_full.lock
     #   jupyterlab
     #   notebook
-numpy==2.2.2
+numpy==1.26.4
     # via
     #   -c requirements_full.lock
+    #   -r requirements_dq.txt
     #   altair
     #   great-expectations
     #   pandas
