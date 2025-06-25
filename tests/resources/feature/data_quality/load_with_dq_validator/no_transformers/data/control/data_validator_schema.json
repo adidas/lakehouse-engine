@@ -20,7 +20,7 @@
     },
     {
       "metadata": {},
-      "name": "run_results",
+      "name": "validation_results",
       "nullable": true,
       "type": "string"
     },
@@ -29,12 +29,6 @@
       "name": "success",
       "nullable": true,
       "type": "boolean"
-    },
-    {
-      "metadata": {},
-      "name": "validation_result_identifier",
-      "nullable": true,
-      "type": "string"
     },
     {
       "metadata": {},
@@ -51,6 +45,16 @@
     {
       "metadata": {},
       "name": "source_primary_key",
+      "nullable": true,
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {},
+      "name": "unexpected_index_list",
       "nullable": true,
       "type": {
         "containsNull": true,

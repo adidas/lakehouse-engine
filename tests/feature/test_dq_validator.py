@@ -471,13 +471,17 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
         dq_control_df.fillna("").select("spec_id", "input_id", "success"),
     )
 
-    # test if the run_results column is json object
-    # test if the json generated has the correct keys
     for key in dq_result_df.collect():
-        assert list(loads(key.run_results).keys()) == [
-            "actions_results",
-            "validation_result",
-        ]
+        validation_results = loads(key.validation_results)
+        result = (
+            validation_results[0]
+            if isinstance(validation_results, list)
+            else validation_results
+        )
+        assert {
+            "success",
+            "expectation_config",
+        }.issubset(result.keys())
 
 
 def _clean_folders() -> None:

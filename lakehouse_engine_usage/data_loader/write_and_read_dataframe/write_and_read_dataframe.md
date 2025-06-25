@@ -316,7 +316,6 @@ write_silver_acon = {
             "bucket": "my_data_product_bucket",
             "expectations_store_prefix": "dq/expectations/",
             "validations_store_prefix": "dq/validations/",
-            "data_docs_prefix": "dq/data_docs/site/",
             "checkpoint_store_prefix": "dq/checkpoints/",
             "result_sink_db_table": "my_database.dummy_deliveries_dq",
             "result_sink_location": "my_data_product_bucket/dq/dummy_deliveries",

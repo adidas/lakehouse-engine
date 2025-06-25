@@ -18,6 +18,7 @@ pipeline {
 
     environment {
         VERSION = env.BRANCH_NAME.replaceAll("[/-]", "_").toLowerCase()
+        GIT_CREDENTIALS_ID = "git-lakehouse-cicd"
     }
 
     stages {
@@ -34,7 +35,7 @@ pipeline {
                         checkout([
                                 $class           : 'GitSCM',
                                 branches         : scm.branches,
-                                userRemoteConfigs: scm.userRemoteConfigs
+                                userRemoteConfigs: [[url: 'https://bitbucket.tools.3stripes.net/scm/lak/lakehouse-engine.git', credentialsId: GIT_CREDENTIALS_ID]]
                         ])
                     }
                 }

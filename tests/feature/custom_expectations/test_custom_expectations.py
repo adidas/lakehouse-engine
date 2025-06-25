@@ -207,13 +207,12 @@ def test_custom_expectation(scenario: dict, caplog: Any) -> None:
         dq_control_df.fillna("").select("spec_id", "input_id", "success"),
     )
 
-    # test if the run_results column is json object
-    # test if the json generated has the correct keys
     for key in dq_result_df.collect():
-        assert list(loads(key.run_results).keys()) == [
-            "actions_results",
-            "validation_result",
-        ]
+        for result in loads(key.validation_results):
+            assert {
+                "success",
+                "expectation_config",
+            }.issubset(result.keys())
 
 
 def _clean_folders(expectation_name: str) -> None:

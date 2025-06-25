@@ -4,7 +4,6 @@ import datetime
 from datetime import timedelta
 from typing import Any, Dict, Optional
 
-from great_expectations.core import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnMapExpectation
 from great_expectations.expectations.metrics import ColumnMapMetricProvider
@@ -31,7 +30,6 @@ class ColumnValuesDateNotOlderThan(ColumnMapMetricProvider):
     def _spark(
         self: ColumnMapMetricProvider,
         column: Any,
-        timeframe: Any,
         **kwargs: dict,
     ) -> Any:
         """Implementation of the expectation's logic.
@@ -41,12 +39,12 @@ class ColumnValuesDateNotOlderThan(ColumnMapMetricProvider):
 
         Args:
             column: Name of column to validate.
-            timeframe: dict with the definition of the timeframe.
             kwargs: dict with additional parameters.
 
         Returns:
             If the condition is met.
         """
+        timeframe = kwargs.get("timeframe") or None
         weeks = (
             timeframe.get("weeks", 0)
             + (timeframe.get("months", 0) * 4)
@@ -97,6 +95,14 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
     Returns:
         An ExpectationSuiteValidationResult.
     """
+
+    mostly: float = 1.0
+    ignore_row_if: str = "neither"
+    result_format: dict = {"result_format": "BASIC"}
+    include_config: bool = True
+    catch_exceptions: bool = False
+    timeframe: Any = {}
+    column: Any = None
 
     examples = [
         {
@@ -167,22 +173,10 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
     ]
 
     map_metric = "column_values.date_is_not_older_than"
-    success_keys = (
-        "column",
-        "ignore_row_if",
-        "timeframe",
-    )
-    default_kwarg_values = {
-        "mostly": 1.0,
-        "ignore_row_if": "neither",
-        "result_format": "BASIC",
-        "include_config": True,
-        "catch_exceptions": False,
-    }
+    success_keys = ("column", "ignore_row_if", "timeframe", "mostly")
 
     def _validate(
         self,
-        configuration: ExpectationConfiguration,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
@@ -196,7 +190,6 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
         we need to make it manually.
 
         Args:
-            configuration: Configuration used in the test.
             metrics: Test result metrics.
             runtime_configuration: Configuration used when running the expectation.
             execution_engine: Execution Engine where the expectation was run.
@@ -206,7 +199,6 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
         """
         return validate_result(
             self,
-            configuration,
             metrics,
             runtime_configuration,
             execution_engine,

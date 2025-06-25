@@ -4,6 +4,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import TerminatorSpec
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
+from lakehouse_engine.terminators.notifiers.exceptions import NotifierNotFoundException
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 LOGGER = LoggingHandler(__name__).get_logger()
@@ -23,9 +24,6 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "template": "failure_notification_email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {
-                        "exception": "test-exception",
-                    },
                 },
             ),
             "expected": "The requested notification format snailmail is not supported.",
@@ -41,9 +39,6 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "template": "failure_notification_email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {
-                        "exception": "test-exception",
-                    },
                 },
             ),
             "expected": "email",
@@ -57,7 +52,7 @@ def test_notification_factory(scenario: dict) -> None:
         scenario: scenario to test.
     """
     if "Error: " in scenario["name"]:
-        with pytest.raises(NotImplementedError) as e:
+        with pytest.raises(NotifierNotFoundException) as e:
             notifier = NotifierFactory.get_notifier(scenario["spec"])
 
         assert scenario["expected"] == str(e.value)

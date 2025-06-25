@@ -16,7 +16,7 @@ charset-normalizer==3.4.1
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   -c requirements_full.lock
     #   msal

@@ -55,7 +55,6 @@
       "dq_table_table_filter": "dummy_sales",
       "tag_source_data": true,
       "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
-      "sort_processed_keys": true,
       "source": "condensed_sales",
       "data_product_name": "delta_with_dupl_tag_gen_fail"
     }

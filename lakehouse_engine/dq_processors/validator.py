@@ -3,9 +3,18 @@
 from typing import Any, List
 
 from great_expectations.core.batch import RuntimeBatchRequest
-from great_expectations.data_context import BaseDataContext
+from great_expectations.data_context import EphemeralDataContext
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, collect_set, explode, first, lit, struct, when
+from pyspark.sql.functions import (
+    col,
+    collect_set,
+    concat,
+    explode,
+    first,
+    lit,
+    struct,
+    when,
+)
 
 from lakehouse_engine.core.definitions import DQDefaults, DQFunctionSpec
 from lakehouse_engine.core.exec_env import ExecEnv
@@ -20,7 +29,7 @@ class Validator(object):
     @classmethod
     def get_dq_validator(
         cls,
-        context: BaseDataContext,
+        context: EphemeralDataContext,
         batch_request: RuntimeBatchRequest,
         expectation_suite_name: str,
         dq_functions: List[DQFunctionSpec],
@@ -73,7 +82,7 @@ class Validator(object):
 
         Returns: a dataframe tagged with the DQ results.
         """
-        run_success = True
+        run_success = results_df.select("success").first()[0]
         run_name = results_df.select("run_name").first()[0]
         raised_exceptions = (
             True
@@ -90,7 +99,6 @@ class Validator(object):
         )
 
         if failures_df.isEmpty() is not True:
-            run_success = False
 
             source_df = cls._get_row_tagged_fail_df(
                 failures_df, raised_exceptions, source_df, source_pk
@@ -169,11 +177,52 @@ class Validator(object):
                 join_cond = [
                     col(f"a.{key}").eqNullSafe(col(f"b.{key}")) for key in source_pk
                 ]
-                source_df = (
-                    source_df.alias("a")
-                    .join(row_failures_df.alias("b"), join_cond, "left")
-                    .select("a.*", "b.dq_validations")
-                )
+                columns = [
+                    col_name
+                    for col_name in source_df.columns
+                    if col_name != "dq_validations"
+                ]
+
+                # Since we are creating multiple rows per run, if the dq_validations
+                # column already exists, we need to add the new dq_validations to
+                # the existing dq_validations.
+                existing_validations = "a.dq_validations"
+                existing_validations_details = "a.dq_validations.dq_failure_details"
+                new_validations = "b.dq_validations"
+                new_validations_details = "b.dq_validations.dq_failure_details"
+
+                if "dq_validations" in source_df.columns:
+                    source_df = (
+                        source_df.alias("a")
+                        .join(row_failures_df.alias("b"), join_cond, "left")
+                        .select(
+                            *[f"a.{col}" for col in columns],
+                            when(
+                                col(new_validations).isNotNull()
+                                & col(existing_validations_details).isNotNull(),
+                                col(new_validations).withField(
+                                    "dq_failure_details",
+                                    concat(
+                                        col(existing_validations_details),
+                                        col(new_validations_details),
+                                    ),
+                                ),
+                            )
+                            .when(
+                                col(new_validations).isNotNull()
+                                & col(new_validations_details).isNotNull(),
+                                col(new_validations),
+                            )
+                            .otherwise(col(existing_validations))
+                            .alias("dq_validations"),
+                        )
+                    )
+                else:
+                    source_df = (
+                        source_df.alias("a")
+                        .join(row_failures_df.alias("b"), join_cond, "left")
+                        .select("a.*", new_validations)
+                    )
 
         return source_df
 
@@ -209,6 +258,7 @@ class Validator(object):
                 }
             }
         ]
+
         complementary_df = ExecEnv.SESSION.createDataFrame(
             complementary_data, schema=DQDefaults.DQ_VALIDATIONS_SCHEMA.value
         )

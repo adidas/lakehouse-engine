@@ -2,7 +2,6 @@
 
 from typing import Any, Dict, Optional
 
-from great_expectations.core import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnMapExpectation
 from great_expectations.expectations.metrics import ColumnMapMetricProvider
@@ -70,6 +69,13 @@ class ExpectColumnValuesToNotBeNullOrEmptyString(ColumnMapExpectation):
         An ExpectationSuiteValidationResult.
     """
 
+    mostly: float = 1.0
+    ignore_row_if: str = "neither"
+    result_format: dict = {"result_format": "BASIC"}
+    include_config: bool = True
+    catch_exceptions: bool = False
+    column: Any = None
+
     examples = [
         {
             "dataset_name": "Test Dataset",
@@ -133,21 +139,10 @@ class ExpectColumnValuesToNotBeNullOrEmptyString(ColumnMapExpectation):
     ]
 
     map_metric = "column_values.not_null_or_empty_string"
-    success_keys = (
-        "column",
-        "ignore_row_if",
-    )
-    default_kwarg_values = {
-        "mostly": 1.0,
-        "ignore_row_if": "neither",
-        "result_format": "BASIC",
-        "include_config": True,
-        "catch_exceptions": False,
-    }
+    success_keys = ("column", "ignore_row_if", "mostly")
 
     def _validate(
         self,
-        configuration: ExpectationConfiguration,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
@@ -161,7 +156,6 @@ class ExpectColumnValuesToNotBeNullOrEmptyString(ColumnMapExpectation):
         we need to make it manually.
 
         Args:
-            configuration: Configuration used in the test.
             metrics: Test result metrics.
             runtime_configuration: Configuration used when running the expectation.
             execution_engine: Execution Engine where the expectation was run.
@@ -171,7 +165,6 @@ class ExpectColumnValuesToNotBeNullOrEmptyString(ColumnMapExpectation):
         """
         return validate_result(
             self,
-            configuration,
             metrics,
             runtime_configuration,
             execution_engine,

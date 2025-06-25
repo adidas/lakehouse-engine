@@ -25,6 +25,13 @@ The main difference between the sample acons is on the usage of `dq_specs`.
 - 3 - [Validations Failing](validations_failing/validations_failing.md)
 - 4 - [Row Tagging](row_tagging/row_tagging.md)
 
+**Disclaimer:** even though the `"dq_type": "validator"` is still supported (as presented on this template),
+our recommendation is to use `"dq_type": "prisma"`, which offers many more features end to end (from DQ Rules
+creation, execution until results analysis) and a configurable central observability
+with standard offering of Dashboarding on top. The DQ Type validator and the result_sink is still
+supported for very specific use cases that might still exist and for which it might make sense to keep using
+this approach. In case of doubt between the offerings, please feel free to reach us.
+
 ### Data Quality Validator
 
 The DQValidator algorithm focuses on validating data (e.g., spark DataFrames, Files or Tables).
@@ -92,10 +99,4 @@ and others can be made, using the information in the `result_sink_db_table`/`res
     The recommendation is to use the same result sink table/location for all your dq_specs and 
     in the dashboard you will get a preview of the status of all of them.
 
-<img src="../../assets/img/dq_dashboard.png?raw=true" style="max-width: 800px; height: auto; "/>
-
-### 3. Data Docs Website
-A site that is auto generated to present you all the relevant information can also be used. If you choose to define 
-the parameter `data_docs_bucket` you will be able to store the GX documentation in the defined bucket,
-and therefore make your data docs available in the DQ Web App (GX UI) visible to everyone. 
-The `data_docs_bucket` property supersedes the `bucket` property only for data docs storage.
+<img src="../assets/img/dq_dashboard.png?raw=true" style="max-width: 800px; height: auto; "/>

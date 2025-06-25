@@ -130,8 +130,6 @@ acon = {
             "input_id": "dummy_deliveries_source",
             "dq_type": "validator",
             "bucket": "my_data_product_bucket",
-            "data_docs_bucket": "my_dq_data_docs_bucket }}",
-            "data_docs_prefix": "dq/my_data_product/data_docs/site/",
             "result_sink_db_table": "my_database.dq_result_sink",
             "result_sink_location": "my_dq_path/dq_result_sink/",
             "tag_source_data": True,

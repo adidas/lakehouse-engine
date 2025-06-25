@@ -2,7 +2,6 @@
 
 from typing import Any, Dict, Optional
 
-from great_expectations.core import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnPairMapExpectation
 from great_expectations.expectations.metrics.map_metric_provider import (
@@ -35,7 +34,6 @@ class ColumnPairCustom(ColumnPairMapMetricProvider):
         self: ColumnPairMapMetricProvider,
         column_A: Any,
         column_B: Any,
-        margin: Any,
         **kwargs: dict,
     ) -> Any:
         """Implementation of the expectation's logic.
@@ -43,12 +41,12 @@ class ColumnPairCustom(ColumnPairMapMetricProvider):
         Args:
             column_A: Value of the row of column_A.
             column_B: Value of the row of column_B.
-            margin: margin value to be added to column_b.
             kwargs: dict with additional parameters.
 
         Returns:
             If the condition is met.
         """
+        margin = kwargs.get("margin") or None
         if margin is None:
             approx = 0
         elif not isinstance(margin, (int, float, complex)):
@@ -88,6 +86,15 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
     Returns:
         An ExpectationSuiteValidationResult.
     """
+
+    mostly: float = 1.0
+    ignore_row_if: str = "neither"
+    result_format: dict = {"result_format": "BASIC"}
+    include_config: bool = True
+    catch_exceptions: bool = False
+    margin: Any = None
+    column_A: Any = None
+    column_B: Any = None
 
     examples = [
         {
@@ -160,17 +167,9 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
         "margin",
         "mostly",
     )
-    default_kwarg_values = {
-        "mostly": 1.0,
-        "ignore_row_if": "neither",
-        "result_format": "BASIC",
-        "include_config": True,
-        "catch_exceptions": False,
-    }
 
     def _validate(
         self,
-        configuration: ExpectationConfiguration,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
@@ -184,7 +183,6 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
         we need to make it manually.
 
         Args:
-            configuration: Configuration used in the test.
             metrics: Test result metrics.
             runtime_configuration: Configuration used when running the expectation.
             execution_engine: Execution Engine where the expectation was run.
@@ -194,7 +192,6 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
         """
         return validate_result(
             self,
-            configuration,
             metrics,
             runtime_configuration,
             execution_engine,

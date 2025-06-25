@@ -53,7 +53,6 @@
       "local_fs_root_dir": "/app/tests/lakehouse/out/feature/data_quality/load_with_dq_table/delta_with_duplicates_tag/dq",
       "result_sink_format": "delta",
       "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
-      "sort_processed_keys": true,
       "dq_table_table_filter": "dummy_sales",
       "tag_source_data": true,
       "source": "condensed_sales",

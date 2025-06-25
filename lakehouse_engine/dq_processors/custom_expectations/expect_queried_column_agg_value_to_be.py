@@ -2,11 +2,13 @@
 
 from typing import Any, Dict, Optional, Union
 
-from great_expectations.core.expectation_configuration import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.expectations.expectation import (
     ExpectationValidationResult,
     QueryExpectation,
+)
+from great_expectations.expectations.expectation_configuration import (
+    ExpectationConfiguration,
 )
 
 
@@ -25,27 +27,28 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
     """
 
     metric_dependencies = ("query.template_values",)
-    query = """
-            SELECT {group_column_list}, {agg_type}({column})
-            FROM {active_batch}
-            GROUP BY {group_column_list}
-            """
+    query_temp = """
+        SELECT {group_column_list}, {agg_type}({column})
+        FROM {batch}
+        GROUP BY {group_column_list}
+    """
+
+    include_config: bool = True
+    mostly: float = 1.0
+    result_format: dict = {"result_format": "BASIC"}
+    catch_exceptions: bool = False
+    meta: Any = None
+    query: str = query_temp
+    template_dict: Any = None
+
     success_keys = ("template_dict", "query")
-    domain_keys = (
+    condition_domain_keys = (
         "query",
         "template_dict",
         "batch_id",
         "row_condition",
         "condition_parser",
     )
-    default_kwarg_values = {
-        "include_config": True,
-        "mostly": 1.0,
-        "result_format": "BASIC",
-        "catch_exceptions": False,
-        "meta": None,
-        "query": query,
-    }
 
     def validate_configuration(
         self, configuration: Optional[ExpectationConfiguration] = None
@@ -206,7 +209,6 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
 
     def _validate(
         self,
-        configuration: ExpectationConfiguration,
         metrics: dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
@@ -217,7 +219,6 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         of the query output.
 
         Args:
-            configuration: Configuration used in the test.
             metrics: Test result metrics.
             runtime_configuration: Configuration used when running the expectation.
             execution_engine: Execution Engine where the expectation was run.
@@ -228,22 +229,19 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         query_result = metrics.get("query.template_values")
         query_result = [element.values() for element in query_result]
         query_result = self._generate_dict(query_result)
-        template_dict = self._validate_template_dict(configuration)
+        template_dict = self._validate_template_dict(self)
         output = self._validate_condition(query_result, template_dict)
 
         return output
 
     @staticmethod
-    def _validate_template_dict(configuration: ExpectationConfiguration) -> dict:
+    def _validate_template_dict(self: Any) -> dict:
         """Validate the template dict.
-
-        Args:
-            configuration (ExpectationConfiguration)
 
         Returns:
             Dict. Raises TypeError and KeyError
         """
-        template_dict = configuration.kwargs.get("template_dict")
+        template_dict = self.template_dict
 
         if not isinstance(template_dict, dict):
             raise TypeError("template_dict must be supplied as a dict")

@@ -23,7 +23,6 @@
       "result_sink_extra_columns": ["validation_results.result.*"],
       "source": "sales",
       "unexpected_rows_pk": ["salesorder", "item", "date", "customer"],
-      "sort_processed_keys": true,
       "dq_table_table_filter": "dummy_sales",
       "tag_source_data": true,
       "data_product_name": "full_overwrite_tag"

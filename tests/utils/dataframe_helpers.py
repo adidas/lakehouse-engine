@@ -177,8 +177,25 @@ class DataframeHelpers(object):
         Args:
             struct_type: dict containing a spark schema structure. [Check here](
                 https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
+
+        Returns:
+            An empty dataframe
         """
         return ExecEnv.SESSION.createDataFrame(data=[], schema=struct_type)
+
+    @staticmethod
+    def create_dataframe(data: list, schema: StructType) -> DataFrame:
+        """Create a DataFrame.
+
+        Args:
+            data: dict containing the data to create the DataFrame.
+            schema: dict containing a spark schema structure. [Check here](
+                https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/StructType.html).
+
+        Returns:
+            The created DataFrame.
+        """
+        return ExecEnv.SESSION.createDataFrame(data=data, schema=schema)
 
     @staticmethod
     def create_delta_table(

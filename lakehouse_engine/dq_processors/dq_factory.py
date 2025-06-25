@@ -1,45 +1,47 @@
 """Module containing the class definition of the Data Quality Factory."""
 
-import importlib.util
+import importlib
 import json
+import random
+from copy import deepcopy
 from datetime import datetime, timezone
 from json import dumps, loads
-from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union
+from typing import Optional, Tuple, Union
 
-from great_expectations.checkpoint.types.checkpoint_result import CheckpointResult
-from great_expectations.core.batch import RuntimeBatchRequest
+import great_expectations as gx
+from great_expectations import ExpectationSuite
+from great_expectations.core import ExpectationSuiteValidationResult
+from great_expectations.core.run_identifier import RunIdentifier
 from great_expectations.data_context import EphemeralDataContext
-from great_expectations.data_context.data_context.context_factory import get_context
 from great_expectations.data_context.types.base import (
-    AnonymizedUsageStatisticsConfig,
     DataContextConfig,
     FilesystemStoreBackendDefaults,
     S3StoreBackendDefaults,
 )
+from great_expectations.expectations.expectation_configuration import (
+    ExpectationConfiguration,
+)
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
-    array,
-    coalesce,
     col,
-    collect_list,
-    concat_ws,
     dayofmonth,
     explode,
     from_json,
     lit,
     month,
     schema_of_json,
-    sort_array,
     struct,
     to_json,
     to_timestamp,
     transform,
     year,
 )
-from pyspark.sql.types import StringType
+from pyspark.sql.types import FloatType, StringType
 
 from lakehouse_engine.core.definitions import (
     DQDefaults,
+    DQFunctionSpec,
+    DQResultFormat,
     DQSpec,
     DQType,
     OutputSpec,
@@ -47,10 +49,7 @@ from lakehouse_engine.core.definitions import (
 )
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.table_manager import TableManager
-from lakehouse_engine.dq_processors.exceptions import (
-    DQCheckpointsResultsException,
-    DQValidationsFailedException,
-)
+from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
 from lakehouse_engine.dq_processors.validator import Validator
 from lakehouse_engine.io.writer_factory import WriterFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -63,12 +62,249 @@ class DQFactory(object):
     _TIMESTAMP = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
 
     @classmethod
+    def _add_critical_function_tag(cls, args: dict) -> dict:
+        """Add tags to function considered critical.
+
+        Adds a tag to each of the functions passed on the dq_specs to
+        denote that they are critical_functions. This means that if any
+        of them fails, the dq process will fail, even if the threshold
+        is not surpassed.
+        This is done by adding a tag to the meta dictionary of the
+        expectation configuration.
+
+        Args:
+            args: arguments passed on the dq_spec
+
+        Returns:
+            A dictionary with the args with the critical function tag.
+        """
+        if "meta" in args.keys():
+            meta = args["meta"]
+
+            if isinstance(meta["notes"], str):
+                meta["notes"] = meta["notes"] + " **Critical function**."
+            else:
+                meta["notes"]["content"] = (
+                    meta["notes"]["content"] + " **Critical function**."
+                )
+
+            args["meta"] = meta
+            return args
+
+        else:
+            args["meta"] = {
+                "notes": {
+                    "format": "markdown",
+                    "content": "**Critical function**.",
+                }
+            }
+            return args
+
+    @classmethod
+    def _configure_checkpoint(
+        cls,
+        context: EphemeralDataContext,
+        dataframe_bd: DataFrame,
+        suite: ExpectationSuite,
+        dq_spec: DQSpec,
+        data: DataFrame,
+        checkpoint_run_time: str,
+    ) -> Tuple[ExpectationSuiteValidationResult, Optional[list]]:
+        """Create and configure the validation checkpoint.
+
+        Creates and configures a validation definition based on the suite
+        and then creates, configures and runs the checkpoint returning,
+        at the end, the result as well as the primary key from the dq_specs.
+
+        Args:
+            context: The data context from GX
+            dataframe_bd: The dataframe with the batch definition to validate
+            suite: A group of expectations to validate
+            dq_spec: The arguments directly passed from the acon in the dq_spec key
+            data: Input dataframe to run the dq process on.
+            checkpoint_run_time: A string with the time in miliseconds
+
+        Returns:
+            A tuple with the result from the checkpoint run and the primary key
+            from the dq_spec.
+        """
+        validation_definition = context.validation_definitions.add(
+            gx.ValidationDefinition(
+                data=dataframe_bd,
+                suite=suite,
+                name=f"{dq_spec.spec_id}-{dq_spec.input_id}"
+                f"-validation-{checkpoint_run_time}",
+            )
+        )
+
+        source_pk = cls._get_unexpected_rows_pk(dq_spec)
+        result_format: dict = {
+            "result_format": DQResultFormat.COMPLETE.value,
+        }
+
+        # If the source primary key is defined, we add it to the result format
+        # so that it is included in the results from GX.
+        if source_pk:
+            result_format = {
+                **result_format,
+                "unexpected_index_column_names": source_pk,
+            }
+
+        checkpoint = context.checkpoints.add(
+            gx.Checkpoint(
+                name=f"{dq_spec.spec_id}-{dq_spec.input_id}"
+                f"-checkpoint-{checkpoint_run_time}"
+                f"-{str(random.randint(1, 100))}",  # nosec B311
+                validation_definitions=[validation_definition],
+                actions=[],
+                result_format=result_format,
+            )
+        )
+
+        result = checkpoint.run(
+            batch_parameters={"dataframe": data},
+            run_id=RunIdentifier(
+                run_name=f"{checkpoint_run_time}"
+                f"-{dq_spec.spec_id}-{dq_spec.input_id}"
+                f"-{str(random.randint(1, 100))}-checkpoint",  # nosec B311
+                run_time=datetime.strptime(checkpoint_run_time, "%Y%m%d-%H%M%S%f"),
+            ),
+        )
+
+        return result, source_pk
+
+    @classmethod
+    def _check_row_condition(
+        cls, dq_spec: DQSpec, dq_function: DQFunctionSpec
+    ) -> DQFunctionSpec:
+        """Enables/disables row_conditions.
+
+        Checks for row_codition arguments in the definition of expectations
+        and enables/disables their usage based on the enable_row_condition
+        argument. row_conditions allow you to filter the rows that are
+        processed by the DQ functions. This is useful when you want to run the
+        DQ functions only on a subset of the data.
+
+        Args:
+            dq_spec: The arguments directly passed from the acon in the dq_spec key
+            dq_function: A DQFunctionSpec with the definition of a dq function.
+
+        Returns:
+            The definition of a dq_function with or without the row_condition key.
+        """
+        if (
+            not dq_spec.enable_row_condition
+            and "row_condition" in dq_function.args.keys()
+        ):
+            del dq_function.args["row_condition"]
+            cls._LOGGER.info(
+                f"Disabling row_condition for function: {dq_function.function}"
+            )
+        return dq_function
+
+    @classmethod
+    def _add_suite(
+        cls, context: EphemeralDataContext, dq_spec: DQSpec, checkpoint_run_time: str
+    ) -> ExpectationSuite:
+        """Create and configure an ExpectationSuite.
+
+        Creates and configures an expectation suite, adding the dq functions
+        passed on the dq_spec as well as the dq_critical_functions also passed
+        on the dq_spec, if they exist. Finally return the configured suite.
+
+        Args:
+            context: The data context from GX
+            dq_spec: The arguments directly passed from the acon in the dq_spec key
+            checkpoint_run_time: A string with the time in miliseconds
+
+        Returns:
+            A configured ExpectationSuite object.
+        """
+        expectation_suite_name = (
+            dq_spec.expectation_suite_name
+            if dq_spec.expectation_suite_name
+            else f"{dq_spec.spec_id}-{dq_spec.input_id}"
+            f"-{dq_spec.dq_type}-{checkpoint_run_time}"
+        )
+        suite = context.suites.add(gx.ExpectationSuite(name=expectation_suite_name))
+
+        for dq_function in dq_spec.dq_functions:
+            dq_function = cls._check_row_condition(dq_spec, dq_function)
+            suite.add_expectation_configuration(
+                ExpectationConfiguration(
+                    type=dq_function.function,
+                    kwargs=dq_function.args if dq_function.args else {},
+                    meta=dq_function.args.get("meta") if dq_function.args else {},
+                )
+            )
+        if dq_spec.critical_functions:
+            for critical_function in dq_spec.critical_functions:
+                meta_args = cls._add_critical_function_tag(critical_function.args)
+                suite.add_expectation_configuration(
+                    ExpectationConfiguration(
+                        type=critical_function.function,
+                        kwargs=(
+                            critical_function.args if critical_function.args else {}
+                        ),
+                        meta=meta_args,
+                    )
+                )
+
+        suite.save()
+        return suite
+
+    @classmethod
+    def _check_expectation_result(cls, result_dict: dict) -> dict:
+        """Add an empty dict if the unexpected_index_list key is empty.
+
+        Checks if the unexpected_index_list key has any element, if it doesn't,
+        add an empty dictionary to the result key. This is needed due to some
+        edge cases that appeared due to the GX update to version 1.3.13 where
+        the unexpected_index_list would sometimes exist even for successful
+        validation runs.
+
+        Args:
+            result_dict: A dict with the result_dict from a checkpoint run.
+
+        Returns:
+            The configured result_dict
+        """
+        for expectation_result in result_dict["results"]:
+            if "unexpected_index_list" in expectation_result["result"].keys():
+                if len(expectation_result["result"]["unexpected_index_list"]) < 1:
+                    expectation_result["result"] = {}
+        return result_dict
+
+    @classmethod
     def run_dq_process(cls, dq_spec: DQSpec, data: DataFrame) -> DataFrame:
         """Run the specified data quality process on a dataframe.
 
         Based on the dq_specs we apply the defined expectations on top of the dataframe
         in order to apply the necessary validations and then output the result of
         the data quality process.
+
+        The logic of the function is as follows:
+        1. Import the custom expectations defined in the engine.
+        2. Create the context based on the dq_spec. - The context is the base class for
+        the GX, an ephemeral context means that it does not store/load the
+        configuration of the environment in a configuration file.
+        3. Add the data source to the context. - This is the data source that will be
+        used to run the dq process, in our case Spark.
+        4. Create the dataframe asset and batch definition. - The asset represents the
+        data where the expectations are applied and the batch definition is the
+        way how the data should be split, in the case of dataframes it is always
+        the whole dataframe.
+        5. Create the expectation suite. - This is the group of expectations that will
+        be applied to the data.
+        6. Create the checkpoint and run it. - The checkpoint is the object that will
+        run the expectations on the data and return the results.
+        7. Transform the results and write them to the result sink. - The results are
+        transformed to a more readable format and then written to the result sink.
+        8. Log the results and raise an exception if needed. - The results are logged
+        and if there are any failed expectations the process will raise an exception
+        based on the dq_spec.
+        9. Tag the source data if needed. - If the dq_spec has the tag_source_data
+        argument set to True, the source data will be tagged with the dq results.
 
         Args:
             dq_spec: data quality specification.
@@ -77,72 +313,60 @@ class DQFactory(object):
         Returns:
             The DataFrame containing the results of the DQ process.
         """
-        # import custom expectations for them to be available to be used.
-        for expectation in DQDefaults.CUSTOM_EXPECTATION_LIST.value:
-            importlib.__import__(
-                "lakehouse_engine.dq_processors.custom_expectations." + expectation
+        # Creating the context
+        if dq_spec.dq_type == "validator" or dq_spec.dq_type == "prisma":
+
+            for expectation in DQDefaults.CUSTOM_EXPECTATION_LIST.value:
+                importlib.__import__(
+                    "lakehouse_engine.dq_processors.custom_expectations." + expectation
+                )
+
+            context = gx.get_context(
+                cls._get_data_context_config(dq_spec), mode="ephemeral"
             )
 
-        context = get_context(project_config=cls._get_data_context_config(dq_spec))
-        context.add_datasource(**cls._get_data_source_defaults(dq_spec))
-
-        expectation_suite_name = (
-            dq_spec.expectation_suite_name
-            if dq_spec.expectation_suite_name
-            else f"{dq_spec.spec_id}-{dq_spec.input_id}-{dq_spec.dq_type}"
-        )
-        context.add_or_update_expectation_suite(
-            expectation_suite_name=expectation_suite_name
-        )
-
-        batch_request = cls._get_batch_request(dq_spec, data)
-
-        if (
-            dq_spec.dq_type == DQType.VALIDATOR.value
-            or dq_spec.dq_type == DQType.PRISMA.value
-        ):
-            Validator.get_dq_validator(
-                context,
-                batch_request,
-                expectation_suite_name,
-                dq_spec.dq_functions,
-                dq_spec.critical_functions,
+            # Adding data source to context
+            dataframe_data_source = context.data_sources.add_spark(
+                name=f"{dq_spec.spec_id}-{dq_spec.input_id}-datasource",
+                persist=False,
+            )
+            dataframe_asset = dataframe_data_source.add_dataframe_asset(
+                name=f"{dq_spec.spec_id}-{dq_spec.input_id}-asset"
+            )
+            dataframe_bd = dataframe_asset.add_batch_definition_whole_dataframe(
+                name=f"{dq_spec.spec_id}-{dq_spec.input_id}-batch"
             )
 
-            source_pk = cls._get_unexpected_rows_pk(dq_spec)
-            results, results_df = cls._configure_and_run_checkpoint(
-                dq_spec, context, batch_request, expectation_suite_name, source_pk
+            checkpoint_run_time = datetime.today().strftime("%Y%m%d-%H%M%S%f")
+
+            suite = cls._add_suite(context, dq_spec, checkpoint_run_time)
+
+            result, source_pk = cls._configure_checkpoint(
+                context, dataframe_bd, suite, dq_spec, data, checkpoint_run_time
             )
 
+            expectation_result_key = list(result.run_results.keys())[0]
+
+            result_dict = result.run_results[expectation_result_key].to_json_dict()
+
+            result_dict = cls._check_expectation_result(result_dict)
+
+            data = cls._transform_checkpoint_results(
+                data, source_pk, result_dict, dq_spec
+            )
+
+            # Processed keys are only added for the PRISMA dq type
+            # because they are being used to calculate the good
+            # records that were processed in a run.
             if dq_spec.dq_type == DQType.PRISMA.value:
-                results_df = results_df.withColumn("source_primary_key", lit(source_pk))
 
-                processed_keys_df = data.select(
-                    concat_ws(
-                        ", ", *[coalesce(col(c), lit("null")) for c in source_pk]
-                    ).alias("combined_pk")
-                )
-                comb_pk_expr = (
-                    sort_array(collect_list("combined_pk"))
-                    if dq_spec.sort_processed_keys
-                    else collect_list("combined_pk")
-                )
-                processed_keys_df = processed_keys_df.agg(
-                    concat_ws("||", comb_pk_expr).alias("processed_keys")
+                keys = data.select(*source_pk)
+                keys = keys.withColumn(
+                    "run_name", lit(result_dict["meta"]["run_id"]["run_name"])
                 )
 
-                results_df = results_df.join(processed_keys_df, lit(1) == lit(1))
+                cls._write_to_location(dq_spec, keys, processed_keys=True)
 
-            cls._write_to_result_sink(dq_spec, results_df)
-
-            cls._log_or_fail(results, dq_spec)
-
-            if (
-                dq_spec.tag_source_data
-                and dq_spec.result_sink_explode
-                and dq_spec.fail_on_error is not True
-            ):
-                data = Validator.tag_source_with_dq(source_pk, data, results_df)
         else:
             raise TypeError(
                 f"Type of Data Quality '{dq_spec.dq_type}' is not supported."
@@ -151,75 +375,10 @@ class DQFactory(object):
         return data
 
     @classmethod
-    def build_data_docs(
-        cls,
-        store_backend: str = DQDefaults.STORE_BACKEND.value,
-        local_fs_root_dir: str = None,
-        data_docs_local_fs: str = None,
-        data_docs_prefix: str = DQDefaults.DATA_DOCS_PREFIX.value,
-        bucket: str = None,
-        data_docs_bucket: str = None,
-        expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value,
-        validations_store_prefix: str = DQDefaults.VALIDATIONS_STORE_PREFIX.value,
-        checkpoint_store_prefix: str = DQDefaults.CHECKPOINT_STORE_PREFIX.value,
-    ) -> None:
-        """Build Data Docs for the project.
-
-        This function does a full build of data docs based on all the great expectations
-        checkpoints in the specified location, getting all history of run/validations
-        executed and results.
-
-        Args:
-            store_backend: which store_backend to use (e.g. s3 or file_system).
-            local_fs_root_dir: path of the root directory. Note: only applicable
-                for store_backend file_system
-            data_docs_local_fs: path of the root directory. Note: only applicable
-                for store_backend file_system.
-            data_docs_prefix: prefix where to store data_docs' data.
-            bucket: the bucket name to consider for the store_backend
-                (store DQ artefacts). Note: only applicable for store_backend s3.
-            data_docs_bucket: the bucket name for data docs only. When defined,
-                it will supersede bucket parameter.
-                Note: only applicable for store_backend s3.
-            expectations_store_prefix: prefix where to store expectations' data.
-                Note: only applicable for store_backend s3.
-            validations_store_prefix: prefix where to store validations' data.
-                Note: only applicable for store_backend s3.
-            checkpoint_store_prefix: prefix where to store checkpoints' data.
-                Note: only applicable for store_backend s3.
-        """
-        if store_backend == DQDefaults.STORE_BACKEND.value:
-            dq_spec = DQSpec(
-                spec_id="dq_validator",
-                input_id="dq",
-                dq_type=DQType.VALIDATOR.value,
-                store_backend=DQDefaults.STORE_BACKEND.value,
-                data_docs_prefix=data_docs_prefix,
-                bucket=bucket,
-                data_docs_bucket=data_docs_bucket,
-                expectations_store_prefix=expectations_store_prefix,
-                validations_store_prefix=validations_store_prefix,
-                checkpoint_store_prefix=checkpoint_store_prefix,
-            )
-        elif store_backend == DQDefaults.FILE_SYSTEM_STORE.value:
-            dq_spec = DQSpec(
-                spec_id="dq_validator",
-                input_id="dq",
-                dq_type=DQType.VALIDATOR.value,
-                store_backend=DQDefaults.FILE_SYSTEM_STORE.value,
-                local_fs_root_dir=local_fs_root_dir,
-                data_docs_local_fs=data_docs_local_fs,
-                data_docs_prefix=data_docs_prefix,
-            )
-        context = get_context(project_config=cls._get_data_context_config(dq_spec))
-        cls._LOGGER.info("The data docs were rebuilt")
-        context.build_data_docs()
-
-    @classmethod
-    def _check_critical_functions_tags(cls, failed_expectations: List[Any]) -> list:
+    def _check_critical_functions_tags(cls, failed_expectations: dict) -> list:
         critical_failure = []
 
-        for expectation in failed_expectations:
+        for expectation in failed_expectations.values():
             meta = expectation["meta"]
             if meta and (
                 ("notes" in meta.keys() and "Critical function" in meta["notes"])
@@ -228,66 +387,9 @@ class DQFactory(object):
                     and "Critical function" in meta["notes"]["content"]
                 )
             ):
-                critical_failure.append(expectation["expectation_type"])
+                critical_failure.append(expectation["type"])
 
         return critical_failure
-
-    @classmethod
-    def _configure_and_run_checkpoint(
-        cls,
-        dq_spec: DQSpec,
-        context: EphemeralDataContext,
-        batch_request: RuntimeBatchRequest,
-        expectation_suite_name: str,
-        source_pk: List[str],
-    ) -> Tuple[CheckpointResult, DataFrame]:
-        """Configure, run and return checkpoint results.
-
-        A checkpoint is what enables us to run the validations of the expectations'
-        suite on the batches of data.
-
-        Args:
-            dq_spec: data quality specification.
-            context: the EphemeralDataContext containing the configurations for the data
-                source and store backend.
-            batch_request: run time batch request to be able to query underlying data.
-            expectation_suite_name: name of the expectation suite.
-            source_pk: the primary key of the source data.
-
-        Returns:
-            The checkpoint results in two types: CheckpointResult and Dataframe.
-        """
-        checkpoint_name = f"{dq_spec.spec_id}-{dq_spec.input_id}-checkpoint"
-        context.add_or_update_checkpoint(
-            name=checkpoint_name,
-            class_name=DQDefaults.DATA_CHECKPOINTS_CLASS_NAME.value,
-            config_version=DQDefaults.DATA_CHECKPOINTS_CONFIG_VERSION.value,
-            run_name_template=f"%Y%m%d-%H%M%S%f-{checkpoint_name}",
-        )
-
-        result_format: Dict[str, Any] = {
-            "result_format": dq_spec.gx_result_format,
-        }
-        if source_pk:
-            result_format = {
-                **result_format,
-                "unexpected_index_column_names": source_pk,
-            }
-
-        results = context.run_checkpoint(
-            checkpoint_name=checkpoint_name,
-            validations=[
-                {
-                    "batch_request": batch_request,
-                    "expectation_suite_name": expectation_suite_name,
-                }
-            ],
-            result_format=result_format,
-        )
-
-        return results, cls._transform_checkpoint_results(
-            results.to_json_dict(), dq_spec
-        )
 
     @classmethod
     def _explode_results(
@@ -301,40 +403,84 @@ class DQFactory(object):
             df: dataframe with dq results to be exploded.
             dq_spec: data quality specification.
         """
-        df = df.withColumn(
-            "validation_results", explode("run_results.validation_result.results")
-        ).withColumn("source", lit(dq_spec.source))
+        df = df.withColumn("validation_results", explode("results")).withColumn(
+            "source", lit(dq_spec.source)
+        )
+
+        if (
+            not df.schema["validation_results"]
+            .dataType.fieldNames()  # type: ignore
+            .__contains__("result")
+        ):
+            df = df.withColumn(
+                "validation_results",
+                col("validation_results").withField(
+                    "result", struct(lit(None).alias("observed_value"))
+                ),
+            )
+
+        kwargs_columns = [
+            f"validation_results.expectation_config.kwargs.{col_name}"
+            for col_name in df.select(
+                "validation_results.expectation_config.kwargs.*"
+            ).columns
+        ]
+
+        cols_to_cast = ["max_value", "min_value", "sum_total"]
+        for col_name in kwargs_columns:
+            if col_name.split(".")[-1] in cols_to_cast:
+                df = df.withColumn(
+                    "validation_results",
+                    col("validation_results").withField(
+                        "expectation_config",
+                        col("validation_results.expectation_config").withField(
+                            "kwargs",
+                            col(
+                                "validation_results.expectation_config.kwargs"
+                            ).withField(
+                                col_name.split(".")[-1],
+                                col(col_name).cast(FloatType()),
+                            ),
+                        ),
+                    ),
+                )
 
         new_columns = [
             "validation_results.expectation_config.kwargs.*",
-            "run_results.validation_result.statistics.*",
-            "validation_results.expectation_config.expectation_type",
+            "validation_results.expectation_config.type as expectation_type",
             "validation_results.success as expectation_success",
             "validation_results.exception_info",
+            "statistics.*",
         ] + dq_spec.result_sink_extra_columns
 
         df_exploded = df.selectExpr(*df.columns, *new_columns).drop(
             *[c.replace(".*", "").split(" as")[0] for c in new_columns]
         )
 
+        df_exploded = df_exploded.drop(
+            "statistics", "id", "results", "meta", "suite_name"
+        )
+
+        if (
+            "meta"
+            in df_exploded.select("validation_results.expectation_config.*").columns
+        ):
+            df_exploded = df_exploded.withColumn(
+                "meta", col("validation_results.expectation_config.meta")
+            )
+
         schema = df_exploded.schema.simpleString()
-        if "unexpected_index_list" in schema:
-            df_exploded = (
-                df_exploded.withColumn(
-                    "unexpected_index_list",
-                    array(struct(lit(True).alias("run_success"))),
-                )
-                if df.select(
-                    col("validation_results.result.unexpected_index_list")
-                ).dtypes[0][1]
-                == "array<string>"
-                else df_exploded.withColumn(
-                    "unexpected_index_list",
-                    transform(
-                        col("validation_results.result.unexpected_index_list"),
-                        lambda x: x.withField("run_success", lit(False)),
-                    ),
-                )
+
+        if (
+            dq_spec.gx_result_format.upper() == DQResultFormat.COMPLETE.value
+            and "unexpected_index_list" in schema
+        ):
+            df_exploded = df_exploded.withColumn(
+                "unexpected_index_list",
+                transform(
+                    col("validation_results.result.unexpected_index_list"),
+                    lambda y: y.withField("run_success", lit(False)),
+                ),
             )
 
         if "observed_value" in schema:
@@ -346,41 +492,10 @@ class DQFactory(object):
             df_exploded.withColumn("run_time_year", year(to_timestamp("run_time")))
             .withColumn("run_time_month", month(to_timestamp("run_time")))
             .withColumn("run_time_day", dayofmonth(to_timestamp("run_time")))
-            .withColumn("checkpoint_config", to_json(col("checkpoint_config")))
-            .withColumn("run_results", to_json(col("run_results")))
             .withColumn(
                 "kwargs", to_json(col("validation_results.expectation_config.kwargs"))
             )
             .withColumn("validation_results", to_json(col("validation_results")))
-        )
-
-    @classmethod
-    def _get_batch_request(
-        cls, dq_spec: DQSpec, data: DataFrame
-    ) -> RuntimeBatchRequest:
-        """Get run time batch request to be able to query underlying data.
-
-        Args:
-            dq_spec: data quality process specification.
-            data: input dataframe to run the dq process on.
-
-        Returns:
-            The RuntimeBatchRequest object configuration.
-        """
-        return RuntimeBatchRequest(
-            datasource_name=f"{dq_spec.spec_id}-{dq_spec.input_id}-datasource",
-            data_connector_name=f"{dq_spec.spec_id}-{dq_spec.input_id}-data_connector",
-            data_asset_name=(
-                dq_spec.data_asset_name
-                if dq_spec.data_asset_name
-                else f"{dq_spec.spec_id}-{dq_spec.input_id}"
-            ),
-            batch_identifiers={
-                "spec_id": dq_spec.spec_id,
-                "input_id": dq_spec.input_id,
-                "timestamp": cls._TIMESTAMP,
-            },
-            runtime_parameters={"batch_data": data},
         )
 
     @classmethod
@@ -398,14 +513,10 @@ class DQFactory(object):
             The DataContextConfig object configuration.
         """
         store_backend: Union[FilesystemStoreBackendDefaults, S3StoreBackendDefaults]
-        data_docs_site = None
 
         if dq_spec.store_backend == DQDefaults.FILE_SYSTEM_STORE.value:
             store_backend = FilesystemStoreBackendDefaults(
                 root_directory=dq_spec.local_fs_root_dir
-            )
-            data_docs_site = cls._get_data_docs_sites(
-                "local_site", store_backend.data_docs_sites, dq_spec
             )
         elif dq_spec.store_backend == DQDefaults.FILE_SYSTEM_S3_STORE.value:
             store_backend = S3StoreBackendDefaults(
@@ -413,51 +524,16 @@ class DQFactory(object):
                 validations_store_prefix=dq_spec.validations_store_prefix,
                 checkpoint_store_prefix=dq_spec.checkpoint_store_prefix,
                 expectations_store_prefix=dq_spec.expectations_store_prefix,
-                data_docs_prefix=dq_spec.data_docs_prefix,
-                data_docs_bucket_name=(
-                    dq_spec.data_docs_bucket
-                    if dq_spec.data_docs_bucket
-                    else dq_spec.bucket
-                ),
             )
-            data_docs_site = cls._get_data_docs_sites(
-                "s3_site", store_backend.data_docs_sites, dq_spec
-            )
+
+        # @todo we should find a way to create a datacontextconfig without
+        # passing a local_fs_root_dir so that we wont have problems with
+        # changing versions of the lakehouse-engine due to the marshmallow
+        # library identifiyng new fields on the checkpoints
 
         return DataContextConfig(
             store_backend_defaults=store_backend,
-            data_docs_sites=data_docs_site,
-            anonymous_usage_statistics=AnonymizedUsageStatisticsConfig(enabled=False),
         )
-
-    @classmethod
-    def _get_data_docs_sites(
-        cls, site_name: str, data_docs_site: dict, dq_spec: DQSpec
-    ) -> dict:
-        """Get the custom configuration of the data_docs_sites.
-
-        Args:
-            site_name: the name to give to the site.
-            data_docs_site: the default configuration for the data_docs_site.
-            dq_spec: data quality specification.
-
-        Returns:
-            Modified data_docs_site.
-        """
-        data_docs_site[site_name]["show_how_to_buttons"] = False
-
-        if site_name == "local_site":
-            data_docs_site[site_name]["store_backend"][
-                "base_directory"
-            ] = dq_spec.data_docs_prefix
-
-            if dq_spec.data_docs_local_fs:
-                # Enable to write data_docs in a separated path
-                data_docs_site[site_name]["store_backend"][
-                    "root_directory"
-                ] = dq_spec.data_docs_local_fs
-
-        return data_docs_site
 
     @classmethod
     def _get_data_source_defaults(cls, dq_spec: DQSpec) -> dict:
@@ -493,52 +569,63 @@ class DQFactory(object):
 
     @classmethod
     def _get_failed_expectations(
-        cls, results: CheckpointResult, dq_spec: DQSpec
-    ) -> List[Any]:
+        cls,
+        results: dict,
+        dq_spec: DQSpec,
+        failed_expectations: dict,
+        evaluated_expectations: dict,
+        is_final_chunk: bool,
+    ) -> Tuple[dict, dict]:
         """Get the failed expectations of a Checkpoint result.
 
         Args:
             results: the results of the DQ process.
             dq_spec: data quality specification.
+            failed_expectations: dict of failed expectations.
+            evaluated_expectations: dict of evaluated expectations.
+            is_final_chunk: boolean indicating if this is the final chunk.
 
-        Returns: a list of failed expectations.
+        Returns: a tuple with a dict of failed expectations
+                and a dict of evaluated expectations.
         """
-        failed_expectations = []
-        for validation_result in results.list_validation_results():
-            expectations_results = validation_result["results"]
-            for result in expectations_results:
-                if not result["success"]:
-                    failed_expectations.append(result["expectation_config"])
-                    if result["exception_info"]["raised_exception"]:
-                        cls._LOGGER.error(
-                            f"""The expectation {str(result["expectation_config"])}
-                            raised the following exception:
-                            {result["exception_info"]["exception_message"]}"""
-                        )
-            cls._LOGGER.error(
-                f"{len(failed_expectations)} out of {len(expectations_results)} "
-                f"Data Quality Expectation(s) have failed! Failed Expectations: "
-                f"{failed_expectations}"
+        expectations_results = results["results"]
+        for result in expectations_results:
+            evaluated_expectations[result["expectation_config"]["id"]] = result[
+                "expectation_config"
+            ]
+            if not result["success"]:
+                failed_expectations[result["expectation_config"]["id"]] = result[
+                    "expectation_config"
+                ]
+                if result["exception_info"]["raised_exception"]:
+                    cls._LOGGER.error(
+                        f"""The expectation {str(result["expectation_config"])}
+                        raised the following exception:
+                        {result["exception_info"]["exception_message"]}"""
+                    )
+        cls._LOGGER.error(
+            f"{len(failed_expectations)} out of {len(evaluated_expectations)} "
+            f"Data Quality Expectation(s) have failed! Failed Expectations: "
+            f"{failed_expectations}"
+        )
+
+        percentage_failure = 1 - (results["statistics"]["success_percent"] / 100)
+
+        if (
+            dq_spec.max_percentage_failure is not None
+            and dq_spec.max_percentage_failure < percentage_failure
+            and is_final_chunk
+        ):
+            raise DQValidationsFailedException(
+                f"Max error threshold is being surpassed! "
+                f"Expected: {dq_spec.max_percentage_failure} "
+                f"Got: {percentage_failure}"
             )
 
-            percentage_failure = 1 - (
-                validation_result["statistics"]["success_percent"] / 100
-            )
-
-            if (
-                dq_spec.max_percentage_failure is not None
-                and dq_spec.max_percentage_failure < percentage_failure
-            ):
-                raise DQValidationsFailedException(
-                    f"Max error threshold is being surpassed! "
-                    f"Expected: {dq_spec.max_percentage_failure} "
-                    f"Got: {percentage_failure}"
-                )
-
-        return failed_expectations
+        return failed_expectations, evaluated_expectations
 
     @classmethod
-    def _get_unexpected_rows_pk(cls, dq_spec: DQSpec) -> Optional[List[str]]:
+    def _get_unexpected_rows_pk(cls, dq_spec: DQSpec) -> Optional[list]:
         """Get primary key for using on rows failing DQ validations.
 
         Args:
@@ -561,108 +648,192 @@ class DQFactory(object):
             return None
 
     @classmethod
-    def _log_or_fail(cls, results: CheckpointResult, dq_spec: DQSpec) -> None:
+    def _log_or_fail(
+        cls,
+        results: dict,
+        dq_spec: DQSpec,
+        failed_expectations: dict,
+        evaluated_expectations: dict,
+        is_final_chunk: bool,
+    ) -> Tuple[dict, dict]:
         """Log the execution of the Data Quality process.
 
         Args:
             results: the results of the DQ process.
             dq_spec: data quality specification.
+            failed_expectations: list of failed expectations.
+            evaluated_expectations: list of evaluated expectations.
+            is_final_chunk: boolean indicating if this is the final chunk.
+
+        Returns: a tuple with a dict of failed expectations
+                and a dict of evaluated expectations.
         """
         if results["success"]:
             cls._LOGGER.info(
                 "The data passed all the expectations defined. Everything looks good!"
             )
         else:
-            failed_expectations = cls._get_failed_expectations(results, dq_spec)
-            if dq_spec.critical_functions:
-                critical_failure = cls._check_critical_functions_tags(
-                    failed_expectations
-                )
+            failed_expectations, evaluated_expectations = cls._get_failed_expectations(
+                results,
+                dq_spec,
+                failed_expectations,
+                evaluated_expectations,
+                is_final_chunk,
+            )
 
-                if critical_failure:
-                    raise DQValidationsFailedException(
-                        f"Data Quality Validations Failed, the following critical "
-                        f"expectations failed: {critical_failure}."
-                    )
-            elif dq_spec.fail_on_error:
-                raise DQValidationsFailedException("Data Quality Validations Failed!")
+        if dq_spec.critical_functions and is_final_chunk:
+            critical_failure = cls._check_critical_functions_tags(failed_expectations)
+
+            if critical_failure:
+                raise DQValidationsFailedException(
+                    f"Data Quality Validations Failed, the following critical "
+                    f"expectations failed: {critical_failure}."
+                )
+        if dq_spec.fail_on_error and is_final_chunk and failed_expectations:
+            raise DQValidationsFailedException("Data Quality Validations Failed!")
+
+        return failed_expectations, evaluated_expectations
 
     @classmethod
     def _transform_checkpoint_results(
-        cls, checkpoint_results: dict, dq_spec: DQSpec
+        cls,
+        data: DataFrame,
+        source_pk: list,
+        checkpoint_results: dict,
+        dq_spec: DQSpec,
     ) -> DataFrame:
         """Transforms the checkpoint results and creates new entries.
 
         All the items of the dictionary are cast to a json like format.
-        The validation_result_identifier is extracted from the run_results column
-        into a separated column. All columns are cast to json like format.
+        All columns are cast to json like format.
         After that the dictionary is converted into a dataframe.
 
         Args:
+            data: input dataframe to run the dq process on.
+            source_pk: list of columns that are part of the primary key.
             checkpoint_results: dict with results of the checkpoint run.
             dq_spec: data quality specification.
+            checkpoint_run_time: A string with the time in miliseconds.
 
         Returns:
             Transformed results dataframe.
         """
-        results_json_dict = loads(dumps(checkpoint_results))
+        results_dict = loads(dumps(checkpoint_results))
+        results_dict_list = []
 
-        results_dict = {}
-        for key, value in results_json_dict.items():
-            if key == "run_results":
-                checkpoint_result_identifier = list(value.keys())[0]
-                # check if the grabbed identifier is correct
-                if (
-                    str(checkpoint_result_identifier)
-                    .lower()
-                    .startswith(DQDefaults.VALIDATION_COLUMN_IDENTIFIER.value)
-                ):
-                    results_dict["validation_result_identifier"] = (
-                        checkpoint_result_identifier
-                    )
-                    results_dict["run_results"] = value[checkpoint_result_identifier]
-                else:
-                    raise DQCheckpointsResultsException(
-                        "The checkpoint result identifier format is not "
-                        "in accordance to what is expected"
-                    )
+        # Here we are splitting the results into chunks per expectation
+        # and then we are splitting the unexpected_index_list into
+        # chunks of size dq_spec.result_sink_chunk_size.
+        for ele in results_dict["results"]:
+            base_result = deepcopy(results_dict)
+
+            if "unexpected_index_list" in ele["result"].keys():
+                for key in ExecEnv.ENGINE_CONFIG.dq_result_sink_columns_to_delete:
+                    del ele["result"][key]
+
+                unexpected_index_list = ele["result"]["unexpected_index_list"]
+                unexpected_index_list_chunks = cls.split_into_chunks(
+                    unexpected_index_list, dq_spec.result_sink_chunk_size
+                )
+
+                del ele["result"]["unexpected_index_list"]
+
+                for chunk in unexpected_index_list_chunks:
+                    ele["result"]["unexpected_index_list"] = chunk
+                    base_result["results"] = [ele]
+                    results_dict_list.append(deepcopy(base_result))
             else:
-                results_dict[key] = value
+                base_result["results"] = [ele]
+                results_dict_list.append(base_result)
 
-        df = ExecEnv.SESSION.createDataFrame(
-            [json.dumps(results_dict)],
-            schema=StringType(),
-        )
-        schema = schema_of_json(df.select("value").head()[0])
-        df = df.withColumn("value", from_json("value", schema)).select("value.*")
+        index = 0
 
-        cols_to_expand = ["run_id"]
-        df = (
-            df.select(
-                [
-                    col(c) if c not in cols_to_expand else col(f"{c}.*")
-                    for c in df.columns
-                ]
+        failed_expectations: dict = {}
+        evaluated_expectations: dict = {}
+
+        # The processed chunk is removed from the list of results
+        # so the memory is freed as soon as possible.
+        while index < len(results_dict_list):
+            is_final_chunk = len(results_dict_list) == 1
+            data, failed_expectations, evaluated_expectations = cls._process_chunk(
+                dq_spec,
+                source_pk,
+                results_dict_list[index],
+                data,
+                failed_expectations,
+                evaluated_expectations,
+                is_final_chunk,
             )
-            .drop(*cols_to_expand)
-            .withColumn("spec_id", lit(dq_spec.spec_id))
-            .withColumn("input_id", lit(dq_spec.input_id))
-        )
+            del results_dict_list[index]
 
-        return (
-            cls._explode_results(df, dq_spec)
-            if dq_spec.result_sink_explode
-            else df.withColumn(
-                "checkpoint_config", to_json(col("checkpoint_config"))
-            ).withColumn("run_results", to_json(col("run_results")))
-        )
+        return data
 
     @classmethod
-    def _write_to_result_sink(
+    def _process_chunk(
+        cls,
+        dq_spec: DQSpec,
+        source_pk: list[str],
+        ele: dict,
+        data: DataFrame,
+        failed_expectations: dict,
+        evaluated_expectations: dict,
+        is_final_chunk: bool,
+    ) -> Tuple[DataFrame, dict, dict]:
+        """Process a chunk of the results.
+
+        Args:
+            dq_spec: data quality specification.
+            source_pk: list of columns that are part of the primary key.
+            ele: dictionary with the results of the dq process.
+            data: input dataframe to run the dq process on.
+            failed_expectations: list of failed expectations.
+            evaluated_expectations: list of evaluated expectations.
+            is_final_chunk: boolean indicating if this is the final chunk.
+
+        Returns:
+            A tuple with the processed data, failed expectations and evaluated
+            expectations.
+        """
+        df = ExecEnv.SESSION.createDataFrame([json.dumps(ele)], schema=StringType())
+        schema = schema_of_json(lit(json.dumps(ele)))
+        df = (
+            df.withColumn("value", from_json("value", schema))
+            .select("value.*")
+            .withColumn("spec_id", lit(dq_spec.spec_id))
+            .withColumn("input_id", lit(dq_spec.input_id))
+            .withColumn("run_name", col("meta.run_id.run_name"))
+            .withColumn("run_time", col("meta.run_id.run_time"))
+        )
+        exploded_df = (
+            cls._explode_results(df, dq_spec)
+            if dq_spec.result_sink_explode
+            else df.withColumn("validation_results", to_json(col("results"))).drop(
+                "statistics", "meta", "suite_name", "results", "id"
+            )
+        )
+
+        exploded_df = exploded_df.withColumn("source_primary_key", lit(source_pk))
+
+        cls._write_to_location(dq_spec, exploded_df)
+
+        failed_expectations, evaluated_expectations = cls._log_or_fail(
+            ele, dq_spec, failed_expectations, evaluated_expectations, is_final_chunk
+        )
+        if (
+            dq_spec.tag_source_data
+            and dq_spec.result_sink_explode
+            and dq_spec.fail_on_error is not True
+        ):
+            data = Validator.tag_source_with_dq(source_pk, data, exploded_df)
+            return data, failed_expectations, evaluated_expectations
+        return data, failed_expectations, evaluated_expectations
+
+    @classmethod
+    def _write_to_location(
         cls,
         dq_spec: DQSpec,
         df: DataFrame,
-        data: OrderedDict = None,
+        processed_keys: bool = False,
     ) -> None:
         """Write dq results dataframe to a table or location.
 
@@ -672,21 +843,31 @@ class DQFactory(object):
         is more prepared for analysis, with some columns exploded, flatten and
         transformed. It can also be set result_sink_extra_columns with other
         columns desired to have in the output table or location.
+        - processed keys when running the dq process with the dq_type set as
+        'prisma'.
 
         Args:
             dq_spec: data quality specification.
             df: dataframe with dq results to write.
-            data: list of all dfs generated on previous steps before writer.
+            processed_keys: boolean indicating if the dataframe contains
+                the processed keys.
         """
-        if dq_spec.result_sink_db_table or dq_spec.result_sink_location:
+        if processed_keys:
+            table = None
+            location = dq_spec.processed_keys_location
+            options = {"mergeSchema": "true"}
+        else:
+            table = dq_spec.result_sink_db_table
+            location = dq_spec.result_sink_location
             options = {"mergeSchema": "true"} if dq_spec.result_sink_explode else {}
 
+        if table or location:
             WriterFactory.get_writer(
                 spec=OutputSpec(
                     spec_id="dq_result_sink",
                     input_id="dq_result",
-                    db_table=dq_spec.result_sink_db_table,
-                    location=dq_spec.result_sink_location,
+                    db_table=table,
+                    location=location,
                     partitions=(
                         dq_spec.result_sink_partitions
                         if dq_spec.result_sink_partitions
@@ -701,5 +882,23 @@ class DQFactory(object):
                     ),
                 ),
                 df=df,
-                data=data,
+                data=None,
             ).write()
+
+    @staticmethod
+    def split_into_chunks(lst: list, chunk_size: int) -> list:
+        """Split a list into chunks of a specified size.
+
+        Args:
+            lst: The list to be split.
+            chunk_size: Number of records in each chunk.
+
+        Returns:
+            A list of lists, where each inner list is a chunk of the original list.
+        """
+        if chunk_size <= 0:
+            raise ValueError("Chunk size must be a positive integer.")
+        chunk_list = []
+        for i in range(0, len(lst), chunk_size):
+            chunk_list.append(lst[i : i + chunk_size])
+        return chunk_list

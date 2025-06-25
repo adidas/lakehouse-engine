@@ -1,10 +1,7 @@
 # Minimal Example
 
 This scenario illustrates the minimal configuration that you can have to use `dq_specs`, in which
-it uses required parameters: `spec_id, input_id, dq_type, bucket, dq_functions` and the optional
-parameter `data_docs_bucket`. This parameter allows you to store the GX documentation in another
-bucket that can be used to make your data docs available, in DQ Web App (GX UI), without giving users access to your bucket.
-The`data_docs_bucket` property supersedes the `bucket` property only for data docs storage.
+it uses required parameters: `spec_id, input_id, dq_type, bucket, dq_functions`.
 
 Regarding the dq_functions, it uses 3 functions (retrieved from the expectations supported by GX), which check:
 
@@ -36,8 +33,6 @@ acon = {
             "input_id": "dummy_deliveries_source",
             "dq_type": "validator",
             "bucket": "my_data_product_bucket",
-            "data_docs_bucket": "my_dq_data_docs_bucket",
-            "data_docs_prefix": "dq/my_data_product/data_docs/site/",
             "tbl_to_derive_pk": "my_database.dummy_deliveries",
             "dq_functions": [
                 {"function": "expect_column_to_exist", "args": {"column": "salesorder"}},

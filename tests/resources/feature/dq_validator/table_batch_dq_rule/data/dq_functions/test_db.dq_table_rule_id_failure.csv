@@ -1,7 +1,7 @@
 dq_rule_id|dq_tech_function|execution_point|schema|table|column|arguments
 rule_1|expect_column_min_to_be_between|in_motion|test_db|dummy_sales|amount|{"column": "amount", "min_value": 0}
 rule_2|expect_column_min_to_be_between|in_motion|test_db|dummy_sales|amount|{"column": "amount", "min_value": 0}
-rule_3|expect_column_to_exist|at_rest|test_db|dummy_sales|amount|{"column": "article", "min_value": 0}
+rule_3|expect_column_to_exist|at_rest|test_db|dummy_sales|amount|{"column": "article"}
 rule_3|expect_column_min_to_be_between|in_motion|test_db|dummy_sales|amount|{"column": "article", "min_value": 3}
 rule_4|expect_column_pair_a_to_be_smaller_or_equal_than_b|at_rest|test_db|dummy_sales|amount|{"column_A": "salesorder", "column_B": "amount"}
 rule_4|expect_wrong_expectation|at_rest|test_db|dummy_invoice|amount|{"column_A": "salesorder", "column_B": "amount"}

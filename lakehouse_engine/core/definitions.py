@@ -55,6 +55,7 @@ class EngineConfig(object):
     engine_dev_usage_path: Optional[str] = None
     collect_engine_usage: str = CollectEngineUsage.ENABLED.value
     dq_functions_column_list: Optional[list] = None
+    dq_result_sink_columns_to_delete: Optional[list] = None
     sharepoint_authority: Optional[str] = None
     sharepoint_company_domain: Optional[str] = None
     sharepoint_api_domain: Optional[str] = None
@@ -191,11 +192,13 @@ class NotificationRuntimeParameters(Enum):
 
     DATABRICKS_JOB_NAME = "databricks_job_name"
     DATABRICKS_WORKSPACE_ID = "databricks_workspace_id"
+    JOB_EXCEPTION = "exception"
 
 
 NOTIFICATION_RUNTIME_PARAMETERS = [
     NotificationRuntimeParameters.DATABRICKS_JOB_NAME.value,
     NotificationRuntimeParameters.DATABRICKS_WORKSPACE_ID.value,
+    NotificationRuntimeParameters.JOB_EXCEPTION.value,
 ]
 
 
@@ -236,7 +239,6 @@ class DQDefaults(Enum):
     STORE_BACKEND = "s3"
     EXPECTATIONS_STORE_PREFIX = "dq/expectations/"
     VALIDATIONS_STORE_PREFIX = "dq/validations/"
-    DATA_DOCS_PREFIX = "dq/data_docs/site/"
     CHECKPOINT_STORE_PREFIX = "dq/checkpoints/"
     VALIDATION_COLUMN_IDENTIFIER = "validationresultidentifier"
     CUSTOM_EXPECTATION_LIST = [
@@ -295,7 +297,8 @@ class InputSpec(object):
     This is very aligned with the way the execution environment connects to the sources
     (e.g., spark sources).
 
-    - spec_id: spec_id of the input specification read_type: ReadType type of read
+    - spec_id: spec_id of the input specification
+    - read_type: ReadType type of read
         operation.
     - data_format: format of the input.
     - sftp_files_format: format of the files (csv, fwf, json, xml...) in a sftp
@@ -390,6 +393,12 @@ class DQType(Enum):
     PRISMA = "prisma"
 
 
+class DQResultFormat(Enum):
+    """Available data quality result formats."""
+
+    COMPLETE = "COMPLETE"
+
+
 class DQExecutionPoint(Enum):
     """Available data quality execution points."""
 
@@ -442,10 +451,6 @@ class DQSpec(object):
         be provided. It is mandatory to provide one of these arguments when using
         tag_source_data as True. hen tag_source_data is False, this is not
         mandatory, but still recommended.
-    - sort_processed_keys - when using the `prisma` `dq_type`, a column `processed_keys`
-        is automatically added to give observability over the PK values that were
-        processed during a run. This parameter (`sort_processed_keys`) controls whether
-        the processed keys column value should be sorted or not. Default: False.
     - gx_result_format - great expectations result format. Default: "COMPLETE".
     - tag_source_data - when set to true, this will ensure that the DQ process ends by
         tagging the source data with an additional column with information about the
@@ -459,17 +464,12 @@ class DQSpec(object):
     - store_backend - which store_backend to use (e.g. s3 or file_system).
     - local_fs_root_dir - path of the root directory. Note: only applicable for
         store_backend file_system.
-    - data_docs_local_fs - the path for data docs only for store_backend
-        file_system.
     - bucket - the bucket name to consider for the store_backend (store DQ artefacts).
         Note: only applicable for store_backend s3.
-    - data_docs_bucket - the bucket name for data docs only. When defined, it will
-        supersede bucket parameter. Note: only applicable for store_backend s3.
     - expectations_store_prefix - prefix where to store expectations' data. Note: only
         applicable for store_backend s3.
     - validations_store_prefix - prefix where to store validations' data. Note: only
         applicable for store_backend s3.
-    - data_docs_prefix - prefix where to store data_docs' data.
     - checkpoint_store_prefix - prefix where to store checkpoints' data. Note: only
         applicable for store_backend s3.
     - data_asset_name - name of the data asset to consider when configuring the great
@@ -479,6 +479,12 @@ class DQSpec(object):
         to save the results of the DQ process.
     - result_sink_location - file system location in which to save the results of the
         DQ process.
+    - result_sink_chunk_size - number of records per chunk when writing the results of
+        the DQ process. Default: 1000000 records.
+    - processed_keys_location - file system location where the keys processed by the
+        DQ Process are saved. This is specifically used when the DQ Type is PRISMA.
+        Note that this location is always constructed during the process, so any
+        value defined in the configuration will be overwritten.
     - data_product_name - name of the data product.
     - result_sink_partitions - the list of partitions to consider.
     - result_sink_format - format of the result table (e.g. delta, parquet, kafka...).
@@ -499,6 +505,14 @@ class DQSpec(object):
         defined, fail_on_error is nullified.
     - max_percentage_failure - percentage of failure that should be allowed.
         This argument has priority over both fail_on_error and critical_functions.
+    - enable_row_condition - flag to determine if the row_conditions should be
+    enabled or not. row_conditions allow you to filter the rows that are
+    processed by the DQ functions. This is useful when you want to run the
+    DQ functions only on a subset of the data. Default: False. Note: When using PRISMA,
+    if you enable this flag, bear in mind that the number of processed keys will be
+    numerically different from the evaluated keys. This happens because the
+    row_conditions limit the number of rows that are processed by the DQ functions,
+    but the we consider processed keys as all the keys that are passed to the dq_spec.
     """
 
     spec_id: str
@@ -511,22 +525,20 @@ class DQSpec(object):
     execution_point: Optional[str] = None
     unexpected_rows_pk: Optional[List[str]] = None
     tbl_to_derive_pk: Optional[str] = None
-    sort_processed_keys: Optional[bool] = False
-    gx_result_format: Optional[str] = "COMPLETE"
+    gx_result_format: Optional[str] = DQResultFormat.COMPLETE.value
     tag_source_data: Optional[bool] = False
     store_backend: str = DQDefaults.STORE_BACKEND.value
     local_fs_root_dir: Optional[str] = None
-    data_docs_local_fs: Optional[str] = None
     bucket: Optional[str] = None
-    data_docs_bucket: Optional[str] = None
     expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value
     validations_store_prefix: str = DQDefaults.VALIDATIONS_STORE_PREFIX.value
-    data_docs_prefix: str = DQDefaults.DATA_DOCS_PREFIX.value
     checkpoint_store_prefix: str = DQDefaults.CHECKPOINT_STORE_PREFIX.value
     data_asset_name: Optional[str] = None
     expectation_suite_name: Optional[str] = None
     result_sink_db_table: Optional[str] = None
     result_sink_location: Optional[str] = None
+    result_sink_chunk_size: Optional[int] = 1000000
+    processed_keys_location: Optional[str] = None
     data_product_name: Optional[str] = None
     result_sink_partitions: Optional[List[str]] = None
     result_sink_format: str = OutputFormat.DELTAFILES.value
@@ -538,6 +550,7 @@ class DQSpec(object):
     cache_df: bool = False
     critical_functions: Optional[List[DQFunctionSpec]] = None
     max_percentage_failure: Optional[float] = None
+    enable_row_condition: bool = False
 
 
 @dataclass

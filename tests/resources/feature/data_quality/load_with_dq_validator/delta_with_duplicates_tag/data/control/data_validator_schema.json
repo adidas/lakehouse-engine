@@ -20,7 +20,7 @@
     },
     {
       "metadata": {},
-      "name": "run_results",
+      "name": "validation_results",
       "nullable": true,
       "type": "string"
     },
@@ -50,12 +50,6 @@
     },
     {
       "metadata": {},
-      "name": "validation_results",
-      "nullable": true,
-      "type": "string"
-    },
-    {
-      "metadata": {},
       "name": "source",
       "nullable": true,
       "type": "string"
@@ -80,19 +74,19 @@
       "metadata": {},
       "name": "max_value",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
       "name": "min_value",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
       "name": "sum_total",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
@@ -204,12 +198,6 @@
             },
             {
               "metadata": {},
-              "name": "amount",
-              "nullable": true,
-              "type": "string"
-            },
-            {
-              "metadata": {},
               "name": "datapakid",
               "nullable": true,
               "type": "string"
@@ -217,6 +205,12 @@
             {
               "metadata": {},
               "name": "partno",
+              "nullable": true,
+              "type": "string"
+            },
+            {
+              "metadata": {},
+              "name": "amount",
               "nullable": true,
               "type": "string"
             }

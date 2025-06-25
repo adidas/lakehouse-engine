@@ -15,21 +15,9 @@ altair==4.2.2
 annotated-types==0.7.0
     # via pydantic
 anyio==4.8.0
-    # via
-    #   httpx
-    #   jupyter-server
-argon2-cffi==23.1.0
-    # via jupyter-server
-argon2-cffi-bindings==21.2.0
-    # via argon2-cffi
-arrow==1.3.0
-    # via isoduration
+    # via httpx
 astpretty==3.0.0
     # via flake8-expression-complexity
-asttokens==3.0.0
-    # via stack-data
-async-lru==2.0.4
-    # via jupyterlab
 attrs==24.3.0
     # via
     #   aiohttp
@@ -43,22 +31,18 @@ azure-core==1.32.0
     #   microsoft-kiota-authentication-azure
 azure-identity==1.19.0
     # via msgraph-sdk
-babel==2.16.0
-    # via jupyterlab-server
+backoff==2.2.1
+    # via posthog
 backports-tarfile==1.2.0
     # via jaraco-context
 bandit==1.7.8
     # via -r requirements_cicd.txt
 bcrypt==4.2.1
     # via paramiko
-beautifulsoup4==4.12.3
-    # via nbconvert
 black==24.4.0
     # via
     #   -r requirements_cicd.txt
     #   flake8-black
-bleach[css]==6.2.0
-    # via nbconvert
 boolean-py==4.0
     # via license-expression
 boto3==1.34.39
@@ -91,7 +75,6 @@ certifi==2024.12.14
     #   requests
 cffi==1.17.1
     # via
-    #   argon2-cffi-bindings
     #   cryptography
     #   pynacl
 charset-normalizer==3.4.1
@@ -99,7 +82,6 @@ charset-normalizer==3.4.1
 click==8.1.8
     # via
     #   black
-    #   great-expectations
     #   mkdocs
     #   mkdocstrings
     #   pip-tools
@@ -107,16 +89,11 @@ cognitive-complexity==1.3.0
     # via flake8-cognitive-complexity
 colorama==0.4.6
     # via
-    #   great-expectations
     #   griffe
     #   mkdocs-material
-comm==0.2.2
-    # via
-    #   ipykernel
-    #   ipywidgets
 coverage[toml]==7.6.10
     # via pytest-cov
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   azure-identity
     #   great-expectations
@@ -127,14 +104,8 @@ cryptography==44.0.0
     #   secretstorage
 cyclonedx-python-lib==7.6.2
     # via pip-audit
-debugpy==1.8.12
-    # via ipykernel
-decorator==5.1.1
-    # via ipython
 defusedxml==0.7.1
-    # via
-    #   nbconvert
-    #   py-serializable
+    # via py-serializable
 delta-spark==3.2.0
     # via -r requirements_os.txt
 deprecated==1.2.15
@@ -143,16 +114,14 @@ deprecated==1.2.15
     #   opentelemetry-semantic-conventions
 distlib==0.3.6
     # via -r requirements_cicd.txt
+distro==1.9.0
+    # via posthog
 docutils==0.21.2
     # via readme-renderer
 entrypoints==0.4
     # via altair
 eradicate==2.3.0
     # via flake8-eradicate
-executing==2.1.0
-    # via stack-data
-fastjsonschema==2.21.1
-    # via nbformat
 filelock==3.16.1
     # via cachecontrol
 flake8==7.0.0
@@ -190,8 +159,6 @@ flake8-mutable==1.2.0
     # via -r requirements_cicd.txt
 flake8-quotes==3.4.0
     # via -r requirements_cicd.txt
-fqdn==1.5.1
-    # via jsonschema
 frozenlist==1.5.0
     # via
     #   aiohttp
@@ -200,7 +167,7 @@ ghp-import==2.1.0
     # via
     #   -r requirements_cicd.txt
     #   mkdocs
-great-expectations==0.18.8
+great-expectations==1.3.13
     # via -r requirements_dq.txt
 griffe==0.29.1
     # via
@@ -218,7 +185,6 @@ httpcore==1.0.7
     # via httpx
 httpx[http2]==0.28.1
     # via
-    #   jupyterlab
     #   microsoft-kiota-http
     #   msgraph-core
 hyperframe==6.0.1
@@ -227,7 +193,6 @@ idna==3.10
     # via
     #   anyio
     #   httpx
-    #   jsonschema
     #   requests
     #   yarl
 importlib-metadata==8.5.0
@@ -241,17 +206,6 @@ importlib-resources==6.5.2
     # via mike
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.29.5
-    # via jupyterlab
-ipython==8.31.0
-    # via
-    #   great-expectations
-    #   ipykernel
-    #   ipywidgets
-ipywidgets==8.1.5
-    # via great-expectations
-isoduration==20.11.0
-    # via jsonschema
 isort==5.13.2
     # via
     #   -r requirements_cicd.txt
@@ -262,20 +216,15 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.1.0
     # via keyring
-jedi==0.19.2
-    # via ipython
 jeepney==0.8.0
     # via
     #   keyring
     #   secretstorage
-jinja2==3.1.4
+jinja2==3.1.6
     # via
     #   -r requirements.txt
     #   altair
     #   great-expectations
-    #   jupyter-server
-    #   jupyterlab
-    #   jupyterlab-server
     #   mike
     #   mkdocs
     #   mkdocs-macros-plugin
@@ -283,73 +232,22 @@ jinja2==3.1.4
     #   mkdocstrings
     #   mkdocstrings-crystal
     #   moto
-    #   nbconvert
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-json5==0.10.0
-    # via jupyterlab-server
-jsonpatch==1.33
-    # via great-expectations
-jsonpointer==3.0.0
-    # via
-    #   jsonpatch
-    #   jsonschema
-jsonschema[format-nongpl]==4.23.0
+jsonschema==4.23.0
     # via
     #   altair
     #   great-expectations
-    #   jupyter-events
-    #   jupyterlab-server
-    #   nbformat
 jsonschema-specifications==2024.10.1
     # via jsonschema
-jupyter-client==8.6.3
-    # via
-    #   ipykernel
-    #   jupyter-server
-    #   nbclient
-jupyter-core==5.7.2
-    # via
-    #   ipykernel
-    #   jupyter-client
-    #   jupyter-server
-    #   jupyterlab
-    #   nbclient
-    #   nbconvert
-    #   nbformat
-jupyter-events==0.11.0
-    # via jupyter-server
-jupyter-lsp==2.2.5
-    # via jupyterlab
-jupyter-server==2.15.0
-    # via
-    #   jupyter-lsp
-    #   jupyterlab
-    #   jupyterlab-server
-    #   notebook
-    #   notebook-shim
-jupyter-server-terminals==0.5.3
-    # via jupyter-server
-jupyterlab==4.3.4
-    # via notebook
-jupyterlab-pygments==0.3.0
-    # via nbconvert
-jupyterlab-server==2.27.3
-    # via
-    #   jupyterlab
-    #   notebook
-jupyterlab-widgets==3.0.13
-    # via ipywidgets
 keyring==25.6.0
     # via twine
 license-expression==30.4.1
     # via cyclonedx-python-lib
 lxml==4.9.2
     # via -r requirements_cicd.txt
-makefun==1.15.6
-    # via great-expectations
 markdown==3.3.7
     # via
     #   -r requirements_cicd.txt
@@ -375,14 +273,9 @@ markupsafe==3.0.2
     #   jinja2
     #   mkdocstrings
     #   mkdocstrings-crystal
-    #   nbconvert
     #   werkzeug
 marshmallow==3.25.1
     # via great-expectations
-matplotlib-inline==0.1.7
-    # via
-    #   ipykernel
-    #   ipython
 mccabe==0.7.0
     # via flake8
 mdurl==0.1.2
@@ -420,9 +313,7 @@ microsoft-kiota-serialization-text==1.9.0
 mike==2.0.0
     # via -r requirements_cicd.txt
 mistune==3.0.2
-    # via
-    #   great-expectations
-    #   nbconvert
+    # via great-expectations
 mkdocs==1.4.3
     # via
     #   -r requirements_cicd.txt
@@ -464,6 +355,8 @@ mkdocstrings-python==1.1.2
     # via
     #   -r requirements_cicd.txt
     #   mkdocstrings
+monotonic==1.6
+    # via posthog
 more-itertools==10.4.0
     # via
     #   jaraco-classes
@@ -480,7 +373,7 @@ msal-extensions==1.2.0
     # via azure-identity
 msgpack==1.1.0
     # via cachecontrol
-msgraph-core==1.2.0
+msgraph-core==1.3.3
     # via msgraph-sdk
 msgraph-sdk==1.4.0
     # via -r requirements_azure.txt
@@ -494,28 +387,10 @@ mypy-extensions==1.0.0
     # via
     #   black
     #   mypy
-nbclient==0.10.2
-    # via nbconvert
-nbconvert==7.16.5
-    # via jupyter-server
-nbformat==5.10.4
-    # via
-    #   great-expectations
-    #   jupyter-server
-    #   nbclient
-    #   nbconvert
 nest-asyncio==1.5.6
-    # via
-    #   -r requirements_azure.txt
-    #   ipykernel
+    # via -r requirements_azure.txt
 nh3==0.2.20
     # via readme-renderer
-notebook==7.3.2
-    # via great-expectations
-notebook-shim==0.2.4
-    # via
-    #   jupyterlab
-    #   notebook
 numpy==1.26.4
     # via
     #   -r requirements_dq.txt
@@ -537,8 +412,6 @@ opentelemetry-sdk==1.29.0
     #   microsoft-kiota-http
 opentelemetry-semantic-conventions==0.50b0
     # via opentelemetry-sdk
-overrides==7.7.0
-    # via jupyter-server
 packageurl-python==0.16.0
     # via cyclonedx-python-lib
 packaging==24.2
@@ -546,36 +419,25 @@ packaging==24.2
     #   black
     #   build
     #   great-expectations
-    #   ipykernel
-    #   jupyter-server
-    #   jupyterlab
-    #   jupyterlab-server
     #   marshmallow
     #   mkdocs
-    #   nbconvert
     #   pip-audit
     #   pip-requirements-parser
     #   pytest
-pandas==2.2.3
+pandas==2.1.4
     # via
     #   altair
     #   great-expectations
-pandocfilters==1.5.1
-    # via nbconvert
 paramiko==3.4.0
     # via
     #   -r requirements_sftp.txt
     #   pytest-sftpserver
-parso==0.8.4
-    # via jedi
 pathspec==0.12.1
     # via black
 pbr==6.1.0
     # via stevedore
 pendulum==3.0.0
     # via -r requirements.txt
-pexpect==4.9.0
-    # via ipython
 pip-api==0.0.34
     # via pip-audit
 pip-audit==2.7.3
@@ -589,28 +451,17 @@ pkginfo==1.10.0
 platformdirs==4.3.6
     # via
     #   black
-    #   jupyter-core
     #   mkdocstrings
 pluggy==1.5.0
     # via pytest
 portalocker==2.10.1
     # via msal-extensions
-prometheus-client==0.21.1
-    # via jupyter-server
-prompt-toolkit==3.0.50
-    # via ipython
+posthog==3.24.0
+    # via great-expectations
 propcache==0.2.1
     # via
     #   aiohttp
     #   yarl
-psutil==6.1.1
-    # via ipykernel
-ptyprocess==0.7.0
-    # via
-    #   pexpect
-    #   terminado
-pure-eval==0.2.3
-    # via stack-data
 py-serializable==1.1.2
     # via cyclonedx-python-lib
 py4j==0.10.9.7
@@ -629,9 +480,7 @@ pyflakes==3.2.0
     # via flake8
 pygments==2.19.1
     # via
-    #   ipython
     #   mkdocs-material
-    #   nbconvert
     #   readme-renderer
     #   rich
 pyjwt[crypto]==2.10.1
@@ -669,27 +518,21 @@ pytest-sftpserver==1.3.0
     # via -r requirements_cicd.txt
 python-dateutil==2.8.2
     # via
-    #   arrow
     #   botocore
     #   ghp-import
     #   great-expectations
-    #   jupyter-client
     #   mkdocs-macros-plugin
     #   moto
     #   pandas
     #   pendulum
+    #   posthog
     #   time-machine
-python-json-logger==3.2.1
-    # via jupyter-events
 pytz==2024.2
-    # via
-    #   great-expectations
-    #   pandas
+    # via pandas
 pyyaml==6.0.1
     # via
     #   -r requirements.txt
     #   bandit
-    #   jupyter-events
     #   mike
     #   mkdocs
     #   mkdocs-macros-plugin
@@ -700,18 +543,12 @@ pyyaml-env-tag==0.1
     # via
     #   -r requirements_cicd.txt
     #   mkdocs
-pyzmq==26.1.0
-    # via
-    #   ipykernel
-    #   jupyter-client
-    #   jupyter-server
 readme-renderer==44.0
     # via twine
 referencing==0.36.1
     # via
     #   jsonschema
     #   jsonschema-specifications
-    #   jupyter-events
 regex==2023.6.3
     # via
     #   -r requirements_cicd.txt
@@ -721,11 +558,11 @@ requests==2.32.3
     #   azure-core
     #   cachecontrol
     #   great-expectations
-    #   jupyterlab-server
     #   mkdocs-material
     #   moto
     #   msal
     #   pip-audit
+    #   posthog
     #   requests-toolbelt
     #   responses
     #   twine
@@ -733,16 +570,8 @@ requests-toolbelt==1.0.0
     # via twine
 responses==0.25.6
     # via moto
-rfc3339-validator==0.1.4
-    # via
-    #   jsonschema
-    #   jupyter-events
 rfc3986==2.0.0
     # via twine
-rfc3986-validator==0.1.1
-    # via
-    #   jsonschema
-    #   jupyter-events
 rich==13.9.4
     # via
     #   bandit
@@ -760,25 +589,19 @@ scipy==1.15.1
     # via great-expectations
 secretstorage==3.3.3
     # via keyring
-send2trash==1.8.3
-    # via jupyter-server
 six==1.17.0
     # via
     #   azure-core
     #   html5lib
+    #   posthog
     #   pytest-sftpserver
     #   python-dateutil
-    #   rfc3339-validator
 sniffio==1.3.1
     # via anyio
 snowballstemmer==2.2.0
     # via pydocstyle
 sortedcontainers==2.4.0
     # via cyclonedx-python-lib
-soupsieve==2.6
-    # via beautifulsoup4
-stack-data==0.6.3
-    # via ipython
 std-uritemplate==2.0.1
     # via microsoft-kiota-abstractions
 stevedore==5.4.0
@@ -787,43 +610,14 @@ tenacity==9.0.0
     # via -r requirements_sharepoint.txt
 termcolor==2.5.0
     # via mkdocs-macros-plugin
-terminado==0.18.1
-    # via
-    #   jupyter-server
-    #   jupyter-server-terminals
 time-machine==2.16.0
     # via pendulum
-tinycss2==1.4.0
-    # via bleach
 toml==0.10.2
     # via pip-audit
 toolz==1.0.0
     # via altair
-tornado==6.4.2
-    # via
-    #   ipykernel
-    #   jupyter-client
-    #   jupyter-server
-    #   jupyterlab
-    #   notebook
-    #   terminado
 tqdm==4.67.1
     # via great-expectations
-traitlets==5.14.3
-    # via
-    #   comm
-    #   ipykernel
-    #   ipython
-    #   ipywidgets
-    #   jupyter-client
-    #   jupyter-core
-    #   jupyter-events
-    #   jupyter-server
-    #   jupyterlab
-    #   matplotlib-inline
-    #   nbclient
-    #   nbconvert
-    #   nbformat
 twine==5.1.1
     # via -r requirements_cicd.txt
 types-awscrt==0.23.6
@@ -834,8 +628,6 @@ types-cryptography==3.3.23.2
     # via types-paramiko
 types-paramiko==2.12.0.0
     # via -r requirements_cicd.txt
-types-python-dateutil==2.9.0.20241206
-    # via arrow
 types-requests==2.31.0.6
     # via -r requirements_cicd.txt
 types-s3transfer==0.11.1
@@ -849,7 +641,6 @@ typing-extensions==4.12.2
     #   azure-identity
     #   boto3-stubs
     #   great-expectations
-    #   ipython
     #   mypy
     #   opentelemetry-sdk
     #   pydantic
@@ -861,12 +652,9 @@ tzdata==2024.2
     #   pendulum
 tzlocal==5.2
     # via great-expectations
-uri-template==1.3.0
-    # via jsonschema
 urllib3==2.3.0
     # via
     #   botocore
-    #   great-expectations
     #   microsoft-kiota-http
     #   requests
     #   responses
@@ -877,23 +665,12 @@ watchdog==3.0.0
     # via
     #   -r requirements_cicd.txt
     #   mkdocs
-wcwidth==0.2.13
-    # via prompt-toolkit
-webcolors==24.11.1
-    # via jsonschema
 webencodings==0.5.1
-    # via
-    #   bleach
-    #   html5lib
-    #   tinycss2
-websocket-client==1.8.0
-    # via jupyter-server
+    # via html5lib
 werkzeug==3.1.3
     # via moto
 wheel==0.45.1
     # via pip-tools
-widgetsnbextension==4.0.13
-    # via ipywidgets
 wrapt==1.17.2
     # via deprecated
 xmltodict==0.14.2

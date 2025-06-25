@@ -50,9 +50,6 @@ class Algorithm(Executable):
             ),
             gx_result_format=spec.get("gx_result_format", DQSpec.gx_result_format),
             tbl_to_derive_pk=spec.get("tbl_to_derive_pk", DQSpec.tbl_to_derive_pk),
-            sort_processed_keys=spec.get(
-                "sort_processed_keys", DQSpec.sort_processed_keys
-            ),
             tag_source_data=spec.get("tag_source_data", DQSpec.tag_source_data),
             data_asset_name=spec.get("data_asset_name", DQSpec.data_asset_name),
             expectation_suite_name=spec.get(
@@ -60,20 +57,13 @@ class Algorithm(Executable):
             ),
             store_backend=spec.get("store_backend", DQDefaults.STORE_BACKEND.value),
             local_fs_root_dir=spec.get("local_fs_root_dir", DQSpec.local_fs_root_dir),
-            data_docs_local_fs=spec.get(
-                "data_docs_local_fs", DQSpec.data_docs_local_fs
-            ),
             bucket=spec.get("bucket", DQSpec.bucket),
-            data_docs_bucket=spec.get("data_docs_bucket", DQSpec.data_docs_bucket),
             checkpoint_store_prefix=spec.get(
                 "checkpoint_store_prefix", DQDefaults.CHECKPOINT_STORE_PREFIX.value
             ),
             expectations_store_prefix=spec.get(
                 "expectations_store_prefix",
                 DQDefaults.EXPECTATIONS_STORE_PREFIX.value,
-            ),
-            data_docs_prefix=spec.get(
-                "data_docs_prefix", DQDefaults.DATA_DOCS_PREFIX.value
             ),
             validations_store_prefix=spec.get(
                 "validations_store_prefix",
@@ -85,8 +75,14 @@ class Algorithm(Executable):
             result_sink_location=spec.get(
                 "result_sink_location", DQSpec.result_sink_location
             ),
+            processed_keys_location=spec.get(
+                "processed_keys_location", DQSpec.processed_keys_location
+            ),
             result_sink_partitions=spec.get(
                 "result_sink_partitions", DQSpec.result_sink_partitions
+            ),
+            result_sink_chunk_size=spec.get(
+                "result_sink_chunk_size", DQSpec.result_sink_chunk_size
             ),
             result_sink_format=spec.get(
                 "result_sink_format", OutputFormat.DELTAFILES.value
@@ -106,6 +102,9 @@ class Algorithm(Executable):
             ),
             max_percentage_failure=spec.get(
                 "max_percentage_failure", DQSpec.max_percentage_failure
+            ),
+            enable_row_condition=spec.get(
+                "enable_row_condition", DQSpec.enable_row_condition
             ),
         )
 

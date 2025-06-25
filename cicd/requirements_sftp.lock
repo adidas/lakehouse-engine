@@ -13,7 +13,7 @@ cffi==1.17.1
     #   -c requirements_full.lock
     #   cryptography
     #   pynacl
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   -c requirements_full.lock
     #   paramiko

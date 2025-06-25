@@ -12,9 +12,16 @@ import pytest
 from lakehouse_engine.core.definitions import TerminatorSpec
 from lakehouse_engine.engine import send_notification
 from lakehouse_engine.terminators.notifiers.email_notifier import EmailNotifier
+from lakehouse_engine.terminators.notifiers.exceptions import (
+    NotifierConfigException,
+    NotifierTemplateConfigException,
+    NotifierTemplateNotFoundException,
+)
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+from tests.conftest import FEATURE_RESOURCES
 
 LOGGER = LoggingHandler(__name__).get_logger()
+TEST_ATTACHEMENTS_PATH = FEATURE_RESOURCES + "/notification/"
 
 
 @pytest.mark.parametrize(
@@ -30,50 +37,14 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "type": "email",
                     "template": "failure_notification_email",
                     "from": "test-email@email.com",
-                    "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {
-                        "exception": "test-exception",
-                    },
+                    "cc": ["test-email1@email.com", "test-email2@email.com"],
+                    "mimetype": "text/text",
+                    "exception": "test-exception",
                 },
             ),
             "expected": """
             Job local in workspace local has
             failed with the exception: test-exception""",
-        },
-        {
-            "name": "Email Notification Template",
-            "spec": TerminatorSpec(
-                function="notify",
-                args={
-                    "server": "localhost",
-                    "port": "1025",
-                    "type": "email",
-                    "template": "opsgenie_notification",
-                    "from": "test-email@email.com",
-                    "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {
-                        "data_product": "test-data_product",
-                        "alias": "test-alias",
-                        "priority": "test-priority",
-                        "entity": "test-entity",
-                        "tags": "test-tags",
-                        "action": "test-action",
-                        "description": "test-description",
-                        "exception": "test-exception",
-                    },
-                },
-            ),
-            "expected": """
-                Opsgenie notification:
-                    - Data Product: test-data_product
-                    - Job name: local
-                    - Alias: test-alias
-                    - Priority: test-priority
-                    - Entity: test-entity
-                    - Tags: test-tags
-                    - Action: test-action
-                    - Description: test-description
-                    - Exception: test-exception""",
         },
         {
             "name": "Email Notification Free Form",
@@ -85,15 +56,20 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "type": "email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "mimetype": "plain",
+                    "mimetype": "text/text",
                     "subject": "Test Email",
                     "message": "Test message for the email.",
+                    "attachments": [
+                        f"{TEST_ATTACHEMENTS_PATH}test_attachement.txt",
+                        f"{TEST_ATTACHEMENTS_PATH}test_image.png",
+                    ],
                 },
             ),
             "expected": "Test message for the email.",
+            "expected_attachments": ["test_attachement.txt", "test_image.png"],
         },
         {
-            "name": "Email Notification Free Form with Args",
+            "name": "Email Notification Free Form",
             "spec": TerminatorSpec(
                 function="notify",
                 args={
@@ -102,14 +78,12 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "type": "email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "mimetype": "plain",
+                    "mimetype": "text/html",
                     "subject": "Test Email",
-                    "message": "Test message for the email with templating: {{ msg }}.",
-                    "args": {"msg": "anything can go here"},
+                    "message": """<html><body>Test message.</body></html>""",
                 },
             ),
-            "expected": "Test message for the email with templating: "
-            "anything can go here.",
+            "expected": "<html><body>Test message.</body></html>",
         },
         {
             "name": "Error: non-existent template",
@@ -134,49 +108,28 @@ LOGGER = LoggingHandler(__name__).get_logger()
                     "type": "email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {
-                        "exception": "test-exception",
-                    },
                 },
             ),
             "expected": "Malformed Notification Definition",
-        },
-        {
-            "name": "Error: missing template parameters",
-            "spec": TerminatorSpec(
-                function="notify",
-                args={
-                    "server": "localhost",
-                    "port": "1025",
-                    "type": "email",
-                    "template": "opsgenie_notification",
-                    "from": "test-email@email.com",
-                    "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "args": {"exception": "test-exception"},
-                },
-            ),
-            "expected": "The following template args have not been set: "
-            "data_product, alias, priority, entity, tags, action, description",
         },
         {
             "name": "Error: Using disallowed smtp server",
             "spec": TerminatorSpec(
                 function="notify",
                 args={
-                    "server": "smtp.office365.com",
+                    "server": "smtp.test.com",
                     "port": "1025",
                     "type": "email",
                     "from": "test-email@email.com",
                     "to": ["test-email1@email.com", "test-email2@email.com"],
-                    "mimetype": "plain",
+                    "mimetype": "text/text",
                     "subject": "Test Email",
-                    "message": "Test message for the email with templating: {{ msg }}.",
-                    "args": {"msg": "anything can go here"},
+                    "message": "Test message for the email.",
                 },
             ),
             "expected": "Trying to use disallowed smtp server: "
-            "'smtp.office365.com'.\n"
-            "Disallowed smtp servers: ['smtp.office365.com']",
+            "'smtp.test.com'.\n"
+            "Disallowed smtp servers: ['smtp.test.com']",
         },
     ],
 )
@@ -213,19 +166,41 @@ def test_email_notification(scenario: dict) -> None:
             email_notifier = EmailNotifier(spec)
 
             if "Error: " in name:
-                with pytest.raises(ValueError) as e:
+                with pytest.raises(
+                    (
+                        NotifierTemplateNotFoundException,
+                        NotifierConfigException,
+                        NotifierTemplateConfigException,
+                    )
+                ) as e:
                     email_notifier.create_notification()
                     email_notifier.send_notification()
                 assert expected_output in str(e.value)
             else:
                 email_notifier.create_notification()
                 email_notifier.send_notification()
-                email_from, email_to, subject, message = _parse_email_output()
+                (
+                    email_from,
+                    email_to,
+                    email_cc,
+                    email_bcc,
+                    mimetype,
+                    subject,
+                    message,
+                    attachments,
+                ) = _parse_email_output()
 
                 assert email_from == spec.args["from"]
-                assert email_to == spec.args["to"]
+                if "to" in spec.args:
+                    assert email_to == spec.args["to"]
+                if "cc" in spec.args:
+                    assert email_cc == spec.args["cc"]
+                if "bcc" in spec.args:
+                    assert email_bcc == spec.args["bcc"]
+                assert mimetype == spec.args["mimetype"]
                 assert subject == spec.args["subject"]
                 assert message == expected_output
+                assert attachments == scenario.get("expected_attachments", [])
 
             os.killpg(os.getpgid(p.pid), SIGKILL)
 
@@ -245,45 +220,12 @@ def test_email_notification(scenario: dict) -> None:
                 "template": "failure_notification_email",
                 "from": "test-email@email.com",
                 "to": ["test-email1@email.com", "test-email2@email.com"],
-                "args": {
-                    "exception": "test-exception",
-                },
+                "cc": ["test-email3@email.com", "test-email4@email.com"],
+                "exception": "test-exception",
             },
             "expected": """
             Job local in workspace local has
             failed with the exception: test-exception""",
-        },
-        {
-            "name": "Email Notification Template",
-            "args": {
-                "server": "localhost",
-                "port": "1025",
-                "type": "email",
-                "template": "opsgenie_notification",
-                "from": "test-email@email.com",
-                "to": ["test-email1@email.com", "test-email2@email.com"],
-                "args": {
-                    "data_product": "test-data_product",
-                    "alias": "test-alias",
-                    "priority": "test-priority",
-                    "entity": "test-entity",
-                    "tags": "test-tags",
-                    "action": "test-action",
-                    "description": "test-description",
-                    "exception": "test-exception",
-                },
-            },
-            "expected": """
-                Opsgenie notification:
-                    - Data Product: test-data_product
-                    - Job name: local
-                    - Alias: test-alias
-                    - Priority: test-priority
-                    - Entity: test-entity
-                    - Tags: test-tags
-                    - Action: test-action
-                    - Description: test-description
-                    - Exception: test-exception""",
         },
         {
             "name": "Email Notification Free Form",
@@ -292,28 +234,17 @@ def test_email_notification(scenario: dict) -> None:
                 "port": "1025",
                 "type": "email",
                 "from": "test-email@email.com",
-                "to": ["test-email1@email.com", "test-email2@email.com"],
-                "mimetype": "plain",
+                "bcc": ["test-email1@email.com", "test-email2@email.com"],
+                "mimetype": "text/text",
                 "subject": "Test Email",
                 "message": "Test message for the email.",
+                "attachments": [
+                    f"{TEST_ATTACHEMENTS_PATH}test_attachement.txt",
+                    f"{TEST_ATTACHEMENTS_PATH}test_image.png",
+                ],
             },
             "expected": "Test message for the email.",
-        },
-        {
-            "name": "Email Notification Free Form with Args",
-            "args": {
-                "server": "localhost",
-                "port": "1025",
-                "type": "email",
-                "from": "test-email@email.com",
-                "to": ["test-email1@email.com", "test-email2@email.com"],
-                "mimetype": "plain",
-                "subject": "Test Email",
-                "message": "Test message for the email with templating: {{ msg }}.",
-                "args": {"msg": "anything can go here"},
-            },
-            "expected": "Test message for the email with templating: "
-            "anything can go here.",
+            "expected_attachments": ["test_attachement.txt", "test_image.png"],
         },
         {
             "name": "Error: non-existent template",
@@ -333,42 +264,24 @@ def test_email_notification(scenario: dict) -> None:
                 "type": "email",
                 "from": "test-email@email.com",
                 "to": ["test-email1@email.com", "test-email2@email.com"],
-                "args": {
-                    "exception": "test-exception",
-                },
             },
             "expected": "Malformed Notification Definition",
         },
         {
-            "name": "Error: missing template parameters",
-            "args": {
-                "server": "localhost",
-                "port": "1025",
-                "type": "email",
-                "template": "opsgenie_notification",
-                "from": "test-email@email.com",
-                "to": ["test-email1@email.com", "test-email2@email.com"],
-                "args": {"exception": "test-exception"},
-            },
-            "expected": "The following template args have not been set: "
-            "data_product, alias, priority, entity, tags, action, description",
-        },
-        {
             "name": "Error: Using disallowed smtp server",
             "args": {
-                "server": "smtp.office365.com",
+                "server": "smtp.test.com",
                 "port": "1025",
                 "type": "email",
                 "from": "test-email@email.com",
                 "to": ["test-email1@email.com", "test-email2@email.com"],
                 "mimetype": "plain",
                 "subject": "Test Email",
-                "message": "Test message for the email with templating: {{ msg }}.",
-                "args": {"msg": "anything can go here"},
+                "message": "Test message for the email.",
             },
             "expected": "Trying to use disallowed smtp server: "
-            "'smtp.office365.com'.\n"
-            "Disallowed smtp servers: ['smtp.office365.com']",
+            "'smtp.test.com'.\n"
+            "Disallowed smtp servers: ['smtp.test.com']",
         },
     ],
 )
@@ -403,17 +316,39 @@ def test_email_notification_facade(scenario: dict) -> None:
             time.sleep(2)
 
             if "Error: " in name:
-                with pytest.raises(ValueError) as e:
+                with pytest.raises(
+                    (
+                        NotifierTemplateNotFoundException,
+                        NotifierConfigException,
+                        NotifierTemplateConfigException,
+                    )
+                ) as e:
                     send_notification(args=args)
                 assert expected_output in str(e.value)
             else:
                 send_notification(args=args)
-                email_from, email_to, subject, message = _parse_email_output()
+                (
+                    email_from,
+                    email_to,
+                    email_cc,
+                    email_bcc,
+                    mimetype,
+                    subject,
+                    message,
+                    attachments,
+                ) = _parse_email_output()
 
                 assert email_from == args["from"]
-                assert email_to == args["to"]
+                if "to" in args:
+                    assert email_to == args["to"]
+                if "cc" in args:
+                    assert email_cc == args["cc"]
+                if "bcc" in args:
+                    assert email_bcc == args["bcc"]
+                assert mimetype == args["mimetype"]
                 assert subject == args["subject"]
                 assert message == expected_output
+                assert attachments == scenario.get("expected_attachments", [])
 
             os.killpg(os.getpgid(p.pid), SIGKILL)
 
@@ -421,19 +356,32 @@ def test_email_notification_facade(scenario: dict) -> None:
             os.remove("email_output")
 
 
-def _parse_email_output() -> typing.Tuple[str, list, str, str]:
+def _parse_email_output() -> typing.Tuple[str, list, list, list, str, str, str, list]:
     """Parse the mail that was received in the debug smtp server.
 
     Returns:
-        A tuple with the email from, email to, subject and message.
+        A tuple with the email from, email to, cc, bcc, subject and message.
     """
     mail_content = open("email_output", "r").read()
 
     email_from = re.search("(?<=From: ).*(?<!')", mail_content).group()
     email_to = re.search("(?<=To: ).*(?<!')", mail_content).group().split(", ")
+    email_cc = re.search("(?<=CC: ).*(?<!')", mail_content).group().split(", ")
+    email_bcc = re.search("(?<=BCC: ).*(?<!')", mail_content).group().split(", ")
+    mimetype = re.search("(?<=Content-Type: ).*(?=; charset)", mail_content).group()
     subject = re.search("(?<=Subject: ).*(?<!')", mail_content).group()
     message = re.findall("(?<=b'').*?(?=b'--=)", mail_content, re.S)[1]
+    attachments = re.findall("""(?<=filename=").*(?=")""", mail_content)
 
     message = message.replace("b'", "").replace("'\n", "\n")[1:-1]
 
-    return email_from, email_to, subject, message
+    return (
+        email_from,
+        email_to,
+        email_cc,
+        email_bcc,
+        mimetype,
+        subject,
+        message,
+        attachments,
+    )

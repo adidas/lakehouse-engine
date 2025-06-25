@@ -25,6 +25,7 @@ pipeline {
     environment {
         PYPI_CREDENTIALS = credentials('pypi-credentials')
         ARTIFACTORY_CREDENTIALS = credentials('artifactory-credentials')
+        GIT_CREDENTIALS_ID = "git-lakehouse-cicd"
         GIT_CREDENTIALS_LAK = credentials('push-to-github-lak')
         GIT_CREDENTIALS_LAK_DOCS = credentials('push-to-github-lak-docs')
         DEPLOY_VERSION = getDeploymentVersion()
@@ -45,7 +46,7 @@ pipeline {
                         checkout([
                                 $class           : 'GitSCM',
                                 branches         : [['name': env.DEPLOY_GIT_OBJECT]],
-                                userRemoteConfigs: scm.userRemoteConfigs
+                                userRemoteConfigs: [[url: 'https://bitbucket.tools.3stripes.net/scm/lak/lakehouse-engine.git', credentialsId: GIT_CREDENTIALS_ID]]
                         ])
                     }
                 }

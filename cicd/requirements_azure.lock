@@ -47,7 +47,7 @@ charset-normalizer==3.4.1
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   -c requirements_full.lock
     #   azure-identity
@@ -146,7 +146,7 @@ msal-extensions==1.2.0
     # via
     #   -c requirements_full.lock
     #   azure-identity
-msgraph-core==1.2.0
+msgraph-core==1.3.3
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk

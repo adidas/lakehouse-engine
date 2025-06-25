@@ -224,6 +224,9 @@ class PrismaUtils:
         spec["result_sink_location"] = (
             f"{dq_bucket}/{spec['data_product_name']}/result_sink/"
         )
+        spec["processed_keys_location"] = (
+            f"{dq_bucket}/{spec['data_product_name']}/dq_processed_keys/"
+        )
         if not spec.get("tbl_to_derive_pk", None) and not spec.get(
             "unexpected_rows_pk", None
         ):

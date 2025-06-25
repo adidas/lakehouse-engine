@@ -2,14 +2,12 @@
 
 from typing import Any, Dict, Optional
 
-from great_expectations.core import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.expectations.expectation import Expectation
 
 
 def validate_result(
-    expectation: Expectation,
-    configuration: ExpectationConfiguration,
+    expectation_configuration: Any,
     metrics: dict,
     runtime_configuration: Optional[dict],
     execution_engine: Optional[ExecutionEngine],
@@ -20,19 +18,18 @@ def validate_result(
     Additionally, it validates the expectation using the GE _validate method.
 
     Args:
-        expectation: Expectation to validate.
-        configuration: Configuration used in the test.
+        expectation_configuration: Expectation configuration.
         metrics: Test result metrics.
         runtime_configuration: Configuration used when running the expectation.
         execution_engine: Execution engine used in the expectation.
         base_expectation: Base expectation to validate.
     """
     example_unexpected_index_list = _get_example_unexpected_index_list(
-        expectation, configuration
+        expectation_configuration
     )
 
     test_unexpected_index_list = _get_test_unexpected_index_list(
-        expectation.map_metric, metrics
+        expectation_configuration.map_metric, metrics
     )
     if example_unexpected_index_list:
         if example_unexpected_index_list != test_unexpected_index_list:
@@ -41,13 +38,11 @@ def validate_result(
                 f"Test unexpected_index_list: {test_unexpected_index_list}"
             )
     return base_expectation._validate(
-        expectation, configuration, metrics, runtime_configuration, execution_engine
+        expectation_configuration, metrics, runtime_configuration, execution_engine
     )
 
 
-def _get_example_unexpected_index_list(
-    expectation: Expectation, configuration: ExpectationConfiguration
-) -> list:
+def _get_example_unexpected_index_list(expectation_configuration: Any) -> list:
     """Retrieves the unexpected index list defined from the example used on the test.
 
     This needs to be done manually because GE allows us to get either the complete
@@ -56,19 +51,18 @@ def _get_example_unexpected_index_list(
     in the test directly from the expectation itself.
 
     Args:
-        expectation: Expectation to fetch the examples.
-        configuration: Configuration used in the test.
+        expectation_configuration: Expectation configuration.
 
     Returns:
-         List of unexpected indexes defined in the example used.
+        List of unexpected indexes defined in the example used.
     """
     filtered_example: dict = {"out": {"unexpected_index_list": []}}
 
-    for example in expectation.examples:
+    for example in expectation_configuration.examples:
         for test in example["tests"]:  # type: ignore
             example_result_format = []
-            if "result_format" in configuration["kwargs"]:
-                example_result_format = configuration["kwargs"]["result_format"]
+            if "result_format" in expectation_configuration.result_format:
+                example_result_format = expectation_configuration.result_format
 
             if test["in"]["result_format"] == example_result_format:
                 filtered_example = test
@@ -88,7 +82,7 @@ def _get_test_unexpected_index_list(metric_name: str, metrics: Dict) -> list:
         metrics: Metric values resulting from the test.
 
     Returns:
-         List of unexpected indexes retrieved form the test.
+        List of unexpected indexes retrieved form the test.
     """
     test_unexpected_index_list = []
     if f"{metric_name}.unexpected_index_list" in metrics:

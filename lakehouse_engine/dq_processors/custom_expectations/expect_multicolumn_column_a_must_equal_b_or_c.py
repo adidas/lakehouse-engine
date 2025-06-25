@@ -2,7 +2,6 @@
 
 from typing import Any, Dict, Optional
 
-from great_expectations.core import ExpectationConfiguration
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import MulticolumnMapExpectation
 from great_expectations.expectations.metrics.map_metric_provider import (
@@ -77,6 +76,14 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         An ExpectationSuiteValidationResult.
     """  # noqa: E501
 
+    ignore_row_if: str = "never"
+    result_format: dict = {"result_format": "BASIC"}
+    include_config: bool = True
+    catch_exceptions: bool = False
+    mostly: float = 1.0
+    column_list: Any = None
+    validation_regex_c: Any = None
+
     examples = [
         {
             "dataset_name": "Test Dataset",
@@ -146,17 +153,9 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         "validation_regex_c",
         "mostly",
     )
-    default_kwarg_values = {
-        "ignore_row_if": "never",
-        "result_format": "BASIC",
-        "include_config": True,
-        "catch_exceptions": False,
-        "mostly": 1,
-    }
 
     def _validate(
         self,
-        configuration: ExpectationConfiguration,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
@@ -170,7 +169,6 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         we need to make it manually.
 
         Args:
-            configuration: Configuration used in the test.
             metrics: Test result metrics.
             runtime_configuration: Configuration used when running the expectation.
             execution_engine: Execution Engine where the expectation was run.
@@ -180,7 +178,6 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         """
         return validate_result(
             self,
-            configuration,
             metrics,
             runtime_configuration,
             execution_engine,

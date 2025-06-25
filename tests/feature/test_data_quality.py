@@ -1,23 +1,14 @@
 """Test data quality process in different types of data loads."""
 
-import shutil
-from os import stat
-from os.path import exists
+from json import loads
 from typing import Any
 
 import pytest
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import (
-    array_sort,
-    col,
-    from_json,
-    regexp_replace,
-    schema_of_json,
-    transform,
-)
+from pyspark.sql.functions import array_sort, col, regexp_replace, transform
+from pyspark.sql.types import IntegerType, StringType, StructField, StructType
 
 from lakehouse_engine.core.definitions import (
-    DQDefaults,
     DQExecutionPoint,
     DQFunctionSpec,
     DQSpec,
@@ -25,7 +16,7 @@ from lakehouse_engine.core.definitions import (
 )
 from lakehouse_engine.dq_processors.dq_factory import DQFactory
 from lakehouse_engine.dq_processors.exceptions import DQValidationsFailedException
-from lakehouse_engine.engine import build_data_docs, load_data
+from lakehouse_engine.engine import load_data
 from lakehouse_engine.utils.dq_utils import PrismaUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
@@ -135,6 +126,10 @@ def test_load_with_dq_validator(scenario: dict) -> None:
         LocalStorage.clean_folder(
             f"{TEST_LAKEHOUSE_IN}/{test_name}/{scenario['name']}/data",
         )
+
+    result_sink_df = DataframeHelpers.read_from_table(
+        f"test_db.validator_{scenario['name']}"
+    )
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{test_name}/{scenario['name']}/"
@@ -430,10 +425,11 @@ def test_load_with_dq_validator_table(scenario: dict) -> None:
             "spec_id": "dq_failure_error_disabled",
             "dq_type": "validator",
             "dq_functions": [
+                DQFunctionSpec("expect_column_to_exist", {"column": "article"}),
                 DQFunctionSpec(
                     "expect_table_row_count_to_be_between",
                     {"min_value": 0, "max_value": 1},
-                )
+                ),
             ],
             "fail_on_error": False,
             "critical_functions": None,
@@ -495,6 +491,22 @@ def test_load_with_dq_validator_table(scenario: dict) -> None:
                         "min_value": 0,
                         "max_value": 1,
                         "meta": {
+                            "dq_rule_id": "rule_1",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_sales",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+                {
+                    "function": "expect_table_column_count_to_be_between",
+                    "args": {
+                        "min_value": 0,
+                        "max_value": 50,
+                        "meta": {
                             "dq_rule_id": "rule_2",
                             "execution_point": "in_motion",
                             "schema": "test_db",
@@ -504,7 +516,7 @@ def test_load_with_dq_validator_table(scenario: dict) -> None:
                             "filters": "",
                         },
                     },
-                }
+                },
             ],
             "critical_functions": [],
             "data_product_name": "dq_failure_error_disabled",
@@ -576,10 +588,10 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
             store_backend="file_system",
             local_fs_root_dir=f"{location}/{scenario['dq_type']}/"
             f"{scenario['spec_id']}/",
-            data_docs_local_fs=f"{location}/{scenario['dq_type']}/data_docs/"
-            f"{scenario['spec_id']}/",
             result_sink_format="json",
             result_sink_explode=False,
+            processed_keys_location=f"{TEST_LAKEHOUSE_OUT}/{scenario['dq_type']}/"
+            f"{scenario['spec_id']}/processed_keys",
             dq_functions=[
                 DQFunctionSpec(
                     function=dq_function["function"], args=dq_function["args"]
@@ -599,8 +611,6 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
             dq_type=scenario["dq_type"],
             store_backend="file_system",
             local_fs_root_dir=f"{location}/{scenario['dq_type']}/"
-            f"{scenario['spec_id']}/",
-            data_docs_local_fs=f"{location}/{scenario['dq_type']}/data_docs/"
             f"{scenario['spec_id']}/",
             result_sink_format="json",
             result_sink_explode=False,
@@ -647,7 +657,7 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
 
         if scenario["spec_id"] == "dq_failure_error_disabled":
             assert (
-                "1 out of 1 Data Quality Expectation(s) have failed! "
+                "1 out of 2 Data Quality Expectation(s) have failed! "
                 "Failed Expectations" in caplog.text
             )
 
@@ -669,22 +679,244 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
 
         assert result_df.columns == control_df.select(*result_df.columns).columns
 
-        # test if the run_results column has the correct keys
-        run_results = result_df.select("run_results").collect()
-        schema = schema_of_json(run_results[0]["run_results"])
-        result_df = result_df.withColumn(
-            "run_results", from_json(col("run_results"), schema)
-        )
-        assert result_df.select("run_results.*").columns == [
-            "actions_results",
-            "validation_result",
-        ]
+        _test_result_structure(result_df)
 
-        assert exists(
-            f"{location}/{scenario['dq_type']}/data_docs/"
-            f"{scenario['spec_id']}/"
-            f"{DQDefaults.DATA_DOCS_PREFIX.value}"
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        {
+            "result": "success",
+            "tag_source_data": False,
+            "num_chunks": 2,
+            "num_rows": 10,
+            "dq_functions": [
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "id",
+                        "min_value": 0,
+                        "max_value": 5,
+                        "meta": {
+                            "dq_rule_id": "rule_2",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "static_column",
+                        "min_value": 0,
+                        "max_value": 5,
+                        "meta": {
+                            "dq_rule_id": "rule_3",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+            ],
+        },
+        {
+            "result": "failure",
+            "tag_source_data": False,
+            "num_chunks": 20,
+            "num_rows": 15,
+            "dq_functions": [
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "id",
+                        "min_value": 0,
+                        "max_value": 1,
+                        "meta": {
+                            "dq_rule_id": "rule_2",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "static_column",
+                        "min_value": 0,
+                        "max_value": 1,
+                        "meta": {
+                            "dq_rule_id": "rule_3",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+            ],
+        },
+        {
+            "result": "success",
+            "tag_source_data": True,
+            "num_chunks": 6,
+            "num_rows": 15,
+            "dq_functions": [
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "id",
+                        "min_value": 0,
+                        "max_value": 1,
+                        "meta": {
+                            "dq_rule_id": "rule_2",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+                {
+                    "function": "expect_column_value_lengths_to_be_between",
+                    "args": {
+                        "column": "static_column",
+                        "min_value": 0,
+                        "max_value": 20,
+                        "meta": {
+                            "dq_rule_id": "rule_3",
+                            "execution_point": "in_motion",
+                            "schema": "test_db",
+                            "table": "dummy_data",
+                            "column": "",
+                            "dimension": "",
+                            "filters": "",
+                        },
+                    },
+                },
+            ],
+        },
+    ],
+)
+def test_chunked_result_sink(scenario: dict, caplog: Any) -> None:
+    """Test the chunked result sink for data quality validation.
+
+    Scenario 0: test two expectations and both are successful.
+    Scenario 1: test two expectations, both with errors
+    Scenario 2: test two expectations, one with error and one without and
+        the tagging functionality when multiple chunks exist.
+
+    Args:
+        scenario: scenario to test.
+        caplog: captured log.
+    """
+    LocalStorage.clean_folder(f"{LAKEHOUSE_FEATURE_OUT}/test_dp/")
+    schema = StructType(
+        [
+            StructField("id", IntegerType(), False),
+            StructField("static_column", StringType(), False),
+        ]
+    )
+
+    data = []
+    for x in range(0, scenario["num_rows"]):
+        data.append((x, True))
+
+    df = DataframeHelpers.create_dataframe(data=data, schema=schema)
+
+    acon = {
+        "input_specs": [
+            {
+                "spec_id": "test_in",
+                "read_type": "batch",
+                "data_format": "dataframe",
+                "df_name": df,
+            },
+        ],
+        "dq_specs": [
+            {
+                "spec_id": "test_dq",
+                "input_id": "test_in",
+                "dq_type": DQType.PRISMA.value,
+                "store_backend": "file_system",
+                "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT}/chunked_result_sink/",
+                "result_sink_format": "json",
+                "data_product_name": "test_dp",
+                "unexpected_rows_pk": ["id", "static_column"],
+                "result_sink_chunk_size": 1,
+                "dq_functions": scenario["dq_functions"],
+                "tag_source_data": scenario["tag_source_data"],
+            }
+        ],
+        "output_specs": [
+            {
+                "spec_id": "test_out",
+                "input_id": "test_dq",
+                "data_format": "dataframe",
+                "write_type": "overwrite",
+            }
+        ],
+    }
+
+    result_df = load_data(acon=acon)["test_out"]
+
+    result_sink = DataframeHelpers.read_from_file(
+        location=f"{LAKEHOUSE_FEATURE_OUT}/test_dp/result_sink/", file_format="json"
+    )
+    assert result_sink.count() == scenario["num_chunks"]
+    processed_keys = DataframeHelpers.read_from_file(
+        location=f"{LAKEHOUSE_FEATURE_OUT}/test_dp/dq_processed_keys/",
+        file_format="json",
+    )
+    assert processed_keys.count() == scenario["num_rows"]
+
+    if scenario["result"] == "failure":
+        assert (
+            "2 out of 2 Data Quality Expectation(s) have failed! Failed Expectations"
+            in caplog.text
         )
+
+    if scenario["tag_source_data"]:
+        final_df = result_df.groupBy("dq_validations").count()
+
+        assert final_df.count() == 2
+        for ele in final_df.collect():
+            if ele.dq_validations.dq_failure_details:
+                assert ele["count"] == 5
+            else:
+                assert ele["count"] == 10
+
+
+def _test_result_structure(df: DataFrame) -> None:
+    """Test if a dataframe has the expected keys in its structure.
+
+    Tests the validity of a dataframe, by checking if some keys are part of the
+    base structure of that dataframe.
+
+    Args:
+        df: dataframe to test.
+    """
+    for key in df.collect():
+        for result in loads(key.validation_results):
+            assert {
+                "success",
+                "expectation_config",
+            }.issubset(result.keys())
 
 
 def _prepare_validation_df(df: DataFrame) -> DataFrame:
@@ -721,85 +953,3 @@ def _prepare_validation_df(df: DataFrame) -> DataFrame:
             ),
         ),
     )
-
-
-@pytest.mark.parametrize(
-    "scenario",
-    [
-        {
-            "scenario_name": "without_data_docs_local_fs",
-            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
-            f"load_with_dq_validator/no_transformers/dq",
-            "data_docs_local_fs": None,
-            "data_docs_prefix": DQDefaults.DATA_DOCS_PREFIX.value,
-        },
-        {
-            "scenario_name": "with_data_docs_local_fs",
-            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
-            f"validator/dq_success",
-            "data_docs_local_fs": f"{TEST_LAKEHOUSE_OUT.replace('file://', '')}/"
-            f"validator/data_docs/dq_success",
-            "data_docs_prefix": DQDefaults.DATA_DOCS_PREFIX.value,
-        },
-    ],
-)
-def test_build_data_docs(scenario: dict, caplog: Any) -> None:
-    """Test the data quality build data docs process.
-
-    The tests executed intend to validate if the build of data docs is
-    done successfully. It is expected that data docs are built considering
-    all the history of checkpoints, even when changing store_backend s3 to
-    file_system. The build of data docs should enable all the runs/validations,
-    that are stored in the path specified, to be available in data docs
-    website, with all the history of runs/validations.
-
-    These tests enable to validate if the build of data docs is done
-    correctly when adding an extra checkpoint, having a specific
-    data_docs_local_fs or using the default value:
-    - without_data_docs_local_fs: data quality is stored in file_system
-    and for this test local_fs_root_dir is specified and data_docs_local_fs
-    and data_docs_prefix have the default value.
-    - with_data_docs_local_fs: data quality is stored in file_system
-    and for this test local_fs_root_dir and data_docs_local_fs are specified
-    and data_docs_prefix have the default value.
-
-    Args:
-        scenario: scenario to test.
-        caplog: captured log.
-    """
-    if scenario["data_docs_local_fs"]:
-        data_docs_location = (
-            f'{scenario["data_docs_local_fs"]}/{scenario["data_docs_prefix"]}index.html'
-        )
-    else:
-        data_docs_location = (
-            f'{scenario["local_fs_root_dir"]}/{scenario["data_docs_prefix"]}index.html'
-        )
-    file_stats_before = stat(data_docs_location)
-    if scenario["scenario_name"] == "without_data_docs_local_fs":
-        checkpoint_name = "20240409-143548-dq_validator-sales_source-checkpoint"
-        shutil.copytree(
-            src=f'{TEST_RESOURCES.replace("/app/", "")}/build_data_docs/'
-            f'{scenario["scenario_name"]}/{checkpoint_name}',
-            dst=f'{scenario["local_fs_root_dir"].replace("/app/", "")}/uncommitted/'
-            f"validations/dq_validator-sales_source-validator/{checkpoint_name}",
-        )
-    elif scenario["scenario_name"] == "with_data_docs_local_fs":
-        checkpoint_name = "20240410-080323-dq_success-sales_orders-checkpoint"
-        shutil.copytree(
-            src=f'{TEST_RESOURCES.replace("/app/", "")}/build_data_docs/'
-            f'{scenario["scenario_name"]}/{checkpoint_name}',
-            dst=f'{scenario["local_fs_root_dir"].replace("/app/", "")}/uncommitted/'
-            f"validations/dq_success-sales_orders-validator/{checkpoint_name}",
-        )
-
-    build_data_docs(
-        store_backend=DQDefaults.FILE_SYSTEM_STORE.value,
-        local_fs_root_dir=scenario["local_fs_root_dir"],
-        data_docs_local_fs=scenario["data_docs_local_fs"],
-        data_docs_prefix=scenario["data_docs_prefix"],
-    )
-
-    file_stats_after = stat(data_docs_location)
-    assert "The data docs were rebuilt" in caplog.text
-    assert file_stats_before.st_size < file_stats_after.st_size

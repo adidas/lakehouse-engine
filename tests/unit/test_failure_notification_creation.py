@@ -30,36 +30,7 @@ LOGGER = LoggingHandler(__name__).get_logger()
                         "template": "failure_notification_email",
                         "from": "test-email@email.com",
                         "to": ["test-email1@email.com", "test-email2@email.com"],
-                        "args": {
-                            "exception": "Test exception",
-                        },
                         "on_failure": True,
-                    },
-                ),
-            ],
-            "server": "localhost",
-            "port": "1025",
-            "expected": """
-            Job local in workspace local has
-            failed with the exception: Test exception""",
-        },
-        {
-            "name": "Email notification creation using a free form arguments.",
-            "spec": [
-                TerminatorSpec(
-                    function="notify",
-                    args={
-                        "server": "localhost",
-                        "port": "1025",
-                        "type": "email",
-                        "from": "test-email@email.com",
-                        "to": ["test-email1@email.com", "test-email2@email.com"],
-                        "mimetype": "plain",
-                        "subject": "Test Email",
-                        "message": "Test message for the email with "
-                        "templating: {{ msg }}.",
-                        "args": {"msg": "anything can go here"},
-                        "generate_failure_notification": True,
                     },
                 ),
             ],

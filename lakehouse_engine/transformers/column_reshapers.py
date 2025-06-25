@@ -387,7 +387,7 @@ class ColumnReshapers(object):
                     from_json(
                         col(input_col).cast("string").alias(f"{input_col}_json"),
                         json_schema,
-                        json_options if json_options else {},
+                        json_options if json_options else None,
                     ).alias(f"{input_col}_json")
                 )
             else:
@@ -396,7 +396,7 @@ class ColumnReshapers(object):
                     from_json(
                         col(input_col).cast("string").alias(f"{input_col}_json"),
                         json_schema,
-                        json_options if json_options else {},
+                        json_options if json_options else None,
                     ).alias(f"{input_col}_json"),
                 )
 
@@ -427,7 +427,8 @@ class ColumnReshapers(object):
 
         def inner(df: DataFrame) -> DataFrame:
             return df.withColumn(
-                out_col, to_json(struct(*in_cols), json_options if json_options else {})
+                out_col,
+                to_json(struct(*in_cols), json_options if json_options else None),
             )
 
         return inner

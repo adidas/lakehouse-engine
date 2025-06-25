@@ -20,12 +20,6 @@
     },
     {
       "metadata": {},
-      "name": "run_results",
-      "nullable": true,
-      "type": "string"
-    },
-    {
-      "metadata": {},
       "name": "success",
       "nullable": true,
       "type": "boolean"
@@ -76,19 +70,19 @@
       "metadata": {},
       "name": "max_value",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
       "name": "min_value",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
       "name": "evaluated_expectations",
       "nullable": true,
-      "type": "long"
+      "type": "float"
     },
     {
       "metadata": {},
@@ -233,6 +227,16 @@
     {
       "metadata": {},
       "name": "source_primary_key",
+      "nullable": true,
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {},
+      "name": "unexpected_index_list",
       "nullable": true,
       "type": {
         "containsNull": true,

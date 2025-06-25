@@ -1,6 +1,6 @@
 dq_bucket: /app/tests/lakehouse/out/feature
 notif_disallowed_email_servers:
-  - smtp.office365.com
+  - smtp.test.com
 engine_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
 engine_dev_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
 collect_engine_usage: disabled
@@ -12,6 +12,11 @@ dq_functions_column_list:
   - table
   - column
   - dimension
+dq_result_sink_columns_to_delete:
+  - partial_unexpected_list
+  - partial_unexpected_counts
+  - partial_unexpected_index_list
+  - unexpected_list
 sharepoint_authority: https://login.microsoftonline.com
 sharepoint_api_domain: https://graph.microsoft.com
 sharepoint_company_domain: company_name.sharepoint.com

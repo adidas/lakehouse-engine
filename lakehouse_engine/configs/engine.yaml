@@ -8,6 +8,11 @@ dq_functions_column_list:
   - table
   - column
   - dimension
+dq_result_sink_columns_to_delete:
+  - partial_unexpected_list
+  - partial_unexpected_counts
+  - partial_unexpected_index_list
+  - unexpected_list
 sharepoint_authority: https://login.microsoftonline.com
 sharepoint_api_domain: https://graph.microsoft.com
 sharepoint_company_domain: your_company_name.sharepoint.com

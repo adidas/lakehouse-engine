@@ -5,6 +5,7 @@ from abc import ABC
 from lakehouse_engine.core.definitions import NotifierType, TerminatorSpec
 from lakehouse_engine.terminators.notifier import Notifier
 from lakehouse_engine.terminators.notifiers.email_notifier import EmailNotifier
+from lakehouse_engine.terminators.notifiers.exceptions import NotifierNotFoundException
 
 
 class NotifierFactory(ABC):
@@ -28,7 +29,7 @@ class NotifierFactory(ABC):
         if notifier:
             return notifier(notification_spec=spec)
         else:
-            raise NotImplementedError(
+            raise NotifierNotFoundException(
                 f"The requested notification format {notifier_name} is not supported."
             )
 
@@ -47,30 +48,20 @@ class NotifierFactory(ABC):
                 notification_specs.append(terminator)
 
         for notification in notification_specs:
-            notification_args = notification.args
-            generate_failure_notification = notification_args.get(
+            failure_notification_spec = notification.args
+            generate_failure_notification = failure_notification_spec.get(
                 "generate_failure_notification", False
             )
 
             if generate_failure_notification or (
                 Notifier.check_if_notification_is_failure_notification(notification)
             ):
-                failure_notification_spec = notification_args
-
-                failure_notification_spec_args = notification_args.get("args", {})
-
-                failure_notification_spec_args["exception"] = str(exception)
-
-                failure_notification_spec["args"] = failure_notification_spec_args
+                failure_notification_spec["exception"] = str(exception)
 
                 if generate_failure_notification:
                     failure_notification_spec["template"] = (
-                        f"""failure_notification_{notification_args["type"]}"""
+                        f"""failure_notification_{failure_notification_spec["type"]}"""
                     )
-                elif "template" in notification_args.keys():
-                    failure_notification_spec["template"] = notification_args[
-                        "template"
-                    ]
 
                 failure_spec = TerminatorSpec(
                     function="notification", args=failure_notification_spec

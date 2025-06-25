@@ -33,6 +33,7 @@ nav:
           - Write and Read Dataframe: lakehouse_engine_usage/data_loader/write_and_read_dataframe/write_and_read_dataframe.md
           - Write to Console: lakehouse_engine_usage/data_loader/write_to_console/write_to_console.md
           - Write to REST API: lakehouse_engine_usage/data_loader/write_to_rest_api/write_to_rest_api.md
+          - Write to Sharepoint: lakehouse_engine_usage/data_loader/write_to_sharepoint/write_to_sharepoint.md
       - Data Quality: 
         - Overview: lakehouse_engine_usage/data_quality/data_quality.md
         - Scenarios:

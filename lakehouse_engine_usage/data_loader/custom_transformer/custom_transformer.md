@@ -147,8 +147,6 @@ acon = {
             "input_id": "transformed_sales_kpi",
             "dq_type": "validator",
             "bucket": "my_dq_bucket",
-            "data_docs_bucket": "my_data_product_bucket",
-            "data_docs_prefix": "dq/my_data_product/data_docs/site/",
             "expectations_store_prefix": "dq/expectations/",
             "validations_store_prefix": "dq/validations/",
             "checkpoint_store_prefix": "dq/checkpoints/",

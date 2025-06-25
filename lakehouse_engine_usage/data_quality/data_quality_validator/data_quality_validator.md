@@ -111,7 +111,6 @@ acon = {
         "result_sink_location": "my_dq_path/dq_validator/dq_validator_deliveries/",
         "expectations_store_prefix": "dq/dq_validator/expectations/",
         "validations_store_prefix": "dq/dq_validator/validations/",
-        "data_docs_prefix": "dq/dq_validator/data_docs/site/",
         "checkpoint_store_prefix": "dq/dq_validator/checkpoints/",
         "unexpected_rows_pk": ["salesorder", "delivery_item", "article_id"],
         "dq_functions": [{"function": "expect_column_values_to_not_be_null", "args": {"column": "delivery_date"}}],
@@ -165,8 +164,6 @@ acon = {
         "input_id": "deliveries_input",
         "dq_type": "validator",
         "bucket": "my_data_product_bucket",
-        "data_docs_bucket": "my_dq_data_docs_bucket",
-        "data_docs_prefix": "dq/my_data_product/data_docs/site/",
         "tbl_to_derive_pk": "my_database.dummy_deliveries",
         "dq_functions": [
             {"function": "expect_column_values_to_not_be_null", "args": {"column": "delivery_date"}},
@@ -204,8 +201,6 @@ acon = {
         "input_id": "deliveries_input",
         "dq_type": "validator",
         "bucket": "my_data_product_bucket",
-        "data_docs_bucket": "my_dq_data_docs_bucket",
-        "data_docs_prefix": "dq/my_data_product/data_docs/site/",
         "tbl_to_derive_pk": "my_database.dummy_deliveries",
         "fail_on_error": False,
         "dq_functions": [
@@ -241,8 +236,6 @@ acon = {
         "input_id": "deliveries_input",
         "dq_type": "validator",
         "bucket": "my_data_product_bucket",
-        "data_docs_bucket": "my_dq_data_docs_bucket",
-        "data_docs_prefix": "dq/my_data_product/data_docs/site/",
         "tbl_to_derive_pk": "my_database.dummy_deliveries",
         "fail_on_error": True,
         "dq_functions": [
@@ -280,8 +273,6 @@ acon = {
         "input_id": "deliveries_input",
         "dq_type": "validator",
         "bucket": "my_data_product_bucket",
-        "data_docs_bucket": "my_dq_data_docs_bucket",
-        "data_docs_prefix": "dq/my_data_product/data_docs/site/",
         "tbl_to_derive_pk": "my_database.dummy_deliveries",
         "fail_on_error": True,
         "dq_functions": [

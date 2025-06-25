@@ -25,7 +25,7 @@ specifications are:
 
 Below is an example of a complete ACON file that reads from a s3 folder with CSVs and incrementally loads that data (using a merge) into a delta lake table.
 
-!!! info "What is the **spec_id**?"
+!!! note "What is the **spec_id**?"
     **spec_id** is one of the main concepts to ensure you can chain the steps of the algorithm, so, for example, you can specify the transformations (in transform_specs) of a DataFrame that was read in the input_specs. Check ACON below to see how the spec_id of the input_specs is used as input_id in one transform specification.
 
 ```python
