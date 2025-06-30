@@ -325,12 +325,6 @@ class DQFactory(object):
                 cls._get_data_context_config(dq_spec), mode="ephemeral"
             )
 
-            # This is added as a workaround for a GX problem which is invoking
-            # init_analytics even when it is not enabled and trying to search for
-            # files, even for ephemeral data contexts, on a path where spark does
-            # not have permissions
-            context._ROOT_CONF_DIR = "/tmp/.great_expectations"  # nosec: B108
-
             # Adding data source to context
             dataframe_data_source = context.data_sources.add_spark(
                 name=f"{dq_spec.spec_id}-{dq_spec.input_id}-datasource",
