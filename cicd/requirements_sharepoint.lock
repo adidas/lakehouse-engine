@@ -4,7 +4,7 @@
 #
 #    pip-compile --constraint=requirements_full.lock --output-file=requirements_sharepoint.lock requirements_sharepoint.txt
 #
-certifi==2024.12.14
+certifi==2025.4.26
     # via
     #   -c requirements_full.lock
     #   requests
@@ -12,11 +12,11 @@ cffi==1.17.1
     # via
     #   -c requirements_full.lock
     #   cryptography
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==44.0.1
+cryptography==45.0.3
     # via
     #   -c requirements_full.lock
     #   msal
@@ -46,7 +46,7 @@ tenacity==9.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_sharepoint.txt
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   -c requirements_full.lock
     #   requests

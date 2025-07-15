@@ -30,7 +30,7 @@ pendulum==3.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements.txt
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -c requirements_full.lock
     #   botocore
@@ -52,11 +52,11 @@ time-machine==2.16.0
     # via
     #   -c requirements_full.lock
     #   pendulum
-tzdata==2024.2
+tzdata==2025.2
     # via
     #   -c requirements_full.lock
     #   pendulum
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   -c requirements_full.lock
     #   botocore

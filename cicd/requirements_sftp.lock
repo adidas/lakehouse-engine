@@ -4,7 +4,7 @@
 #
 #    pip-compile --constraint=requirements_full.lock --output-file=requirements_sftp.lock requirements_sftp.txt
 #
-bcrypt==4.2.1
+bcrypt==4.3.0
     # via
     #   -c requirements_full.lock
     #   paramiko
@@ -13,7 +13,7 @@ cffi==1.17.1
     #   -c requirements_full.lock
     #   cryptography
     #   pynacl
-cryptography==44.0.1
+cryptography==45.0.3
     # via
     #   -c requirements_full.lock
     #   paramiko

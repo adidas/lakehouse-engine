@@ -196,6 +196,12 @@
               "nullable": true,
               "type": "boolean"
             },
+             {
+              "metadata": {},
+              "name": "amount",
+              "nullable": true,
+              "type": "string"
+            },
             {
               "metadata": {},
               "name": "datapakid",
@@ -205,12 +211,6 @@
             {
               "metadata": {},
               "name": "partno",
-              "nullable": true,
-              "type": "string"
-            },
-            {
-              "metadata": {},
-              "name": "amount",
               "nullable": true,
               "type": "string"
             }

@@ -61,7 +61,7 @@ Find usage examples [here](lakehouse_engine_usage/reconciliator/reconciliator.md
 to check if an upstream system or Data Product contains new data since the last execution. With this feature, people can
 trigger jobs to run in more frequent intervals and if the upstream does not contain new data, then the rest of the job
 exits without creating bigger clusters to execute more intensive data ETL (Extraction, Transformation, and Loading).
-Find usage examples [here](lakehouse_engine_usage/sensor/sensor.md).
+Find usage examples [here](lakehouse_engine_usage/sensors/sensors.md).
 
 ⭐ **Terminators:** this feature allow people to specify what to do as a last action, before finishing a Data Load.
 Some examples of actions are: optimising target table, vacuum, compute stats, expose change data feed to external location

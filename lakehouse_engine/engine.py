@@ -5,7 +5,8 @@ from typing import List, Optional, OrderedDict
 from lakehouse_engine.algorithms.data_loader import DataLoader
 from lakehouse_engine.algorithms.gab import GAB
 from lakehouse_engine.algorithms.reconciliator import Reconciliator
-from lakehouse_engine.algorithms.sensor import Sensor, SensorStatus
+from lakehouse_engine.algorithms.sensors.heartbeat import Heartbeat
+from lakehouse_engine.algorithms.sensors.sensor import Sensor, SensorStatus
 from lakehouse_engine.core.definitions import (
     CollectEngineUsage,
     SAPLogchain,
@@ -181,6 +182,112 @@ def execute_sensor(
         acon, execute_sensor.__name__, collect_engine_usage, spark_confs
     )
     return Sensor(acon).execute()
+
+
+def execute_sensor_heartbeat(
+    acon_path: Optional[str] = None,
+    acon: Optional[dict] = None,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
+    spark_confs: dict = None,
+) -> None:
+    """Execute a sensor based on a Heartbeat Algorithm Configuration.
+
+    The heartbeat mechanism monitors whether an upstream system has new data.
+
+    The heartbeat job runs continuously within a defined data product or
+    according to a user-defined schedule.
+
+    This job operates based on the Control table, where source-related entries can be
+    fed by users using the Heartbeat Data Feeder job.
+
+    Each source (such as SAP, delta_table, Kafka, Local Manual Upload, etc.) can have
+    tasks added in parallel within the Heartbeat Job.
+
+    Based on source heartbeat ACON and control table entries,
+    Heartbeat will send a final sensor acon to the existing sensor modules,
+    which checks if a new event is available for the control table record.
+
+    The sensor then returns the NEW_EVENT_AVAILABLE status to the Heartbeat modules,
+    which update the control table.
+
+    Following this, the related Databricks jobs are triggered through the
+    Databricks Job API, ensuring that all dependencies are met.
+
+    This process allows the Heartbeat sensor to efficiently manage and centralize
+    the entire workflow with minimal user intervention and
+    enhance sensor features by providing centralization, efficently manage and
+    track using control table.
+
+    Args:
+        acon_path: path of the acon (algorithm configuration) file.
+        acon: acon provided directly through python code (e.g., notebooks
+            or other apps).
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
+        spark_confs: optional dictionary with the spark confs to be used when collecting
+            the engine usage.
+    """
+    acon = ConfigUtils.get_acon(acon_path, acon)
+    ExecEnv.get_or_create(
+        app_name="execute_heartbeat", config=acon.get("exec_env", None)
+    )
+    EngineUsageStats.store_engine_usage(
+        acon, execute_sensor_heartbeat.__name__, collect_engine_usage, spark_confs
+    )
+    return Heartbeat(acon).execute()
+
+
+def trigger_heartbeat_sensor_jobs(
+    acon: dict,
+) -> None:
+    """Trigger the jobs via Databricks job API.
+
+    Args:
+        acon: Heartbeat ACON containing data product configs and options.
+    """
+    ExecEnv.get_or_create(app_name="trigger_heartbeat_sensor_jobs")
+    Heartbeat(acon).heartbeat_sensor_trigger_jobs()
+
+
+def execute_heartbeat_sensor_data_feed(
+    heartbeat_sensor_data_feed_path: str,
+    heartbeat_sensor_control_table: str,
+) -> None:
+    """Control table Data feeder.
+
+    It reads the CSV file stored at `data` folder and
+    perform UPSERT and DELETE in control table.
+
+    Args:
+        heartbeat_sensor_data_feed_path: path where CSV file is stored.
+        heartbeat_sensor_control_table: CONTROL table of Heartbeat sensor.
+    """
+    ExecEnv.get_or_create(app_name="execute_heartbeat_sensor_data_feed")
+    Heartbeat.heartbeat_sensor_control_table_data_feed(
+        heartbeat_sensor_data_feed_path, heartbeat_sensor_control_table
+    )
+
+
+def update_heartbeat_sensor_status(
+    heartbeat_sensor_control_table: str,
+    sensor_table: str,
+    job_id: str,
+) -> None:
+    """UPDATE heartbeat sensor status.
+
+    Update heartbeat sensor control table with COMPLETE status and
+    job_end_timestamp for the triggered job.
+    Update sensor control table with PROCESSED_NEW_DATA status and
+    status_change_timestamp for the triggered job.
+
+    Args:
+        heartbeat_sensor_control_table: Heartbeat sensor control table name.
+        sensor_table: lakehouse engine sensor table name.
+        job_id: job_id of the running job. It refers to trigger_job_id in Control table.
+    """
+    ExecEnv.get_or_create(app_name="update_heartbeat_sensor_status")
+    Heartbeat.update_heartbeat_sensor_completion_status(
+        heartbeat_sensor_control_table, sensor_table, job_id
+    )
 
 
 def update_sensor_status(

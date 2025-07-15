@@ -1,0 +1,4 @@
+sensor_source|sensor_id|sensor_read_type|asset_description|upstream_key|preprocess_query|latest_event_fetched_timestamp|trigger_job_id|trigger_job_name|status|status_change_timestamp|job_start_timestamp|job_end_timestamp|job_state|dependency_flag
+delta_table|dummy_delta_table|streaming|dummy_heartbeat_asset|||2025-08-14 23:00:00|1927384615203749|data-product_job_name_orders|NEW_EVENT_AVAILABLE|2025-08-14 23:00:00|||UNPAUSED|TRUE
+sap_bw|dummy_sap_asset|batch|dummy_heartbeat_sap_bw|LOAD_DATE|||2604918372561094|data-product_job_name_sales|||||UNPAUSED|TRUE
+kafka|sales: domain.workspace.load.dummy_topic|streaming|dummy_heartbeat_kafka||||2604918372561094|data-product_job_name_sales|||||UNPAUSED|TRUE

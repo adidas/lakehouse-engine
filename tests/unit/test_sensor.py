@@ -11,7 +11,7 @@ from lakehouse_engine.algorithms.exceptions import (
     NoNewDataException,
     SensorAlreadyExistsException,
 )
-from lakehouse_engine.algorithms.sensor import Sensor
+from lakehouse_engine.algorithms.sensors.sensor import Sensor
 from lakehouse_engine.core.definitions import (
     InputFormat,
     InputSpec,

@@ -1,0 +1,51 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name":"sensor_id",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "assets",
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"status",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"status_change_timestamp",
+      "type":"timestamp",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"checkpoint_location",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"upstream_key",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"upstream_value",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

@@ -4,9 +4,9 @@
 #
 #    pip-compile --output-file=requirements_full.lock requirements.txt requirements_azure.txt requirements_cicd.txt requirements_dq.txt requirements_os.txt requirements_sftp.txt requirements_sharepoint.txt
 #
-aiohappyeyeballs==2.4.4
+aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.11.11
+aiohttp==3.12.9
     # via microsoft-kiota-authentication-azure
 aiosignal==1.3.2
     # via aiohttp
@@ -14,22 +14,22 @@ altair==4.2.2
     # via great-expectations
 annotated-types==0.7.0
     # via pydantic
-anyio==4.8.0
+anyio==4.9.0
     # via httpx
 astpretty==3.0.0
     # via flake8-expression-complexity
-attrs==24.3.0
+attrs==25.3.0
     # via
     #   aiohttp
     #   flake8-bugbear
     #   flake8-eradicate
     #   jsonschema
     #   referencing
-azure-core==1.32.0
+azure-core==1.34.0
     # via
     #   azure-identity
     #   microsoft-kiota-authentication-azure
-azure-identity==1.19.0
+azure-identity==1.23.0
     # via msgraph-sdk
 backoff==2.2.1
     # via posthog
@@ -37,26 +37,26 @@ backports-tarfile==1.2.0
     # via jaraco-context
 bandit==1.7.8
     # via -r requirements_cicd.txt
-bcrypt==4.2.1
+bcrypt==4.3.0
     # via paramiko
 black==24.4.0
     # via
     #   -r requirements_cicd.txt
     #   flake8-black
-boolean-py==4.0
+boolean-py==5.0
     # via license-expression
 boto3==1.34.39
     # via
     #   -r requirements.txt
     #   moto
-boto3-stubs==1.36.2
+boto3-stubs==1.38.31
     # via types-boto3
 botocore==1.34.162
     # via
     #   boto3
     #   moto
     #   s3transfer
-botocore-stubs==1.36.2
+botocore-stubs==1.38.30
     # via boto3-stubs
 build==1.2.1
     # via
@@ -64,11 +64,11 @@ build==1.2.1
     #   pip-tools
 bump2version==1.0.1
     # via -r requirements_cicd.txt
-cachecontrol[filecache]==0.14.2
+cachecontrol[filecache]==0.14.3
     # via
     #   cachecontrol
     #   pip-audit
-certifi==2024.12.14
+certifi==2025.4.26
     # via
     #   httpcore
     #   httpx
@@ -77,9 +77,9 @@ cffi==1.17.1
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
-click==8.1.8
+click==8.2.1
     # via
     #   black
     #   mkdocs
@@ -91,9 +91,9 @@ colorama==0.4.6
     # via
     #   griffe
     #   mkdocs-material
-coverage[toml]==7.6.10
+coverage[toml]==7.8.2
     # via pytest-cov
-cryptography==44.0.1
+cryptography==45.0.3
     # via
     #   azure-identity
     #   great-expectations
@@ -108,10 +108,6 @@ defusedxml==0.7.1
     # via py-serializable
 delta-spark==3.2.0
     # via -r requirements_os.txt
-deprecated==1.2.15
-    # via
-    #   opentelemetry-api
-    #   opentelemetry-semantic-conventions
 distlib==0.3.6
     # via -r requirements_cicd.txt
 distro==1.9.0
@@ -122,7 +118,7 @@ entrypoints==0.4
     # via altair
 eradicate==2.3.0
     # via flake8-eradicate
-filelock==3.16.1
+filelock==3.18.0
     # via cachecontrol
 flake8==7.0.0
     # via
@@ -159,7 +155,7 @@ flake8-mutable==1.2.0
     # via -r requirements_cicd.txt
 flake8-quotes==3.4.0
     # via -r requirements_cicd.txt
-frozenlist==1.5.0
+frozenlist==1.6.2
     # via
     #   aiohttp
     #   aiosignal
@@ -173,21 +169,21 @@ griffe==0.29.1
     # via
     #   -r requirements_cicd.txt
     #   mkdocstrings-python
-h11==0.14.0
+h11==0.16.0
     # via httpcore
-h2==4.1.0
+h2==4.2.0
     # via httpx
-hpack==4.0.0
+hpack==4.1.0
     # via h2
 html5lib==1.1
     # via pip-audit
-httpcore==1.0.7
+httpcore==1.0.9
     # via httpx
 httpx[http2]==0.28.1
     # via
     #   microsoft-kiota-http
     #   msgraph-core
-hyperframe==6.0.1
+hyperframe==6.1.0
     # via h2
 idna==3.10
     # via
@@ -195,7 +191,7 @@ idna==3.10
     #   httpx
     #   requests
     #   yarl
-importlib-metadata==8.5.0
+importlib-metadata==8.7.0
     # via
     #   delta-spark
     #   keyring
@@ -204,7 +200,7 @@ importlib-metadata==8.5.0
     #   twine
 importlib-resources==6.5.2
     # via mike
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 isort==5.13.2
     # via
@@ -216,7 +212,7 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.1.0
     # via keyring
-jeepney==0.8.0
+jeepney==0.9.0
     # via
     #   keyring
     #   secretstorage
@@ -236,11 +232,11 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via
     #   altair
     #   great-expectations
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via jsonschema
 keyring==25.6.0
     # via twine
@@ -274,7 +270,7 @@ markupsafe==3.0.2
     #   mkdocstrings
     #   mkdocstrings-crystal
     #   werkzeug
-marshmallow==3.25.1
+marshmallow==3.26.1
     # via great-expectations
 mccabe==0.7.0
     # via flake8
@@ -284,7 +280,7 @@ mergedeep==1.3.4
     # via
     #   -r requirements_cicd.txt
     #   mkdocs
-microsoft-kiota-abstractions==1.9.0
+microsoft-kiota-abstractions==1.9.3
     # via
     #   microsoft-kiota-authentication-azure
     #   microsoft-kiota-http
@@ -294,25 +290,25 @@ microsoft-kiota-abstractions==1.9.0
     #   microsoft-kiota-serialization-text
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-authentication-azure==1.9.0
+microsoft-kiota-authentication-azure==1.9.3
     # via
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-http==1.9.0
+microsoft-kiota-http==1.9.3
     # via
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-serialization-form==1.9.0
+microsoft-kiota-serialization-form==1.9.3
     # via msgraph-sdk
-microsoft-kiota-serialization-json==1.9.0
+microsoft-kiota-serialization-json==1.9.3
     # via msgraph-sdk
-microsoft-kiota-serialization-multipart==1.9.0
+microsoft-kiota-serialization-multipart==1.9.3
     # via msgraph-sdk
-microsoft-kiota-serialization-text==1.9.0
+microsoft-kiota-serialization-text==1.9.3
     # via msgraph-sdk
 mike==2.0.0
     # via -r requirements_cicd.txt
-mistune==3.0.2
+mistune==3.1.3
     # via great-expectations
 mkdocs==1.4.3
     # via
@@ -357,7 +353,7 @@ mkdocstrings-python==1.1.2
     #   mkdocstrings
 monotonic==1.6
     # via posthog
-more-itertools==10.4.0
+more-itertools==10.7.0
     # via
     #   jaraco-classes
     #   jaraco-functools
@@ -369,27 +365,27 @@ msal==1.31.0
     #   -r requirements_sharepoint.txt
     #   azure-identity
     #   msal-extensions
-msal-extensions==1.2.0
+msal-extensions==1.3.1
     # via azure-identity
 msgpack==1.1.0
     # via cachecontrol
-msgraph-core==1.3.3
+msgraph-core==1.3.4
     # via msgraph-sdk
 msgraph-sdk==1.4.0
     # via -r requirements_azure.txt
-multidict==6.1.0
+multidict==6.4.4
     # via
     #   aiohttp
     #   yarl
 mypy==1.9.0
     # via -r requirements_cicd.txt
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via
     #   black
     #   mypy
 nest-asyncio==1.5.6
     # via -r requirements_azure.txt
-nh3==0.2.20
+nh3==0.2.21
     # via readme-renderer
 numpy==1.26.4
     # via
@@ -398,23 +394,23 @@ numpy==1.26.4
     #   great-expectations
     #   pandas
     #   scipy
-opentelemetry-api==1.29.0
+opentelemetry-api==1.34.0
     # via
     #   microsoft-kiota-abstractions
     #   microsoft-kiota-authentication-azure
     #   microsoft-kiota-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.29.0
+opentelemetry-sdk==1.34.0
     # via
     #   microsoft-kiota-abstractions
     #   microsoft-kiota-authentication-azure
     #   microsoft-kiota-http
-opentelemetry-semantic-conventions==0.50b0
+opentelemetry-semantic-conventions==0.55b0
     # via opentelemetry-sdk
-packageurl-python==0.16.0
+packageurl-python==0.17.1
     # via cyclonedx-python-lib
-packaging==24.2
+packaging==25.0
     # via
     #   black
     #   build
@@ -434,7 +430,7 @@ paramiko==3.4.0
     #   pytest-sftpserver
 pathspec==0.12.1
     # via black
-pbr==6.1.0
+pbr==6.1.1
     # via stevedore
 pendulum==3.0.0
     # via -r requirements.txt
@@ -448,17 +444,15 @@ pip-tools==7.4.1
     # via -r requirements_cicd.txt
 pkginfo==1.10.0
     # via twine
-platformdirs==4.3.6
+platformdirs==4.3.8
     # via
     #   black
     #   mkdocstrings
-pluggy==1.5.0
+pluggy==1.6.0
     # via pytest
-portalocker==2.10.1
-    # via msal-extensions
-posthog==3.24.0
+posthog==3.25.0
     # via great-expectations
-propcache==0.2.1
+propcache==0.3.1
     # via
     #   aiohttp
     #   yarl
@@ -470,9 +464,9 @@ pycodestyle==2.11.1
     # via flake8
 pycparser==2.22
     # via cffi
-pydantic==2.10.5
+pydantic==2.11.5
     # via great-expectations
-pydantic-core==2.27.2
+pydantic-core==2.33.2
     # via pydantic
 pydocstyle==6.3.0
     # via flake8-docstrings
@@ -495,7 +489,7 @@ pymdown-extensions==10.0.1
     #   mkdocstrings
 pynacl==1.5.0
     # via paramiko
-pyparsing==3.2.1
+pyparsing==3.2.3
     # via
     #   great-expectations
     #   mike
@@ -516,7 +510,7 @@ pytest-cov==4.1.0
     # via -r requirements_cicd.txt
 pytest-sftpserver==1.3.0
     # via -r requirements_cicd.txt
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   ghp-import
@@ -527,7 +521,7 @@ python-dateutil==2.8.2
     #   pendulum
     #   posthog
     #   time-machine
-pytz==2024.2
+pytz==2025.2
     # via pandas
 pyyaml==6.0.1
     # via
@@ -545,7 +539,7 @@ pyyaml-env-tag==0.1
     #   mkdocs
 readme-renderer==44.0
     # via twine
-referencing==0.36.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -568,24 +562,26 @@ requests==2.32.3
     #   twine
 requests-toolbelt==1.0.0
     # via twine
-responses==0.25.6
+responses==0.25.7
     # via moto
 rfc3986==2.0.0
     # via twine
-rich==13.9.4
+rich==14.0.0
     # via
     #   bandit
     #   pip-audit
     #   twine
-rpds-py==0.22.3
+rpds-py==0.25.1
     # via
     #   jsonschema
     #   referencing
-ruamel-yaml==0.17.17
+ruamel-yaml==0.18.13
     # via great-expectations
+ruamel-yaml-clib==0.2.12
+    # via ruamel-yaml
 s3transfer==0.10.4
     # via boto3
-scipy==1.15.1
+scipy==1.15.3
     # via great-expectations
 secretstorage==3.3.3
     # via keyring
@@ -598,17 +594,17 @@ six==1.17.0
     #   python-dateutil
 sniffio==1.3.1
     # via anyio
-snowballstemmer==2.2.0
+snowballstemmer==3.0.1
     # via pydocstyle
 sortedcontainers==2.4.0
     # via cyclonedx-python-lib
-std-uritemplate==2.0.1
+std-uritemplate==2.0.5
     # via microsoft-kiota-abstractions
-stevedore==5.4.0
+stevedore==5.4.1
     # via bandit
 tenacity==9.0.0
     # via -r requirements_sharepoint.txt
-termcolor==2.5.0
+termcolor==3.1.0
     # via mkdocs-macros-plugin
 time-machine==2.16.0
     # via pendulum
@@ -620,7 +616,7 @@ tqdm==4.67.1
     # via great-expectations
 twine==5.1.1
     # via -r requirements_cicd.txt
-types-awscrt==0.23.6
+types-awscrt==0.27.2
     # via botocore-stubs
 types-boto3==1.0.2
     # via -r requirements_cicd.txt
@@ -630,11 +626,11 @@ types-paramiko==2.12.0.0
     # via -r requirements_cicd.txt
 types-requests==2.31.0.6
     # via -r requirements_cicd.txt
-types-s3transfer==0.11.1
+types-s3transfer==0.13.0
     # via boto3-stubs
 types-urllib3==1.26.25.14
     # via types-requests
-typing-extensions==4.12.2
+typing-extensions==4.14.0
     # via
     #   anyio
     #   azure-core
@@ -642,20 +638,24 @@ typing-extensions==4.12.2
     #   boto3-stubs
     #   great-expectations
     #   mypy
+    #   opentelemetry-api
     #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   referencing
-tzdata==2024.2
+    #   typing-inspection
+typing-inspection==0.4.1
+    # via pydantic
+tzdata==2025.2
     # via
     #   pandas
     #   pendulum
-tzlocal==5.2
+tzlocal==5.3.1
     # via great-expectations
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   botocore
-    #   microsoft-kiota-http
     #   requests
     #   responses
     #   twine
@@ -671,13 +671,11 @@ werkzeug==3.1.3
     # via moto
 wheel==0.45.1
     # via pip-tools
-wrapt==1.17.2
-    # via deprecated
 xmltodict==0.14.2
     # via moto
-yarl==1.18.3
+yarl==1.20.0
     # via aiohttp
-zipp==3.21.0
+zipp==3.22.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

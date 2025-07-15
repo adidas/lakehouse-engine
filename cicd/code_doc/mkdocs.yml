@@ -46,16 +46,28 @@ nav:
           - Validations Failing: lakehouse_engine_usage/data_quality/validations_failing/validations_failing.md
       - Reconciliator: 
         - Overview: lakehouse_engine_usage/reconciliator/reconciliator.md
-      - Sensor: 
-        - Overview: lakehouse_engine_usage/sensor/sensor.md
-        - Scenarios:
-          - Delta Table: lakehouse_engine_usage/sensor/delta_table/delta_table.md
-          - Sensor from other Sensor Delta Table: lakehouse_engine_usage/sensor/delta_upstream_sensor_table/delta_upstream_sensor_table.md
-          - Sensor from Files: lakehouse_engine_usage/sensor/file/file.md
-          - Sensor from JDBC: lakehouse_engine_usage/sensor/jdbc_table/jdbc_table.md
-          - Sensor from Kafka: lakehouse_engine_usage/sensor/kafka/kafka.md
-          - Sensor from SAP: lakehouse_engine_usage/sensor/sap_bw_b4/sap_bw_b4.md
-          - Update Sensor control Delta Table after processing the data: lakehouse_engine_usage/sensor/update_sensor_status/update_sensor_status.md
+      - Sensors:
+          - Overview: lakehouse_engine_usage/sensors/sensors.md
+          - Sensor:
+              - Overview: lakehouse_engine_usage/sensors/sensor/sensor.md
+              - Supported Sources:
+                  - Delta Table: lakehouse_engine_usage/sensors/sensor/delta_table/delta_table.md
+                  - Sensor from other Sensor Delta Table: lakehouse_engine_usage/sensors/sensor/delta_upstream_sensor_table/delta_upstream_sensor_table.md
+                  - Sensor from Files: lakehouse_engine_usage/sensors/sensor/file/file.md
+                  - Sensor from JDBC: lakehouse_engine_usage/sensors/sensor/jdbc_table/jdbc_table.md
+                  - Sensor from Kafka: lakehouse_engine_usage/sensors/sensor/kafka/kafka.md
+                  - Sensor from SAP: lakehouse_engine_usage/sensors/sensor/sap_bw_b4/sap_bw_b4.md
+              - Update Sensor control Delta Table after processing the data: lakehouse_engine_usage/sensors/sensor/update_sensor_status/update_sensor_status.md
+          - Heartbeat Sensor:
+              - Overview: lakehouse_engine_usage/sensors/heartbeat/heartbeat.md
+              - Supported Sources:
+                  - Delta Table: lakehouse_engine_usage/sensors/heartbeat/delta_table/delta_table.md
+                  - Kafka: lakehouse_engine_usage/sensors/heartbeat/kafka/kafka.md
+                  - Manual Table: lakehouse_engine_usage/sensors/heartbeat/manual_table/manual_table.md
+                  - SAP BW/4HANA: lakehouse_engine_usage/sensors/heartbeat/sap_bw_b4/sap_bw_b4.md
+                  - Trigger File: lakehouse_engine_usage/sensors/heartbeat/trigger_file/trigger_file.md
+              - Feed Heartbeat Sensor Control Delta Table: lakehouse_engine_usage/sensors/heartbeat/heartbeat_sensor_data_feed/heartbeat_sensor_data_feed.md
+              - Update Heartbeat Sensor control Delta Table after processing the data: lakehouse_engine_usage/sensors/heartbeat/update_heartbeat_sensor_status/update_heartbeat_sensor_status.md
       - GAB: 
         - Overview: lakehouse_engine_usage/gab/gab.md
         - Step-by-Step: lakehouse_engine_usage/gab/step_by_step/step_by_step.md

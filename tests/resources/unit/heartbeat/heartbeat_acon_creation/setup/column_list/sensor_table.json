@@ -1,0 +1,9 @@
+{
+  "sensor_id": "string",
+  "assets": "array<string>",
+  "status": "string",
+  "status_change_timestamp": "timestamp",
+  "checkpoint_location": "string",
+  "upstream_key": "string",
+  "upstream_value": "string"
+}

@@ -1471,3 +1471,120 @@ class GABCombinedConfiguration(Enum):
             "project_end": _DEFAULT_PROJECT_END,
         },
     }
+
+
+@dataclass
+class HeartbeatConfigSpec(object):
+    """Heartbeat Configurations and control table specifications.
+
+    This provides the way in which the Heartbeat can pass environment and
+    specific quantum related config information to sensor acon.
+
+    - sensor_source: specifies the source system of sensor, for e.g.
+        sap_b4, sap_bw, delta_table, kafka, lmu_delta_table, trigger_file etc.
+        It is also a part of heartbeat control table, Therefore it is useful for
+        filtering out data from Heartbeat control table based on template source system.
+    - data_format: format of the input source, e.g jdbc, delta, kafka, cloudfiles etc.
+    - heartbeat_sensor_db_table: heartbeat control table along
+        with database from config.
+    - lakehouse_engine_sensor_db_table: Control table along with database(config).
+    - options: dict with other relevant options for reading data from specified input
+        data_format. This can vary for each source system.
+        For e.g. For sap systems, DRIVER, URL, USERNAME, PASSWORD are required which are
+        all being read from config file of quantum.
+    - jdbc_db_table: schema and table name of JDBC sources.
+    - token: token to access Databricks Job API(read from config).
+    - domain: workspace domain url for quantum(read from config).
+    - base_checkpoint_location: checkpoint location for streaming sources(from config).
+    - kafka_configs: configs required for kafka. It is (read from config) as JSON.
+        config hierarchy is [sensor_kafka --> <dp_name/prefix> --> main kafka options].
+    - kafka_secret_scope: secret scope for kafka (read from config).
+    - base_trigger_file_location: location where all the trigger files are being
+        created (read from config).
+    - schema_dict: dict representation of schema of the trigger file (e.g. Spark struct
+        type schema).
+    """
+
+    sensor_source: str
+    data_format: str
+    heartbeat_sensor_db_table: str
+    lakehouse_engine_sensor_db_table: str
+    token: str
+    domain: str
+    options: Optional[dict]
+    jdbc_db_table: Optional[str]
+    base_checkpoint_location: Optional[str]
+    kafka_configs: Optional[dict]
+    kafka_secret_scope: Optional[str]
+    base_trigger_file_location: Optional[str]
+    schema_dict: Optional[dict]
+
+    @classmethod
+    def create_from_acon(cls, acon: dict):  # type: ignore
+        """Create HeartbeatConfigSpec from acon.
+
+        Args:
+            acon: Heartbeat ACON.
+        """
+        return cls(
+            sensor_source=acon["sensor_source"],
+            data_format=acon["data_format"],
+            heartbeat_sensor_db_table=acon["heartbeat_sensor_db_table"],
+            lakehouse_engine_sensor_db_table=acon["lakehouse_engine_sensor_db_table"],
+            token=acon["token"],
+            domain=acon["domain"],
+            options=acon.get("options"),
+            jdbc_db_table=acon.get("jdbc_db_table"),
+            base_checkpoint_location=acon.get("base_checkpoint_location"),
+            kafka_configs=acon.get("kafka_configs"),
+            kafka_secret_scope=acon.get("kafka_secret_scope"),
+            base_trigger_file_location=acon.get("base_trigger_file_location"),
+            schema_dict=acon.get("schema_dict"),
+        )
+
+
+class HeartbeatSensorSource(Enum):
+    """Formats of algorithm input."""
+
+    SAP_BW = "sap_bw"
+    SAP_B4 = "sap_b4"
+    DELTA_TABLE = "delta_table"
+    KAFKA = "kafka"
+    LMU_DELTA_TABLE = "lmu_delta_table"
+    TRIGGER_FILE = "trigger_file"
+
+    @classmethod
+    def values(cls):  # type: ignore
+        """Generates a list containing all enum values.
+
+        Returns:
+            A list with all enum values.
+        """
+        return (c.value for c in cls)
+
+
+class HeartbeatStatus(Enum):
+    """Status for a sensor."""
+
+    NEW_EVENT_AVAILABLE = "NEW_EVENT_AVAILABLE"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+
+
+HEARTBEAT_SENSOR_UPDATE_SET: dict = {
+    "target.sensor_source": "src.sensor_source",
+    "target.sensor_id": "src.sensor_id",
+    "target.asset_description": "src.asset_description",
+    "target.upstream_key": "src.upstream_key",
+    "target.preprocess_query": "src.preprocess_query",
+    "target.latest_event_fetched_timestamp": "src.latest_event_fetched_timestamp",
+    "target.trigger_job_id": "src.trigger_job_id",
+    "target.trigger_job_name": "src.trigger_job_name",
+    "target.status": "src.status",
+    "target.status_change_timestamp": "src.status_change_timestamp",
+    "target.job_start_timestamp": "src.job_start_timestamp",
+    "target.job_end_timestamp": "src.job_end_timestamp",
+    "target.job_state": "src.job_state",
+    "target.dependency_flag": "src.dependency_flag",
+    "target.sensor_read_type": "src.sensor_read_type",
+}

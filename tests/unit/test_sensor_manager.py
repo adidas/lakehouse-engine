@@ -16,7 +16,7 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-from lakehouse_engine.algorithms.sensor import SensorStatus
+from lakehouse_engine.algorithms.sensors.sensor import SensorStatus
 from lakehouse_engine.core.definitions import SensorSpec
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.sensor_manager import (

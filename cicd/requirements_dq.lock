@@ -12,7 +12,7 @@ annotated-types==0.7.0
     # via
     #   -c requirements_full.lock
     #   pydantic
-attrs==24.3.0
+attrs==25.3.0
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -21,7 +21,7 @@ backoff==2.2.1
     # via
     #   -c requirements_full.lock
     #   posthog
-certifi==2024.12.14
+certifi==2025.4.26
     # via
     #   -c requirements_full.lock
     #   requests
@@ -29,11 +29,11 @@ cffi==1.17.1
     # via
     #   -c requirements_full.lock
     #   cryptography
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==44.0.1
+cryptography==45.0.3
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -58,12 +58,12 @@ jinja2==3.1.6
     #   -c requirements_full.lock
     #   altair
     #   great-expectations
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via
     #   -c requirements_full.lock
     #   altair
     #   great-expectations
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -71,11 +71,11 @@ markupsafe==3.0.2
     # via
     #   -c requirements_full.lock
     #   jinja2
-marshmallow==3.25.1
+marshmallow==3.26.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
-mistune==3.0.2
+mistune==3.1.3
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -91,7 +91,7 @@ numpy==1.26.4
     #   great-expectations
     #   pandas
     #   scipy
-packaging==24.2
+packaging==25.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -101,7 +101,7 @@ pandas==2.1.4
     #   -c requirements_full.lock
     #   altair
     #   great-expectations
-posthog==3.24.0
+posthog==3.25.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -109,29 +109,29 @@ pycparser==2.22
     # via
     #   -c requirements_full.lock
     #   cffi
-pydantic==2.10.5
+pydantic==2.11.5
     # via
     #   -c requirements_full.lock
     #   great-expectations
-pydantic-core==2.27.2
+pydantic-core==2.33.2
     # via
     #   -c requirements_full.lock
     #   pydantic
-pyparsing==3.2.1
+pyparsing==3.2.3
     # via
     #   -c requirements_full.lock
     #   great-expectations
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -c requirements_full.lock
     #   great-expectations
     #   pandas
     #   posthog
-pytz==2024.2
+pytz==2025.2
     # via
     #   -c requirements_full.lock
     #   pandas
-referencing==0.36.1
+referencing==0.36.2
     # via
     #   -c requirements_full.lock
     #   jsonschema
@@ -141,16 +141,20 @@ requests==2.32.3
     #   -c requirements_full.lock
     #   great-expectations
     #   posthog
-rpds-py==0.22.3
+rpds-py==0.25.1
     # via
     #   -c requirements_full.lock
     #   jsonschema
     #   referencing
-ruamel-yaml==0.17.17
+ruamel-yaml==0.18.13
     # via
     #   -c requirements_full.lock
     #   great-expectations
-scipy==1.15.1
+ruamel-yaml-clib==0.2.12
+    # via
+    #   -c requirements_full.lock
+    #   ruamel-yaml
+scipy==1.15.3
     # via
     #   -c requirements_full.lock
     #   great-expectations
@@ -167,22 +171,27 @@ tqdm==4.67.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
-typing-extensions==4.12.2
+typing-extensions==4.14.0
     # via
     #   -c requirements_full.lock
     #   great-expectations
     #   pydantic
     #   pydantic-core
     #   referencing
-tzdata==2024.2
+    #   typing-inspection
+typing-inspection==0.4.1
+    # via
+    #   -c requirements_full.lock
+    #   pydantic
+tzdata==2025.2
     # via
     #   -c requirements_full.lock
     #   pandas
-tzlocal==5.2
+tzlocal==5.3.1
     # via
     #   -c requirements_full.lock
     #   great-expectations
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   -c requirements_full.lock
     #   requests

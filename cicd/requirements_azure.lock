@@ -4,11 +4,11 @@
 #
 #    pip-compile --constraint=requirements_full.lock --output-file=requirements_azure.lock requirements_azure.txt
 #
-aiohappyeyeballs==2.4.4
+aiohappyeyeballs==2.6.1
     # via
     #   -c requirements_full.lock
     #   aiohttp
-aiohttp==3.11.11
+aiohttp==3.12.9
     # via
     #   -c requirements_full.lock
     #   microsoft-kiota-authentication-azure
@@ -16,24 +16,24 @@ aiosignal==1.3.2
     # via
     #   -c requirements_full.lock
     #   aiohttp
-anyio==4.8.0
+anyio==4.9.0
     # via
     #   -c requirements_full.lock
     #   httpx
-attrs==24.3.0
+attrs==25.3.0
     # via
     #   -c requirements_full.lock
     #   aiohttp
-azure-core==1.32.0
+azure-core==1.34.0
     # via
     #   -c requirements_full.lock
     #   azure-identity
     #   microsoft-kiota-authentication-azure
-azure-identity==1.19.0
+azure-identity==1.23.0
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
-certifi==2024.12.14
+certifi==2025.4.26
     # via
     #   -c requirements_full.lock
     #   httpcore
@@ -43,39 +43,34 @@ cffi==1.17.1
     # via
     #   -c requirements_full.lock
     #   cryptography
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==44.0.1
+cryptography==45.0.3
     # via
     #   -c requirements_full.lock
     #   azure-identity
     #   msal
     #   pyjwt
-deprecated==1.2.15
-    # via
-    #   -c requirements_full.lock
-    #   opentelemetry-api
-    #   opentelemetry-semantic-conventions
-frozenlist==1.5.0
+frozenlist==1.6.2
     # via
     #   -c requirements_full.lock
     #   aiohttp
     #   aiosignal
-h11==0.14.0
+h11==0.16.0
     # via
     #   -c requirements_full.lock
     #   httpcore
-h2==4.1.0
+h2==4.2.0
     # via
     #   -c requirements_full.lock
     #   httpx
-hpack==4.0.0
+hpack==4.1.0
     # via
     #   -c requirements_full.lock
     #   h2
-httpcore==1.0.7
+httpcore==1.0.9
     # via
     #   -c requirements_full.lock
     #   httpx
@@ -84,7 +79,7 @@ httpx[http2]==0.28.1
     #   -c requirements_full.lock
     #   microsoft-kiota-http
     #   msgraph-core
-hyperframe==6.0.1
+hyperframe==6.1.0
     # via
     #   -c requirements_full.lock
     #   h2
@@ -95,11 +90,11 @@ idna==3.10
     #   httpx
     #   requests
     #   yarl
-importlib-metadata==8.5.0
+importlib-metadata==8.7.0
     # via
     #   -c requirements_full.lock
     #   opentelemetry-api
-microsoft-kiota-abstractions==1.9.0
+microsoft-kiota-abstractions==1.9.3
     # via
     #   -c requirements_full.lock
     #   microsoft-kiota-authentication-azure
@@ -110,29 +105,29 @@ microsoft-kiota-abstractions==1.9.0
     #   microsoft-kiota-serialization-text
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-authentication-azure==1.9.0
+microsoft-kiota-authentication-azure==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-http==1.9.0
+microsoft-kiota-http==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-core
     #   msgraph-sdk
-microsoft-kiota-serialization-form==1.9.0
+microsoft-kiota-serialization-form==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
-microsoft-kiota-serialization-json==1.9.0
+microsoft-kiota-serialization-json==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
-microsoft-kiota-serialization-multipart==1.9.0
+microsoft-kiota-serialization-multipart==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
-microsoft-kiota-serialization-text==1.9.0
+microsoft-kiota-serialization-text==1.9.3
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
@@ -142,11 +137,11 @@ msal==1.31.0
     #   -r requirements_azure.txt
     #   azure-identity
     #   msal-extensions
-msal-extensions==1.2.0
+msal-extensions==1.3.1
     # via
     #   -c requirements_full.lock
     #   azure-identity
-msgraph-core==1.3.3
+msgraph-core==1.3.4
     # via
     #   -c requirements_full.lock
     #   msgraph-sdk
@@ -154,7 +149,7 @@ msgraph-sdk==1.4.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_azure.txt
-multidict==6.1.0
+multidict==6.4.4
     # via
     #   -c requirements_full.lock
     #   aiohttp
@@ -163,7 +158,7 @@ nest-asyncio==1.5.6
     # via
     #   -c requirements_full.lock
     #   -r requirements_azure.txt
-opentelemetry-api==1.29.0
+opentelemetry-api==1.34.0
     # via
     #   -c requirements_full.lock
     #   microsoft-kiota-abstractions
@@ -171,21 +166,17 @@ opentelemetry-api==1.29.0
     #   microsoft-kiota-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-sdk==1.29.0
+opentelemetry-sdk==1.34.0
     # via
     #   -c requirements_full.lock
     #   microsoft-kiota-abstractions
     #   microsoft-kiota-authentication-azure
     #   microsoft-kiota-http
-opentelemetry-semantic-conventions==0.50b0
+opentelemetry-semantic-conventions==0.55b0
     # via
     #   -c requirements_full.lock
     #   opentelemetry-sdk
-portalocker==2.10.1
-    # via
-    #   -c requirements_full.lock
-    #   msal-extensions
-propcache==0.2.1
+propcache==0.3.1
     # via
     #   -c requirements_full.lock
     #   aiohttp
@@ -212,31 +203,28 @@ sniffio==1.3.1
     # via
     #   -c requirements_full.lock
     #   anyio
-std-uritemplate==2.0.1
+std-uritemplate==2.0.5
     # via
     #   -c requirements_full.lock
     #   microsoft-kiota-abstractions
-typing-extensions==4.12.2
+typing-extensions==4.14.0
     # via
     #   -c requirements_full.lock
     #   anyio
     #   azure-core
     #   azure-identity
+    #   opentelemetry-api
     #   opentelemetry-sdk
-urllib3==2.3.0
+    #   opentelemetry-semantic-conventions
+urllib3==2.4.0
     # via
     #   -c requirements_full.lock
-    #   microsoft-kiota-http
     #   requests
-wrapt==1.17.2
-    # via
-    #   -c requirements_full.lock
-    #   deprecated
-yarl==1.18.3
+yarl==1.20.0
     # via
     #   -c requirements_full.lock
     #   aiohttp
-zipp==3.21.0
+zipp==3.22.0
     # via
     #   -c requirements_full.lock
     #   importlib-metadata

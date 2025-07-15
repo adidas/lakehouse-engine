@@ -1,8 +1,10 @@
 """Module to define Sensor Manager classes."""
 
+import json
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
+import requests
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, Row
 from pyspark.sql.functions import array, col, lit
@@ -403,3 +405,47 @@ class SensorUpstreamManager(object):
         )
 
         return query
+
+
+class SensorJobRunManager(object):
+    """Class to manage triggering of Jobs via Job Run API."""
+
+    _LOGGER = LoggingHandler(__name__).get_logger()
+
+    @classmethod
+    def run_job(cls, job_id: str, token: str, host: str) -> Tuple[int, Optional[str]]:
+        """Trigger the job based on its id.
+
+        Args:
+            job_id: the id of the job to trigger.
+            token: token required to access Databricks API.
+            host: host for workspace.
+        """
+        run_id = None
+        ex = None
+
+        headers = {"Authorization": f"Bearer {token}"}
+        body = json.dumps(
+            {
+                "job_id": job_id,
+                "notebook_params": {"msg": "triggered via heartbeat sensor"},
+            }
+        )
+
+        res = requests.post(
+            f"https://{host}/api/2.1/jobs/run-now",
+            data=body,
+            headers=headers,
+            timeout=3600,
+        )
+
+        if res.status_code == 200:
+            run_id = (json.loads(res.text))["run_id"]
+            cls._LOGGER.info(
+                f"Job : {str(job_id)} triggered successfully... RUN ID : {str(run_id)}"
+            )
+        else:
+            ex = str(res.json()["error_code"]) + "  " + res.json()["message"]
+            cls._LOGGER.error(f"An error has occurred: {ex}")
+
+        return run_id, ex

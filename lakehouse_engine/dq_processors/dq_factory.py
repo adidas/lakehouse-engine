@@ -392,6 +392,31 @@ class DQFactory(object):
         return critical_failure
 
     @classmethod
+    def _check_chunk_usage(cls, results_dict: dict, dq_spec: DQSpec) -> bool:
+        """Check if the results should be split into chunks.
+
+        If the size of the results dictionary is too big, we will split it into
+        smaller chunks. This is needed to avoid memory issues when processing
+        large datasets.
+
+        Args:
+            results_dict: The results dictionary to be checked.
+            dq_spec: data quality specification.
+
+        Returns:
+            True if the results dictionary is too big, False otherwise.
+        """
+        for ele in results_dict["results"]:
+            if (
+                "unexpected_index_list" in ele["result"].keys()
+                and len(ele["result"]["unexpected_index_list"])
+                > dq_spec.result_sink_chunk_size
+            ):
+                return True
+
+        return False
+
+    @classmethod
     def _explode_results(
         cls,
         df: DataFrame,
@@ -720,32 +745,10 @@ class DQFactory(object):
             Transformed results dataframe.
         """
         results_dict = loads(dumps(checkpoint_results))
-        results_dict_list = []
 
-        # Here we are splitting the results into chunks per expectation
-        # and then we are splitting the unexpected_index_list into
-        # chunks of size dq_spec.result_sink_chunk_size.
-        for ele in results_dict["results"]:
-            base_result = deepcopy(results_dict)
-
-            if "unexpected_index_list" in ele["result"].keys():
-                for key in ExecEnv.ENGINE_CONFIG.dq_result_sink_columns_to_delete:
-                    del ele["result"][key]
-
-                unexpected_index_list = ele["result"]["unexpected_index_list"]
-                unexpected_index_list_chunks = cls.split_into_chunks(
-                    unexpected_index_list, dq_spec.result_sink_chunk_size
-                )
-
-                del ele["result"]["unexpected_index_list"]
-
-                for chunk in unexpected_index_list_chunks:
-                    ele["result"]["unexpected_index_list"] = chunk
-                    base_result["results"] = [ele]
-                    results_dict_list.append(deepcopy(base_result))
-            else:
-                base_result["results"] = [ele]
-                results_dict_list.append(base_result)
+        # Check the size of the results dictionary, if it is too big
+        # we will split it into smaller chunks.
+        results_dict_list = cls._generate_chunks(results_dict, dq_spec)
 
         index = 0
 
@@ -828,6 +831,77 @@ class DQFactory(object):
             data = Validator.tag_source_with_dq(source_pk, data, exploded_df)
             return data, failed_expectations, evaluated_expectations
         return data, failed_expectations, evaluated_expectations
+
+    @classmethod
+    def _generate_chunks(cls, results_dict: dict, dq_spec: DQSpec) -> list:
+        """Split the results dictionary into smaller chunks.
+
+        This is needed to avoid memory issues when processing large datasets.
+        The size of the chunks is defined by the dq_spec.result_sink_chunk_size.
+
+        Args:
+            results_dict: The results dictionary to be split.
+            dq_spec: data quality specification.
+
+        Returns:
+            A list of dictionaries, where each dictionary is a chunk of the original
+            results dictionary.
+        """
+        results_dict_list = []
+
+        split = cls._check_chunk_usage(results_dict, dq_spec)
+
+        if split:
+            # Here we are splitting the results into chunks per expectation
+            # and then we are splitting the unexpected_index_list into
+            # chunks of size dq_spec.result_sink_chunk_size.
+            results_dict_list = cls._split_into_chunks(results_dict, dq_spec)
+        else:
+            # If the results are not too big, we can process them all at once.
+            results_dict_list = [results_dict]
+
+        return results_dict_list
+
+    @classmethod
+    def _split_into_chunks(cls, results_dict: dict, dq_spec: DQSpec) -> list:
+        """Split the results into smaller chunks.
+
+        This is needed to avoid memory issues when processing large datasets.
+        The size of the chunks is defined by the dq_spec.result_sink_chunk_size.
+
+        Args:
+            results: The results to be split.
+            dq_spec: data quality specification.
+
+        Returns:
+            A list of dictionaries, where each dictionary is a chunk of the original
+            results.
+        """
+        results_dict_list = []
+
+        for ele in results_dict["results"]:
+            base_result = deepcopy(results_dict)
+
+            if "unexpected_index_list" in ele["result"].keys():
+                for key in ExecEnv.ENGINE_CONFIG.dq_result_sink_columns_to_delete:
+                    del ele["result"][key]
+
+                unexpected_index_list = ele["result"]["unexpected_index_list"]
+                unexpected_index_list_chunks = cls.split_into_chunks(
+                    unexpected_index_list, dq_spec.result_sink_chunk_size
+                )
+
+                del ele["result"]["unexpected_index_list"]
+
+                for chunk in unexpected_index_list_chunks:
+                    ele["result"]["unexpected_index_list"] = chunk
+                    base_result["results"] = [ele]
+                    results_dict_list.append(deepcopy(base_result))
+            else:
+                base_result["results"] = [ele]
+                results_dict_list.append(base_result)
+
+        return results_dict_list
 
     @classmethod
     def _write_to_location(
