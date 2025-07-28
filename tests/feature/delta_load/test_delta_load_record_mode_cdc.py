@@ -7,6 +7,7 @@ import pytest
 from lakehouse_engine.core.definitions import InputFormat
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -43,14 +44,20 @@ def test_batch_delta_load(scenario: List[str]) -> None:
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/part-01.{scenario[1]}",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/batch_init.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}/batch_init.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/part-0[2,3,4].{scenario[1]}",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/batch_delta.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}/batch_delta.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/control/part-01.csv",
@@ -113,19 +120,22 @@ def test_file_by_file(scenario: str) -> None:
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/{second_file}.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/{scenario[1]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/{third_file}.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/{scenario[1]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/part-04.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/{scenario[1]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/control/part-01.csv",
@@ -159,14 +169,16 @@ def test_backfill(scenario: str) -> None:
         f"{TEST_RESOURCES}/{scenario}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-0[2,3,4].csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_delta.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_delta.json")
+    load_data(acon=acon)
 
     LocalStorage.delete_file(f"{TEST_LAKEHOUSE_IN}/{scenario}/data/part-0[2,3,4].csv")
 
@@ -175,7 +187,10 @@ def test_backfill(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_backfill.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario}/batch_backfill.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.delete_file(f"{TEST_LAKEHOUSE_CONTROL}/{scenario}/data/part-01.csv")
 
@@ -213,14 +228,16 @@ def test_direct_silver_load(scenario: str) -> None:
         f"{TEST_RESOURCES}/{scenario}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-0[2,3,4].csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_delta.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_delta.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/control/part-01.csv",

@@ -36,7 +36,7 @@ from pyspark.sql.functions import (
     transform,
     year,
 )
-from pyspark.sql.types import FloatType, StringType
+from pyspark.sql.types import FloatType, LongType, StringType
 
 from lakehouse_engine.core.definitions import (
     DQDefaults,
@@ -440,7 +440,7 @@ class DQFactory(object):
             df = df.withColumn(
                 "validation_results",
                 col("validation_results").withField(
-                    "result", struct(lit(None).alias("observed_value"))
+                    "result", struct(lit(None).cast(LongType()).alias("observed_value"))
                 ),
             )
 

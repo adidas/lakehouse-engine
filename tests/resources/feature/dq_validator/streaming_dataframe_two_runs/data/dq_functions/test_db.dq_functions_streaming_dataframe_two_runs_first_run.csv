@@ -1,0 +1,2 @@
+dq_rule_id|dq_tech_function|execution_point|schema|table|column|arguments
+rule_3|expect_column_to_exist|at_rest|test_db|dummy_sales|amount|{"column": "article"}

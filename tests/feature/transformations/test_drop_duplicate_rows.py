@@ -4,6 +4,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import InputFormat, OutputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -56,7 +57,8 @@ def test_drop_duplicate_rows(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_CONTROL}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario[0]}.json")
+    load_data(acon=acon)
 
     control_drop_duplicates = DataframeHelpers.read_from_file(
         f"{TEST_LAKEHOUSE_CONTROL}/data/{scenario[0]}_drop_duplicates.json",

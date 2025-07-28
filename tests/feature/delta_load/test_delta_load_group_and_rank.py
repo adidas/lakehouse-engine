@@ -7,6 +7,7 @@ import pytest
 from lakehouse_engine.core.definitions import InputFormat
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -105,14 +106,17 @@ def execute_loads(scenario: List[str], iteration: int) -> None:
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/{scenario[1]}"
         f"/data/WE_SO_SCL_202108111500000000.csv{iteration}",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/WE_SO_SCL_202108111600000000.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/{scenario[1]}"
         f"/data/WE_SO_SCL_202108111600000000.csv{iteration}",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/{scenario[1]}_delta.json")
+    load_data(acon=acon)
 
 
 def _create_table(scenario: List[str]) -> None:

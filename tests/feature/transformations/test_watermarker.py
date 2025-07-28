@@ -5,6 +5,7 @@ import pytest
 from lakehouse_engine.core.definitions import OutputFormat
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -62,7 +63,10 @@ def test_drop_duplicates_with_watermark(scenario: dict) -> None:
             f"{TEST_RESOURCES}/{scenario_name}/data/source/part-0{str(load)}.csv",
             f"{TEST_LAKEHOUSE_IN}/{scenario_name}/data/",
         )
-        load_data(f"file://{TEST_RESOURCES}/{scenario_name}/{scenario_name}.json")
+        acon = ConfigUtils.get_acon(
+            f"file://{TEST_RESOURCES}/{scenario_name}/{scenario_name}.json"
+        )
+        load_data(acon=acon)
 
     result_df = DataframeHelpers.read_from_file(
         f"{TEST_LAKEHOUSE_OUT}/{scenario_name}/data",
@@ -126,7 +130,10 @@ def test_joins_with_watermark(scenario: dict) -> None:
             f"{TEST_LAKEHOUSE_IN}/{scenario_name}/",
         )
 
-        load_data(f"file://{TEST_RESOURCES}/{scenario_name}/{scenario_name}.json")
+        acon = ConfigUtils.get_acon(
+            f"file://{TEST_RESOURCES}/{scenario_name}/{scenario_name}.json"
+        )
+        load_data(acon=acon)
 
     result_df = DataframeHelpers.read_from_file(
         f"{TEST_LAKEHOUSE_OUT}/{scenario_name}/data",

@@ -3,6 +3,7 @@
 from json import loads
 from typing import Any, Dict, List, Tuple, Union
 
+import py4j
 import pytest
 from pyspark.sql import DataFrame
 from pyspark.sql.utils import StreamingQueryException
@@ -14,6 +15,7 @@ from lakehouse_engine.dq_processors.exceptions import (
     DQValidationsFailedException,
 )
 from lakehouse_engine.engine import execute_dq_validation, load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
@@ -484,6 +486,102 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
         }.issubset(result.keys())
 
 
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        {
+            "name": "streaming_dataframe_two_runs",
+            "dq_type": "prisma",
+            "read_type": "streaming",
+            "input_type": "dataframe_reader",
+            "dq_validator_result": "success_explode",
+            "dq_db_table_first_run": "test_db.dq_functions_streaming_dataframe_two_runs_first_run",  # noqa: E501
+            "dq_db_table_second_run": "test_db.dq_functions_streaming_dataframe_two_runs_second_run",  # noqa: E501
+            "fail_on_error": False,
+            "critical_functions": None,
+            "max_percentage_failure": None,
+            "restore_prev_version": False,
+        },
+    ],
+)
+def test_dq_validator_two_runs(scenario: dict, caplog: Any) -> None:
+    """Test the integrity of the result sink after two runs.
+
+    This tests performs two runs of the Data Quality Validator with the same
+    scenario but different dq functions source tables. The goal is to ensure
+    that the result sink does not have void types and that it is able to
+    be read without issues.
+    This is a regression test for the case when the Data Quality Validator
+    was writing a column with void types to the result sink, which caused
+    issues when reading the result sink.
+
+    Data Quality Validator scenarios:
+    - scenario 1: test result sink structure by having two runs writing to the same
+    result sink without creating an issue with void types.
+
+    Args:
+        scenario: scenario to test.
+        caplog: captured log.
+    """
+    _clean_folders()
+
+    input_spec = {
+        "spec_id": "sales_source",
+        "read_type": scenario["read_type"],
+        "data_format": "dataframe",
+        "df_name": _generate_dataframe(scenario["read_type"]),
+    }
+
+    _create_dq_functions_source_table(
+        test_resources_path=TEST_RESOURCES,
+        lakehouse_in_path=TEST_LAKEHOUSE_IN,
+        lakehouse_out_path=TEST_LAKEHOUSE_OUT,
+        test_name=scenario["name"],
+        scenario=scenario["read_type"],
+        table_name=scenario["dq_db_table_first_run"],
+    )
+
+    _create_dq_functions_source_table(
+        test_resources_path=TEST_RESOURCES,
+        lakehouse_in_path=TEST_LAKEHOUSE_IN,
+        lakehouse_out_path=TEST_LAKEHOUSE_OUT,
+        test_name=scenario["name"],
+        scenario=scenario["read_type"],
+        table_name=scenario["dq_db_table_second_run"],
+    )
+
+    scenario["dq_db_table"] = scenario["dq_db_table_first_run"]
+
+    first_acon = _generate_acon(
+        input_spec, scenario, scenario.get("dq_type", DQType.PRISMA.value)
+    )
+
+    scenario["dq_db_table"] = scenario["dq_db_table_second_run"]
+
+    second_acon = _generate_acon(
+        input_spec, scenario, scenario.get("dq_type", DQType.PRISMA.value)
+    )
+
+    LocalStorage.copy_file(
+        f"{TEST_RESOURCES}/data/control/*",
+        f"{TEST_LAKEHOUSE_CONTROL}/data/",
+    )
+
+    execute_dq_validation(acon=first_acon)
+
+    execute_dq_validation(acon=second_acon)
+
+    result_sink_path = f"{LAKEHOUSE_FEATURE_OUT}/{scenario['name']}/result_sink/"
+    df = ExecEnv.SESSION.sql(
+        f"""select * from delta.`{result_sink_path}`"""  # nosec B608
+    )
+
+    try:
+        df.show()
+    except py4j.protocol.Py4JJavaError:
+        pytest.fail("Failed to write to result sink due to void type in the dataframe.")
+
+
 def _clean_folders() -> None:
     """Clean test folders and tables."""
     LocalStorage.clean_folder(f"{TEST_LAKEHOUSE_IN}/data")
@@ -532,14 +630,15 @@ def _execute_load(load_type: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{load_type}.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{load_type}.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/data/source/part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/data/",
     )
 
-    load_data(f"file://{TEST_RESOURCES}/{load_type}.json")
+    load_data(acon=acon)
 
 
 def _generate_acon(
@@ -570,7 +669,7 @@ def _generate_acon(
             f"{scenario['name']}/result_sink/",
             "dq_db_table": scenario.get("dq_db_table"),
             "dq_table_table_filter": "dummy_sales",
-            "result_sink_format": "json",
+            "result_sink_format": "delta",
             "fail_on_error": scenario["fail_on_error"],
             "critical_functions": scenario["critical_functions"],
             "max_percentage_failure": scenario["max_percentage_failure"],
@@ -650,7 +749,7 @@ def _get_result_and_control_dfs(
     else:
         dq_result_df = DataframeHelpers.read_from_file(
             location=result,
-            file_format="json",
+            file_format="delta",
         )
 
     dq_control_df = DataframeHelpers.read_from_file(

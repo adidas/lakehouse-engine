@@ -7,6 +7,7 @@ from pyspark.sql.utils import StreamingQueryException
 
 from lakehouse_engine.core.definitions import InputFormat, OutputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -52,19 +53,23 @@ def test_chain_transformations(scenario: dict, caplog: Any) -> None:
     """
     _prepare_files()
 
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+
     if scenario["scenario_name"] == "write_streaming_struct_data_fail":
         with pytest.raises(
             StreamingQueryException,
             match=".*An exception was raised by the Python Proxy.*",
         ):
-            load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+            load_data(acon=acon)
 
         assert (
             "A column or function parameter with name `sample_json_field1` "
             "cannot be resolved." in caplog.text
         )
     else:
-        load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+        load_data(acon=acon)
 
         result_df = DataframeHelpers.read_from_file(
             f"{TEST_LAKEHOUSE_OUT}/{scenario['scenario_name']}/data",

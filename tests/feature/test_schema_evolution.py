@@ -8,6 +8,7 @@ from pyspark.sql.utils import AnalysisException
 from lakehouse_engine.core.definitions import InputFormat
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -168,12 +169,16 @@ def test_schema_evolution_delta_load(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/delta_load/source_delta_schema.json",
     )
 
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/delta_load/{scenario[2]}.json"
+    )
+
     # tests with schema auto merge enabled
     if (
         "enabled" in scenario[0]
         or scenario[0] == "auto_merge_disabled_rename_column_transform"
     ):
-        load_data(f"file://{TEST_RESOURCES}/delta_load/{scenario[2]}.json")
+        load_data(acon=acon)
 
         result_df = DataframeHelpers.read_from_file(
             f"{TEST_LAKEHOUSE_OUT}/delta_load/data",
@@ -212,7 +217,7 @@ def test_schema_evolution_delta_load(scenario: str) -> None:
         # for "add column" and "cast column" tests the merge runs successfully
         # but the schema changes are ignored
         if "add" in scenario[0] or "cast" in scenario[0]:
-            load_data(f"file://{TEST_RESOURCES}/delta_load/{scenario[2]}.json")
+            load_data(acon=acon)
 
             result_df = DataframeHelpers.read_from_file(
                 f"{TEST_LAKEHOUSE_OUT}/delta_load/data",
@@ -229,7 +234,7 @@ def test_schema_evolution_delta_load(scenario: str) -> None:
                 AnalysisException,
                 match=f".*Cannot resolve {scenario[4]} in UPDATE clause given.*",
             ):
-                load_data(f"file://{TEST_RESOURCES}/delta_load/{scenario[2]}.json")
+                load_data(acon=acon)
 
 
 @pytest.mark.parametrize(
@@ -368,11 +373,14 @@ def test_schema_evolution_append_load(scenario: str) -> None:
     # tests with schema auto merge enabled
     if "enabled" in scenario[0]:
         # for the cast column test, the append throws an error
+        acon = ConfigUtils.get_acon(
+            f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json"
+        )
         if "cast" in scenario[0]:
             with pytest.raises(AnalysisException, match=f".*{scenario[4]}*"):
-                load_data(f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json")
+                load_data(acon=acon)
         else:
-            load_data(f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json")
+            load_data(acon=acon)
 
             result_df = DataframeHelpers.read_from_file(
                 f"{TEST_LAKEHOUSE_OUT}/append_load/data",
@@ -407,11 +415,14 @@ def test_schema_evolution_append_load(scenario: str) -> None:
     # tests with schema auto merge disabled
     elif "disabled" in scenario[0]:
         # for the renaming or adding column tests, the append throws an error
+        acon = ConfigUtils.get_acon(
+            f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json"
+        )
         if "rename_column_file" in scenario[0] or "add" in scenario[0]:
             with pytest.raises(AnalysisException, match=f".*{scenario[4]}*"):
-                load_data(f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json")
+                load_data(acon=acon)
         else:
-            load_data(f"file://{TEST_RESOURCES}/append_load/{scenario[2]}.json")
+            load_data(acon=acon)
 
             result_df = DataframeHelpers.read_from_file(
                 f"{TEST_LAKEHOUSE_OUT}/append_load/data",
@@ -474,7 +485,8 @@ def test_schema_evolution_full_load(scenario: str) -> None:
         f"{TEST_RESOURCES}/full_load/schema/source/source_part-01_schema.json",
         f"{TEST_LAKEHOUSE_IN}/full_load/source_schema.json",
     )
-    load_data(f"file://{TEST_RESOURCES}/full_load/batch_init.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/full_load/batch_init.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/full_load/data/source/{scenario[1]}.csv",
@@ -485,11 +497,12 @@ def test_schema_evolution_full_load(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/full_load/source_schema.json",
     )
 
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/full_load/{scenario[2]}.json")
     if scenario[0] == "auto_merge_disabled":
         with pytest.raises(AnalysisException, match=f".*{scenario[4]}*"):
-            load_data(f"file://{TEST_RESOURCES}/full_load/{scenario[2]}.json")
+            load_data(acon=acon)
     else:
-        load_data(f"file://{TEST_RESOURCES}/full_load/{scenario[2]}.json")
+        load_data(acon=acon)
 
         final_schema = SchemaUtils.from_table_schema(
             "test_db.schema_evolution_full_load"

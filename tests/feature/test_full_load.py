@@ -6,6 +6,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import InputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -46,7 +47,10 @@ def test_batch_full_load(scenario: List[str]) -> None:
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/batch_init.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}/batch_init.json"
+    )
+    load_data(acon=acon)
 
     LocalStorage.clean_folder(
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/data",
@@ -55,7 +59,8 @@ def test_batch_full_load(scenario: List[str]) -> None:
         f"{TEST_RESOURCES}/{scenario[0]}/data/source/part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario[0]}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}/batch.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario[0]}/batch.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario[0]}/data/control/part-01.csv",

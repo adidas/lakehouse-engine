@@ -35,21 +35,23 @@ def test_permissive_jdbc_append_load(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
     _append_data_into_source(scenario)
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
     _append_data_into_source(scenario)
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-03.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
     _append_data_into_source(scenario)
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/control/part-01.csv",
@@ -75,7 +77,8 @@ def test_failfast_append_load(scenario: str) -> None:
         f"{TEST_RESOURCES}/{scenario}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch_init.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-0[2,3].csv",
@@ -85,7 +88,8 @@ def test_failfast_append_load(scenario: str) -> None:
     with pytest.raises(Py4JJavaError) as e:
         # should raise malformed records due to failfast, as amount column was
         # renamed to amount2 and there is one more column in the pat-03.csv file.
-        load_data(f"file://{TEST_RESOURCES}/{scenario}/batch.json")
+        acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch.json")
+        load_data(acon=acon)
 
     assert "Malformed CSV record" in str(e.value)
 
@@ -101,19 +105,20 @@ def test_streaming_dropmalformed(scenario: str) -> None:
         f"{TEST_RESOURCES}/{scenario}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/source/part-03.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/control/part-01.csv",
@@ -143,7 +148,8 @@ def test_streaming_with_terminators(scenario: str, caplog: Any) -> None:
         f"{TEST_RESOURCES}/{scenario}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/streaming.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/{scenario}/data/control/part-01.csv",

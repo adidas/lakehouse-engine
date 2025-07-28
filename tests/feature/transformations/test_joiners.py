@@ -6,6 +6,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import OutputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -60,14 +61,16 @@ def test_joiners(scenario: List[str]) -> None:
         f"{TEST_LAKEHOUSE_IN}/",
     )
 
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario[0]}.json")
+
     if scenario[0] != "batch":
-        load_data(f"file://{TEST_RESOURCES}/{scenario[0]}.json")
+        load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/data/source/sales-part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/data/sales/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario[0]}.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/data/control/*.csv",

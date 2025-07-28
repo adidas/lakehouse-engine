@@ -23,6 +23,7 @@ from lakehouse_engine.core.definitions import OutputFormat, OutputSpec
 from lakehouse_engine.engine import load_data
 from lakehouse_engine.io.exceptions import NotSupportedException
 from lakehouse_engine.io.writers.dataframe_writer import DataFrameWriter
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -57,7 +58,10 @@ def test_write_to_files(scenario: dict) -> None:
     """
     _prepare_files()
 
-    load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+    load_data(acon=acon)
 
     result_df = DataframeHelpers.read_from_file(
         f"{TEST_LAKEHOUSE_OUT}/{scenario['scenario_name']}/data",
@@ -92,7 +96,10 @@ def test_write_to_rest_api(scenario: dict) -> None:
         "lakehouse_engine.io.writers.rest_api_writer.execute_api_request",
         return_value=RestResponse(status_code=200, text="ok"),
     ):
-        load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+        acon = ConfigUtils.get_acon(
+            f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+        )
+        load_data(acon=acon)
 
 
 @pytest.mark.parametrize(
@@ -112,7 +119,10 @@ def test_write_to_jdbc(scenario: dict) -> None:
 
     os.mkdir(f"{TEST_LAKEHOUSE_OUT}/{scenario['scenario_name']}/")
 
-    load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+    load_data(acon=acon)
 
     result_df = DataframeHelpers.read_from_jdbc(
         f"jdbc:sqlite:{TEST_LAKEHOUSE_OUT}/{scenario['scenario_name']}/test.db",
@@ -142,7 +152,10 @@ def test_write_to_table(scenario: dict) -> None:
     """
     _prepare_files()
 
-    load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+    load_data(acon=acon)
 
     result_df = DataframeHelpers.read_from_table(f"test_db.{scenario['scenario_name']}")
 
@@ -170,7 +183,10 @@ def test_write_to_console(scenario: dict, capsys: Any) -> None:
     """
     _prepare_files()
 
-    load_data(f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+    load_data(acon=acon)
 
     captured = capsys.readouterr()
 

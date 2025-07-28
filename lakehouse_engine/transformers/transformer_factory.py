@@ -93,27 +93,29 @@ class TransformerFactory(object):
         """
         if spec.function == "incremental_filter":
             # incremental_filter optionally expects a DataFrame as input, so find it.
-            if "increment_df" in spec.args:
-                spec.args["increment_df"] = data[spec.args["increment_df"]]
+            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+            if "increment_df" in args_copy:
+                args_copy["increment_df"] = data[args_copy["increment_df"]]
             return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
                 spec.function
-            ](**spec.args)
+            ](**args_copy)
         elif spec.function == "join":
             # get the dataframe given the input_id in the input specs of the acon.
-            spec.args["join_with"] = data[spec.args["join_with"]]
+            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+            args_copy["join_with"] = data[args_copy["join_with"]]
             return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
                 spec.function
-            ](**spec.args)
+            ](**args_copy)
         elif spec.function == "union" or spec.function == "union_by_name":
             # get the list of dataframes given the input_id in the input specs
             # of the acon.
-            df_to_transform = spec.args["union_with"]
-            spec.args["union_with"] = []
-            for item in df_to_transform:
-                spec.args["union_with"].append(data[item])
+            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+            args_copy["union_with"] = []
+            for union_with_spec_id in spec.args["union_with"]:
+                args_copy["union_with"].append(data[union_with_spec_id])
             return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
                 spec.function
-            ](**spec.args)
+            ](**args_copy)
         elif spec.function in TransformerFactory.AVAILABLE_TRANSFORMERS:
             return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
                 spec.function
@@ -122,3 +124,22 @@ class TransformerFactory(object):
             raise NotImplementedError(
                 f"The requested transformer {spec.function} is not implemented."
             )
+
+    @staticmethod
+    def _get_spec_args_copy(spec_args: dict) -> dict:
+        """Returns a shallow copy of `spec_args` to ensure immutability.
+
+        Args:
+            spec_args (dict): A dictionary containing the arguments of a
+            TransformerSpec.
+
+        Returns:
+            dict: A shallow copy of `spec_args`, preventing modifications to the
+            original dictionary. This is important in Spark, especially when
+            retries of failed attempts occur. For example, if during the first
+            run the `join_with` argument (initially a string) is replaced with a
+            DataFrame (as done in the `get_transformer` function), then on a retry,
+            depending on how Spark handles state, the `join_with` argument may no
+            longer be a string but a DataFrame, leading to key error.
+        """
+        return dict(spec_args)

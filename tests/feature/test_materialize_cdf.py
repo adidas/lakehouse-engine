@@ -8,6 +8,7 @@ from delta.tables import DeltaTable
 from lakehouse_engine.core.definitions import InputFormat
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data, manage_table
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
@@ -43,7 +44,10 @@ def test_streaming_with_cdf(scenario: str, caplog: Any) -> None:
         f"{TEST_RESOURCES}/data/source/part-01.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/streaming_without_clean_cdf.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/streaming_without_clean_cdf.json"
+    )
+    load_data(acon=acon)
 
     assert "Writing CDF to external table..." in caplog.text
 
@@ -97,7 +101,10 @@ def test_streaming_with_cdf(scenario: str, caplog: Any) -> None:
         f"{TEST_RESOURCES}/data/source/part-02.csv",
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
-    load_data(f"file://{TEST_RESOURCES}/streaming_with_clean_and_vacuum.json")
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/streaming_with_clean_and_vacuum.json"
+    )
+    load_data(acon=acon)
 
     assert "Writing CDF to external table..." in caplog.text
     assert "Cleaning CDF table..." in caplog.text

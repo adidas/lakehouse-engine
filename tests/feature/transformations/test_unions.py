@@ -7,6 +7,7 @@ from pyspark.sql.utils import AnalysisException
 
 from lakehouse_engine.core.definitions import OutputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -77,20 +78,24 @@ def test_unions(scenario: List[str]) -> None:
 
     copy_data_files(1)
 
+    acon = ConfigUtils.get_acon(
+        f"file://{TEST_RESOURCES}/{scenario[0]}_{scenario[1]}.json"
+    )
+
     if "union_diff_schema" in scenario[1] or "error" in scenario[1]:
         with pytest.raises(
             AnalysisException,
             match=".*UNION can only be performed on inputs with the same number.*",
         ):
-            load_data(f"file://{TEST_RESOURCES}/{scenario[0]}_{scenario[1]}.json")
+            load_data(acon=acon)
 
     else:
         if scenario[0] != "batch":
-            load_data(f"file://{TEST_RESOURCES}/{scenario[0]}_{scenario[1]}.json")
+            load_data(acon=acon)
 
             copy_data_files(2)
 
-        load_data(f"file://{TEST_RESOURCES}/{scenario[0]}_{scenario[1]}.json")
+        load_data(acon=acon)
 
         LocalStorage.copy_file(
             f"{TEST_RESOURCES}/data/control/*.csv",

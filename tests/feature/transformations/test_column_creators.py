@@ -4,6 +4,7 @@ import pytest
 
 from lakehouse_engine.core.definitions import InputFormat, OutputFormat
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -38,7 +39,8 @@ def test_column_creators(scenario: str) -> None:
         f"{TEST_RESOURCES}/*schema.json",
         f"{TEST_LAKEHOUSE_IN}/",
     )
-    load_data(f"file://{TEST_RESOURCES}/{scenario}.json")
+    acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}.json")
+    load_data(acon=acon)
 
     LocalStorage.copy_file(
         f"{TEST_RESOURCES}/data/control/*.json",
