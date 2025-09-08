@@ -1,14 +1,12 @@
 """Module for notifier factory."""
 
-from abc import ABC
-
 from lakehouse_engine.core.definitions import NotifierType, TerminatorSpec
 from lakehouse_engine.terminators.notifier import Notifier
 from lakehouse_engine.terminators.notifiers.email_notifier import EmailNotifier
 from lakehouse_engine.terminators.notifiers.exceptions import NotifierNotFoundException
 
 
-class NotifierFactory(ABC):
+class NotifierFactory(object):
     """Class for notification factory."""
 
     NOTIFIER_TYPES = {NotifierType.EMAIL.value: EmailNotifier}

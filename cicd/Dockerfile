@@ -10,7 +10,7 @@ ARG CPU_ARCHITECTURE
 # Install Prerequisites
 RUN mkdir -p /usr/share/man/man1 && \
     apt-get -y update && \
-    apt-get install -y wget=1.21* gnupg2=2.2* unzip=6.0* git=1:2* g++=4:10.2.1*  rsync=3.2* && \
+    apt-get install -y wget=1.21* gnupg2=2.2* unzip=6.0* git=1:2* g++=4:10.2.1* rsync=3.2* && \
     apt-get -y clean
 
 # Install jdk

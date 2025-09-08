@@ -1,18 +1,12 @@
 """Utilities to be used by custom expectations."""
 
-from typing import Any, Dict, Optional
-
-from great_expectations.execution_engine import ExecutionEngine
-from great_expectations.expectations.expectation import Expectation
+from typing import Any, Dict
 
 
 def validate_result(
     expectation_configuration: Any,
     metrics: dict,
-    runtime_configuration: Optional[dict],
-    execution_engine: Optional[ExecutionEngine],
-    base_expectation: Expectation,
-) -> Any:
+) -> None:
     """Validates that the unexpected_index_list in the tests is corretly defined.
 
     Additionally, it validates the expectation using the GE _validate method.
@@ -37,9 +31,6 @@ def validate_result(
                 f"Example unexpected_index_list: {example_unexpected_index_list}\n"
                 f"Test unexpected_index_list: {test_unexpected_index_list}"
             )
-    return base_expectation._validate(
-        expectation_configuration, metrics, runtime_configuration, execution_engine
-    )
 
 
 def _get_example_unexpected_index_list(expectation_configuration: Any) -> list:

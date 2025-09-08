@@ -64,29 +64,25 @@
       "metadata": {},
       "name": "column_list",
       "nullable": true,
-      "type": {
-        "containsNull": true,
-        "elementType": "string",
-        "type": "array"
-      }
+      "type": "string"
     },
     {
       "metadata": {},
       "name": "max_value",
       "nullable": true,
-      "type": "float"
+      "type": "string"
     },
     {
       "metadata": {},
       "name": "min_value",
       "nullable": true,
-      "type": "float"
+      "type": "string"
     },
     {
       "metadata": {},
       "name": "sum_total",
       "nullable": true,
-      "type": "float"
+      "type": "string"
     },
     {
       "metadata": {},
@@ -276,7 +272,7 @@
       "metadata": {},
       "name": "observed_value",
       "nullable": true,
-      "type": "long"
+      "type": "string"
     },
     {
       "metadata": {},
@@ -324,11 +320,7 @@
       "metadata": {},
       "name": "value_set",
       "nullable": true,
-      "type": {
-        "containsNull": true,
-        "elementType": "long",
-        "type": "array"
-      }
+      "type": "string"
     },
     {
       "metadata": {},

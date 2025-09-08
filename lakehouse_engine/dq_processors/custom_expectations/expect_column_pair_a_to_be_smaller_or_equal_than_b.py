@@ -190,13 +190,12 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        return validate_result(
+        validate_result(
             self,
             metrics,
-            runtime_configuration,
-            execution_engine,
-            ColumnPairMapExpectation,
         )
+
+        return super()._validate(metrics, runtime_configuration, execution_engine)
 
 
 """Mandatory block of code. If it is removed the expectation will not be available."""

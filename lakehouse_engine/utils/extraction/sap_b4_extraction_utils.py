@@ -18,9 +18,9 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 class ADSOTypes(Enum):
     """Standardise the types of ADSOs we can have for Extractions from SAP B4."""
 
-    AQ: str = "AQ"
-    CL: str = "CL"
-    SUPPORTED_TYPES: list = [AQ, CL]
+    AQ = "AQ"
+    CL = "CL"
+    SUPPORTED_TYPES = [AQ, CL]
 
 
 @dataclass

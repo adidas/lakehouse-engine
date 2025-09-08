@@ -1,9 +1,9 @@
 """Module to read configurations."""
 
 import importlib.resources
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any, Optional, Union
 
-import pkg_resources
 import yaml
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -82,11 +82,11 @@ class ConfigUtils(object):
             String of engine version.
         """
         try:
-            version = pkg_resources.get_distribution("lakehouse-engine").version
-        except pkg_resources.DistributionNotFound:
+            _version = version("lakehouse-engine")
+        except PackageNotFoundError:
             cls._LOGGER.info("Could not identify Lakehouse Engine version.")
-            version = ""
-        return str(version)
+            _version = ""
+        return str(_version)
 
     @staticmethod
     def read_json_acon(path: str, disable_dbfs_retry: bool = False) -> Any:

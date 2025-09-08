@@ -137,10 +137,10 @@ def _create_table(scenario: List[str]) -> None:
             article string,
             amount int,
             {"extraction_date string,"
-        if scenario[1] == "streaming" else "lhe_row_id int,"}
+             if scenario[1] == "streaming" else "lhe_row_id int,"}
             {"lhe_batch_id int," if scenario[1] == "streaming" else ""}
             {"lhe_row_id int"
-        if scenario[1] == "streaming" else "extraction_date string"}
+             if scenario[1] == "streaming" else "extraction_date string"}
         )
         USING delta
         LOCATION '{TEST_LAKEHOUSE_OUT}/{scenario[0]}/{scenario[1]}/data'

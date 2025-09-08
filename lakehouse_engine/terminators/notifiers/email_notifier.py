@@ -257,7 +257,7 @@ class EmailNotifier(Notifier):
                     f"""Unknown mimetype '{self.notification["mimetype"]}' """
                     f"provided. Defaulting to 'text'."
                 )
-                message_body.content_type = BodyType.Text.value
+                message_body.content_type = BodyType.Text
 
         message.body = message_body
 
@@ -275,7 +275,7 @@ class EmailNotifier(Notifier):
 
             attachments.append(attachment)
 
-        message.attachments = attachments
+        message.attachments = attachments  # type: ignore
 
         message.to_recipients = self._set_graph_api_recipients("to")
         message.cc_recipients = self._set_graph_api_recipients("cc")

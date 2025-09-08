@@ -27,7 +27,7 @@ class ReconciliationType(Enum):
 class ReconciliationTransformers(Enum):
     """Transformers Available for the Reconciliation Algorithm."""
 
-    AVAILABLE_TRANSFORMERS: dict = {
+    AVAILABLE_TRANSFORMERS = {
         "cache": Optimizers.cache,
         "persist": Optimizers.persist,
     }
@@ -195,7 +195,9 @@ class Reconciliator(Executable):
             for transformation in preprocess_query_args:
                 rec_func = ReconciliationTransformers.AVAILABLE_TRANSFORMERS.value[
                     transformation["function"]
-                ](**transformation.get("args", {}))
+                ](
+                    **transformation.get("args", {})
+                )  # type: ignore
 
                 transformed_df = df.transform(rec_func)
         else:

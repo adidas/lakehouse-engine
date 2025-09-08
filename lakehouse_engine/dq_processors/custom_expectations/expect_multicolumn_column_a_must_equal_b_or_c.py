@@ -1,6 +1,6 @@
 """Expectation to check if column 'a' equals 'b', or 'c'."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import MulticolumnMapExpectation
@@ -76,7 +76,9 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         An ExpectationSuiteValidationResult.
     """  # noqa: E501
 
-    ignore_row_if: str = "never"
+    ignore_row_if: Literal[
+        "all_values_are_missing", "any_value_is_missing", "never"
+    ] = "never"
     result_format: dict = {"result_format": "BASIC"}
     include_config: bool = True
     catch_exceptions: bool = False
@@ -152,7 +154,7 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         "validation_regex_b",
         "validation_regex_c",
         "mostly",
-    )
+    )  # type: ignore
 
     def _validate(
         self,
@@ -176,13 +178,12 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        return validate_result(
+        validate_result(
             self,
             metrics,
-            runtime_configuration,
-            execution_engine,
-            MulticolumnMapExpectation,
         )
+
+        return super()._validate(metrics, runtime_configuration, execution_engine)
 
 
 if __name__ == "__main__":

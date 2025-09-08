@@ -6,10 +6,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lakehouse-engine"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-version = "1.26.1"
+version = "1.27.0"
 authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
 description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
 keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
@@ -68,7 +68,7 @@ module = [
     "IPython.*",
     "nest_asyncio.*",
     "msgraph.*",
-    "pkg_resources.*",
+    "importlib.*",
     "yaml.*",
     "ruamel.*",
     "msal.*"
@@ -85,13 +85,9 @@ filterwarnings = [
     # need checkpoint for the test.
     "ignore:`result_format` configured at the Validator-level will not be persisted:UserWarning", # 12 warnings
     "ignore:`result_format` configured at the Expectation-level will not be persisted:UserWarning", # 12 warnings
-    "ignore: In a future version, object-dtype columns with all-bool values will not be included:FutureWarning", # 60 warnings,
     "ignore: jsonschema.RefResolver is deprecated as of v4.18.0:DeprecationWarning", #1985 warnings come from this one
-    "ignore: 'contextfilter' is renamed to 'pass_context', the old name will be removed in Jinja 3.1:DeprecationWarning", # 4 warnings
     "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:DeprecationWarning",
-    "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:FutureWarning",
+    "ignore: The default dtype for empty Series will be:FutureWarning",
     # Warning about host keys on local ftp tests with paramiko
-    "ignore: Unknown ssh-rsa host key for : UserWarning",
-    # expect_multicolumn_sum_to_equal from GX is generating this warning
-    "ignore: V2 API style custom rendering is deprecated as of v0.13.28 and is not fully supported anymore:DeprecationWarning"
+    "ignore: Unknown ssh-rsa host key for : UserWarning"
 ]

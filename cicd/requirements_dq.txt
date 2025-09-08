@@ -2,7 +2,9 @@
 #
 # ! Do not forget running `make build-lock-files` after updating dependency list !
 #
-great-expectations==1.3.13
+great-expectations==1.5.11
 # Note: Numpy is not a direct dependency.
 # It is included temporarily to prevent version conflicts.
 numpy==1.26.4
+# Fixing the version to solve known vulnerabilities
+requests==2.32.4 # when updating also update in all files

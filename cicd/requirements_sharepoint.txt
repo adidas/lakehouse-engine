@@ -2,4 +2,7 @@
 # ! Do not forget running `make build-lock-files` after updating dependency list !
 #
 tenacity==9.0.0
-msal==1.31.0
+msal==1.33.0
+urllib3==2.5.0 # msal uses a version with known vulnerabilities
+# Fixing the version to solve known vulnerabilities
+requests==2.32.4 # when updating also update in all files

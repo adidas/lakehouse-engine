@@ -1,11 +1,7 @@
 """Mail notifications tests."""
 
-import os
 import re
-import subprocess  # nosec B404
-import time
 import typing
-from signal import SIGKILL
 
 import pytest
 
@@ -19,6 +15,7 @@ from lakehouse_engine.terminators.notifiers.exceptions import (
 )
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 from tests.conftest import FEATURE_RESOURCES
+from tests.utils.smtp_server import SMTPServer
 
 LOGGER = LoggingHandler(__name__).get_logger()
 TEST_ATTACHEMENTS_PATH = FEATURE_RESOURCES + "/notification/"
@@ -148,64 +145,52 @@ def test_email_notification(scenario: dict) -> None:
     LOGGER.info(f"Executing notification test: {name}")
 
     if notification_type == "email":
-        try:
-            port = spec.args["port"]
-            server = spec.args["server"]
+        port = spec.args["port"]
+        server = spec.args["server"]
 
-            p = subprocess.Popen(
-                args="python -u -m smtpd -c DebuggingServer -n "
-                f"{server}:{port} > email_output",
-                shell=True,
-                text=True,
-                preexec_fn=os.setsid,
-            )
+        email_notifier = EmailNotifier(spec)
 
-            # We sleep so the subprocess has time to start the debug smtp server
-            time.sleep(2)
-
-            email_notifier = EmailNotifier(spec)
-
-            if "Error: " in name:
-                with pytest.raises(
-                    (
-                        NotifierTemplateNotFoundException,
-                        NotifierConfigException,
-                        NotifierTemplateConfigException,
-                    )
-                ) as e:
-                    email_notifier.create_notification()
-                    email_notifier.send_notification()
-                assert expected_output in str(e.value)
-            else:
+        if "Error: " in name:
+            with pytest.raises(
+                (
+                    NotifierTemplateNotFoundException,
+                    NotifierConfigException,
+                    NotifierTemplateConfigException,
+                )
+            ) as e:
                 email_notifier.create_notification()
                 email_notifier.send_notification()
-                (
-                    email_from,
-                    email_to,
-                    email_cc,
-                    email_bcc,
-                    mimetype,
-                    subject,
-                    message,
-                    attachments,
-                ) = _parse_email_output()
+            assert expected_output in str(e.value)
+        else:
+            smtp_server = SMTPServer(server, port)
+            smtp_server.start()
 
-                assert email_from == spec.args["from"]
-                if "to" in spec.args:
-                    assert email_to == spec.args["to"]
-                if "cc" in spec.args:
-                    assert email_cc == spec.args["cc"]
-                if "bcc" in spec.args:
-                    assert email_bcc == spec.args["bcc"]
-                assert mimetype == spec.args["mimetype"]
-                assert subject == spec.args["subject"]
-                assert message == expected_output
-                assert attachments == scenario.get("expected_attachments", [])
+            email_notifier.create_notification()
+            email_notifier.send_notification()
+            (
+                email_from,
+                email_to,
+                email_cc,
+                email_bcc,
+                mimetype,
+                subject,
+                message,
+                attachments,
+            ) = _parse_email_output(smtp_server.get_last_message().as_string())
 
-            os.killpg(os.getpgid(p.pid), SIGKILL)
+            assert email_from == spec.args["from"]
+            if "to" in spec.args:
+                assert email_to == spec.args["to"]
+            if "cc" in spec.args:
+                assert email_cc == spec.args["cc"]
+            if "bcc" in spec.args:
+                assert email_bcc == spec.args["bcc"]
+            assert mimetype == spec.args["mimetype"]
+            assert subject == spec.args["subject"]
+            assert message == expected_output
+            assert attachments == scenario.get("expected_attachments", [])
 
-        finally:
-            os.remove("email_output")
+            smtp_server.stop()
 
 
 @pytest.mark.parametrize(
@@ -300,80 +285,69 @@ def test_email_notification_facade(scenario: dict) -> None:
     LOGGER.info(f"Executing notification test: {name}")
 
     if notification_type == "email":
-        try:
-            port = args["port"]
-            server = args["server"]
+        port = args["port"]
+        server = args["server"]
 
-            p = subprocess.Popen(
-                args="python -u -m smtpd -c DebuggingServer -n "
-                f"{server}:{port} > email_output",
-                shell=True,
-                text=True,
-                preexec_fn=os.setsid,
-            )
-
-            # We sleep so the subprocess has time to start the debug smtp server
-            time.sleep(2)
-
-            if "Error: " in name:
-                with pytest.raises(
-                    (
-                        NotifierTemplateNotFoundException,
-                        NotifierConfigException,
-                        NotifierTemplateConfigException,
-                    )
-                ) as e:
-                    send_notification(args=args)
-                assert expected_output in str(e.value)
-            else:
-                send_notification(args=args)
+        if "Error: " in name:
+            with pytest.raises(
                 (
-                    email_from,
-                    email_to,
-                    email_cc,
-                    email_bcc,
-                    mimetype,
-                    subject,
-                    message,
-                    attachments,
-                ) = _parse_email_output()
+                    NotifierTemplateNotFoundException,
+                    NotifierConfigException,
+                    NotifierTemplateConfigException,
+                )
+            ) as e:
+                send_notification(args=args)
+            assert expected_output in str(e.value)
+        else:
+            smtp_server = SMTPServer(server, port)
+            smtp_server.start()
 
-                assert email_from == args["from"]
-                if "to" in args:
-                    assert email_to == args["to"]
-                if "cc" in args:
-                    assert email_cc == args["cc"]
-                if "bcc" in args:
-                    assert email_bcc == args["bcc"]
-                assert mimetype == args["mimetype"]
-                assert subject == args["subject"]
-                assert message == expected_output
-                assert attachments == scenario.get("expected_attachments", [])
+            send_notification(args=args)
+            (
+                email_from,
+                email_to,
+                email_cc,
+                email_bcc,
+                mimetype,
+                subject,
+                message,
+                attachments,
+            ) = _parse_email_output(smtp_server.get_last_message().as_string())
 
-            os.killpg(os.getpgid(p.pid), SIGKILL)
+            assert email_from == args["from"]
+            if "to" in args:
+                assert email_to == args["to"]
+            if "cc" in args:
+                assert email_cc == args["cc"]
+            if "bcc" in args:
+                assert email_bcc == args["bcc"]
+            assert mimetype == args["mimetype"]
+            assert subject == args["subject"]
+            assert message == expected_output
+            assert attachments == scenario.get("expected_attachments", [])
 
-        finally:
-            os.remove("email_output")
+            smtp_server.stop()
 
 
-def _parse_email_output() -> typing.Tuple[str, list, list, list, str, str, str, list]:
+def _parse_email_output(
+    mail_content: str,
+) -> typing.Tuple[str, list, list, list, str, str, str, list]:
     """Parse the mail that was received in the debug smtp server.
+
+    Args:
+        mail_content: The raw mail content.
 
     Returns:
         A tuple with the email from, email to, cc, bcc, subject and message.
     """
-    mail_content = open("email_output", "r").read()
-
-    email_from = re.search("(?<=From: ).*(?<!')", mail_content).group()
-    email_to = re.search("(?<=To: ).*(?<!')", mail_content).group().split(", ")
-    email_cc = re.search("(?<=CC: ).*(?<!')", mail_content).group().split(", ")
-    email_bcc = re.search("(?<=BCC: ).*(?<!')", mail_content).group().split(", ")
+    email_from = re.search("(?<=From: ).*", mail_content).group()
+    email_to = re.search("(?<=To: ).*", mail_content).group().split(", ")
+    email_cc = re.search("(?<=CC: ).*", mail_content).group().split(", ")
+    email_bcc = re.search("(?<=BCC: ).*", mail_content).group().split(", ")
     mimetype = re.search("(?<=Content-Type: ).*(?=; charset)", mail_content).group()
-    subject = re.search("(?<=Subject: ).*(?<!')", mail_content).group()
-    message = re.findall("(?<=b'').*?(?=b'--=)", mail_content, re.S)[1]
+    subject = re.search("(?<=Subject: ).*", mail_content).group()
+    message = re.search("(?<=bit\n).*?(?=--=)", mail_content, re.S).group()[1:-1]
     attachments = re.findall("""(?<=filename=").*(?=")""", mail_content)
-
-    message = message.replace("b'", "").replace("'\n", "\n")[1:-1]
 
     return (
         email_from,

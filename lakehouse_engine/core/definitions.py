@@ -250,6 +250,23 @@ class DQDefaults(Enum):
         "expect_column_pair_a_to_be_not_equal_to_b",
         "expect_column_values_to_not_be_null_or_empty_string",
     ]
+    DQ_COLUMNS_TO_KEEP_TYPES = [
+        "success",
+        "run_time",
+        "validation_results",
+        "expectation_success",
+        "exception_info",
+        "meta",
+        "run_time_year",
+        "run_time_month",
+        "run_time_day",
+        "source_primary_key",
+        "evaluated_expectations",
+        "success_percent",
+        "successful_expectations",
+        "unsuccessful_expectations",
+        "unexpected_index_list",
+    ]
     DQ_VALIDATIONS_SCHEMA = StructType(
         [
             StructField(

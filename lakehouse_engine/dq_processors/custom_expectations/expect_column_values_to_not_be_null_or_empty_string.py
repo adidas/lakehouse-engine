@@ -22,7 +22,7 @@ class ColumnValuesNotNullOrEpmtyString(ColumnMapMetricProvider):
         "table",
         "column",
         "ignore_row_if",
-    )
+    )  # type: ignore
     condition_value_keys = ()
 
     @column_condition_partial(engine=SparkDFExecutionEngine)
@@ -163,13 +163,12 @@ class ExpectColumnValuesToNotBeNullOrEmptyString(ColumnMapExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        return validate_result(
+        validate_result(
             self,
             metrics,
-            runtime_configuration,
-            execution_engine,
-            ColumnMapExpectation,
         )
+
+        return super()._validate(metrics, runtime_configuration, execution_engine)
 
 
 """Mandatory block of code. If it is removed the expectation will not be available."""

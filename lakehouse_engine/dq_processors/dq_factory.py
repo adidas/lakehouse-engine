@@ -10,7 +10,8 @@ from typing import Optional, Tuple, Union
 
 import great_expectations as gx
 from great_expectations import ExpectationSuite
-from great_expectations.core import ExpectationSuiteValidationResult
+from great_expectations.checkpoint import CheckpointResult
+from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.core.run_identifier import RunIdentifier
 from great_expectations.data_context import EphemeralDataContext
 from great_expectations.data_context.types.base import (
@@ -36,7 +37,7 @@ from pyspark.sql.functions import (
     transform,
     year,
 )
-from pyspark.sql.types import FloatType, LongType, StringType
+from pyspark.sql.types import FloatType, StringType
 
 from lakehouse_engine.core.definitions import (
     DQDefaults,
@@ -104,12 +105,12 @@ class DQFactory(object):
     def _configure_checkpoint(
         cls,
         context: EphemeralDataContext,
-        dataframe_bd: DataFrame,
+        dataframe_bd: BatchDefinition,
         suite: ExpectationSuite,
         dq_spec: DQSpec,
         data: DataFrame,
         checkpoint_run_time: str,
-    ) -> Tuple[ExpectationSuiteValidationResult, Optional[list]]:
+    ) -> Tuple[CheckpointResult, Optional[list]]:
         """Create and configure the validation checkpoint.
 
         Creates and configures a validation definition based on the suite
@@ -360,7 +361,9 @@ class DQFactory(object):
             # records that were processed in a run.
             if dq_spec.dq_type == DQType.PRISMA.value:
 
-                keys = data.select(*source_pk)
+                keys = data.select(
+                    [col(c).cast(StringType()).alias(c) for c in source_pk]
+                )
                 keys = keys.withColumn(
                     "run_name", lit(result_dict["meta"]["run_id"]["run_name"])
                 )
@@ -440,7 +443,7 @@ class DQFactory(object):
             df = df.withColumn(
                 "validation_results",
                 col("validation_results").withField(
-                    "result", struct(lit(None).cast(LongType()).alias("observed_value"))
+                    "result", struct(lit(None).alias("observed_value"))
                 ),
             )
 
@@ -546,7 +549,7 @@ class DQFactory(object):
         elif dq_spec.store_backend == DQDefaults.FILE_SYSTEM_S3_STORE.value:
             store_backend = S3StoreBackendDefaults(
                 default_bucket_name=dq_spec.bucket,
-                validations_store_prefix=dq_spec.validations_store_prefix,
+                validation_results_store_prefix=dq_spec.validations_store_prefix,
                 checkpoint_store_prefix=dq_spec.checkpoint_store_prefix,
                 expectations_store_prefix=dq_spec.expectations_store_prefix,
             )
@@ -818,6 +821,8 @@ class DQFactory(object):
 
         exploded_df = exploded_df.withColumn("source_primary_key", lit(source_pk))
 
+        exploded_df = cls._cast_columns_to_string(exploded_df)
+
         cls._write_to_location(dq_spec, exploded_df)
 
         failed_expectations, evaluated_expectations = cls._log_or_fail(
@@ -831,6 +836,21 @@ class DQFactory(object):
             data = Validator.tag_source_with_dq(source_pk, data, exploded_df)
             return data, failed_expectations, evaluated_expectations
         return data, failed_expectations, evaluated_expectations
+
+    @classmethod
+    def _cast_columns_to_string(cls, df: DataFrame) -> DataFrame:
+        """Cast selected columns of the dataframe to string type.
+
+        Args:
+            df: The input dataframe.
+
+        Returns:
+            A new dataframe with selected columns cast to string type.
+        """
+        for col_name in df.columns:
+            if col_name not in DQDefaults.DQ_COLUMNS_TO_KEEP_TYPES.value:
+                df = df.withColumn(col_name, df[col_name].cast(StringType()))
+        return df
 
     @classmethod
     def _generate_chunks(cls, results_dict: dict, dq_spec: DQSpec) -> list:

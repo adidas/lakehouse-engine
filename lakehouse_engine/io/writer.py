@@ -130,16 +130,6 @@ class Writer(ABC):
 
         Returns: the validated dataframe.
         """
-        # This is added as a workaround for a GX problem which is invoking
-        # init_analytics even when it is not enabled and trying to search for
-        # files, even for ephemeral data contexts, on a path where spark does
-        # not have permissions
-        import os
-        import pathlib
-
-        path = pathlib.Path.home()
-        os.environ["HOME"] = "/tmp"  # nosec: B108
-
         from lakehouse_engine.dq_processors.dq_factory import DQFactory
 
         # forcing session to be available inside forEachBatch on
@@ -149,7 +139,5 @@ class Writer(ABC):
         validated_df = df
         for spec in dq_spec:
             validated_df = DQFactory.run_dq_process(spec, df)
-
-        os.environ["HOME"] = str(path)
 
         return validated_df

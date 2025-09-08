@@ -74,13 +74,13 @@
       "metadata": {},
       "name": "max_value",
       "nullable": true,
-      "type": "float"
+      "type": "string"
     },
     {
       "metadata": {},
       "name": "min_value",
       "nullable": true,
-      "type": "float"
+      "type": "string"
     },
     {
       "metadata": {},
@@ -202,7 +202,7 @@
       "metadata": {},
       "name": "observed_value",
       "nullable": true,
-      "type": "long"
+      "type": "string"
     },
     {
       "metadata": {},
