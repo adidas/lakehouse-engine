@@ -15,6 +15,7 @@ from pyspark.sql.functions import (
     lit,
     regexp_replace,
     row_number,
+    trim,
     upper,
 )
 from pyspark.sql.window import Window
@@ -498,6 +499,7 @@ class Heartbeat(Algorithm):
         # based on trigger_job_id. dependency_flag = "TRUE" needs to be checked as
         # we are only concerned with records where dependencies needs to be checked.
         full_data_trigger_job_id = col("full_data.trigger_job_id")
+        dep_flag_comparison = trim(upper(col("dependency_flag"))) == "TRUE"
         jobs_with_new_events_df = (
             full_data_df.alias("full_data")
             .join(
@@ -510,14 +512,14 @@ class Heartbeat(Algorithm):
                 col("full_data.status"),
                 col("full_data.dependency_flag"),
             )
-        ).filter(col("dependency_flag") == "TRUE")
+        ).filter(dep_flag_comparison)
 
         # Count level aggregation based on trigger_job_id, dependency_flag picks all
         # those trigger_job_id which doesn`t satisfy dependency as it denotes there
         # are more than one record present having dependency_flag = "TRUE" and status
         # is different for same trigger_job_id.
         jobs_to_not_trigger_with_new_event_df = (
-            jobs_with_new_events_df.filter(upper(col("dependency_flag")) == "TRUE")
+            jobs_with_new_events_df.filter(dep_flag_comparison)
             .groupBy("trigger_job_id", "dependency_flag")
             .agg(count("trigger_job_id").alias("count"))
             .where(col("count") > 1)

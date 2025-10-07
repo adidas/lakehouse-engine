@@ -291,6 +291,7 @@ class ColumnReshapers(object):
         key_col: str = "key",
         expand_key: bool = False,
         expand_value: bool = True,
+        options: dict = None,
     ) -> Callable:
         """Select all attributes from avro using a schema registry.
 
@@ -305,6 +306,7 @@ class ColumnReshapers(object):
                 column or not. Default: false.
             expand_value: whether you want to expand the content inside the value
                 column or not. Default: true.
+            options: extra options (e.g., mode: "PERMISSIVE").
 
         Returns:
             Function to be called in .transform() spark function.
@@ -324,6 +326,7 @@ class ColumnReshapers(object):
                         data=col(key_col),
                         subject=key_schema,
                         schemaRegistryAddress=schema_registry,  # type: ignore
+                        options=options if options else {},
                     ).alias(key_col)
                     if key_schema
                     else key_col
@@ -332,6 +335,7 @@ class ColumnReshapers(object):
                     data=col(value_col),
                     subject=value_schema,
                     schemaRegistryAddress=schema_registry,  # type: ignore
+                    options=options if options else {},
                 ).alias(value_col),
             ).select(
                 *cols_to_select,
