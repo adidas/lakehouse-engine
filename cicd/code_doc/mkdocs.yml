@@ -26,6 +26,7 @@ nav:
           - Flatten Schema and Explode Columns: lakehouse_engine_usage/data_loader/flatten_schema_and_explode_columns/flatten_schema_and_explode_columns.md
           - Full Load: lakehouse_engine_usage/data_loader/full_load/full_load.md
           - Read from Dataframe: lakehouse_engine_usage/data_loader/read_from_dataframe/read_from_dataframe.md
+          - Read from Sharepoint: lakehouse_engine_usage/data_loader/read_from_sharepoint/read_from_sharepoint.md
           - Streaming Append Load with DROPMALFORMED: lakehouse_engine_usage/data_loader/streaming_append_load_with_malformed/streaming_append_load_with_malformed.md
           - Streaming Append Load with Optimize Dataset Terminator: lakehouse_engine_usage/data_loader/streaming_append_load_with_terminator/streaming_append_load_with_terminator.md
           - Streaming Delta Load with Group and Rank Condensation: lakehouse_engine_usage/data_loader/streaming_delta_load_with_group_and_rank_condensation/streaming_delta_load_with_group_and_rank_condensation.md
@@ -34,7 +35,7 @@ nav:
           - Write to Console: lakehouse_engine_usage/data_loader/write_to_console/write_to_console.md
           - Write to REST API: lakehouse_engine_usage/data_loader/write_to_rest_api/write_to_rest_api.md
           - Write to Sharepoint: lakehouse_engine_usage/data_loader/write_to_sharepoint/write_to_sharepoint.md
-      - Data Quality: 
+      - Data Quality:
         - Overview: lakehouse_engine_usage/data_quality/data_quality.md
         - Scenarios:
           - Custom Expectations: lakehouse_engine_usage/data_quality/custom_expectations/custom_expectations.md
@@ -44,7 +45,7 @@ nav:
           - Result Sink: lakehouse_engine_usage/data_quality/result_sink/result_sink.md
           - Row Tagging: lakehouse_engine_usage/data_quality/row_tagging/row_tagging.md
           - Validations Failing: lakehouse_engine_usage/data_quality/validations_failing/validations_failing.md
-      - Reconciliator: 
+      - Reconciliator:
         - Overview: lakehouse_engine_usage/reconciliator/reconciliator.md
       - Sensors:
           - Overview: lakehouse_engine_usage/sensors/sensors.md
@@ -68,9 +69,11 @@ nav:
                   - Trigger File: lakehouse_engine_usage/sensors/heartbeat/trigger_file/trigger_file.md
               - Feed Heartbeat Sensor Control Delta Table: lakehouse_engine_usage/sensors/heartbeat/heartbeat_sensor_data_feed/heartbeat_sensor_data_feed.md
               - Update Heartbeat Sensor control Delta Table after processing the data: lakehouse_engine_usage/sensors/heartbeat/update_heartbeat_sensor_status/update_heartbeat_sensor_status.md
-      - GAB: 
+      - GAB:
         - Overview: lakehouse_engine_usage/gab/gab.md
         - Step-by-Step: lakehouse_engine_usage/gab/step_by_step/step_by_step.md
+  - Tools:
+    - Table & File Manager Helper: lakehouse_engine_usage/managerhelper/managerhelper.md
   - API Documentation: reference/ # (1)!
 
 theme:
@@ -136,7 +139,7 @@ plugins:
           options:
             show_source: true
   - macros:
-      module_name: custom_example_macros
+      module_name: mkdocs_macros
   - gen-files:
       scripts:
         - gen_ref_nav.py

@@ -57,8 +57,7 @@
       "spec_id": "sharepoint_output",
       "input_id": "sharepoint_input",
       "data_format": "sharepoint",
-      "sharepoint_opts":
-      {
+      "sharepoint_opts": {
         "client_id": "CLIENT_ID",
         "tenant_id": "TENANT_TEST",
         "secret": "CLIENT_SECRET",
@@ -66,7 +65,7 @@
         "drive_name": "mock_drive",
         "folder_relative_path": "sp_test",
         "file_name": "sharepoint_test",
-        "local_path":  "/app/tests/lakehouse/out/feature/sharepoint/writer/data/",
+        "local_path": "/app/tests/lakehouse/out/feature/sharepoint/writer/data/",
         "conflict_behaviour": "replace"
       }
     }

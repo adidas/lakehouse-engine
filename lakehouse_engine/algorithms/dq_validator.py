@@ -109,6 +109,7 @@ class DQValidator(Algorithm):
                 def write_dq_validator_micro_batch(
                     batch_df: DataFrame, batch_id: int
                 ) -> None:
+                    ExecEnv.get_for_each_batch_session(batch_df)
                     self.process_dq(batch_df)
 
                 read_df.writeStream.trigger(once=True).foreachBatch(

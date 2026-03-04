@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from pathlib import Path
+from typing import ClassVar, Collection, List, Optional, Tuple
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import (
@@ -14,6 +15,8 @@ from pyspark.sql.types import (
     StructType,
     TimestampType,
 )
+
+from lakehouse_engine.io.exceptions import InputNotFoundException
 
 
 class CollectEngineUsage(Enum):
@@ -46,6 +49,16 @@ class EngineConfig(object):
         engine usage stats or not.
     - dq_functions_column_list: list of columns to be added to the meta argument
         of GX when using PRISMA.
+    - raise_on_config_not_available: whether to raise an exception if a spark config
+        is not available.
+    - prod_catalog: name of the prod catalog being used. This is useful to derive
+        whether the environment is prod or dev, so the dev or prod buckets/paths can be
+        used for storing engine usage stats and dq artifacts.
+    - environment: environment that the engine is being executed on. Takes precedence
+        over prod_catalog when defining if the environment is prod or dev.
+    - sharepoint_authority: authority for the Sharepoint api.
+    - sharepoint_company_domain: company domain for the Sharepoint api.
+    - sharepoint_api_domain: api domain for the Sharepoint api.
     """
 
     dq_bucket: Optional[str] = None
@@ -59,9 +72,12 @@ class EngineConfig(object):
     sharepoint_authority: Optional[str] = None
     sharepoint_company_domain: Optional[str] = None
     sharepoint_api_domain: Optional[str] = None
+    raise_on_config_not_available: bool = False
+    prod_catalog: Optional[str] = None
+    environment: Optional[str] = None
 
 
-class EngineStats(Enum):
+class EngineStats(object):
     """Definitions for collection of Lakehouse Engine Stats.
 
     !!! note
@@ -78,6 +94,15 @@ class EngineStats(Enum):
         "job_id": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#JobId",
         "job_name": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#RunName",
         "run_id": f"{CLUSTER_USAGE_TAGS}.clusterAllTags#ClusterName",
+    }
+    DEF_DATABRICKS_CONTEXT_KEYS = {
+        "environment": "environment",
+        "dp_name": "jobName",
+        "run_id": "runId",
+        "job_id": "jobId",
+        "job_name": "jobName",
+        "workspace_id": "workspaceId",
+        "policy_id": "usagePolicyId",
     }
 
 
@@ -97,6 +122,7 @@ class InputFormat(Enum):
     SAP_B4 = "sap_b4"
     DATAFRAME = "dataframe"
     SFTP = "sftp"
+    SHAREPOINT = "sharepoint"
 
     @classmethod
     def values(cls):  # type: ignore
@@ -129,6 +155,276 @@ FILE_INPUT_FORMATS = [
     InputFormat.DELTAFILES.value,
     InputFormat.CLOUDFILES.value,
 ]
+
+SHAREPOINT_SUPPORTED_EXTENSIONS = {".csv", ".xlsx"}
+
+
+@dataclass
+class SharepointFile:
+    """Represents a file from Sharepoint with metadata and optional content."""
+
+    file_name: str
+    time_created: str
+    time_modified: str
+    content: Optional[bytes] = None
+    _folder: Optional[str] = None
+    skip_rename: bool = False
+    _already_archived: bool = False
+
+    @property
+    def file_extension(self) -> str:
+        """Returns the file extension of the stored file."""
+        return Path(self.file_name).suffix
+
+    @property
+    def file_path(self) -> str:
+        """Full Sharepoint path including folder and file name."""
+        if not self._folder:
+            raise AttributeError("file_path unavailable; _folder not set.")
+        return f"{self._folder}/{self.file_name}"
+
+    @property
+    def is_csv(self) -> bool:
+        """True if file is a CSV."""
+        return self.file_extension.lower() == ".csv"
+
+    @property
+    def is_excel(self) -> bool:
+        """True if file is an Excel file."""
+        return self.file_extension.lower() == ".xlsx"
+
+    @property
+    def content_size(self) -> int:
+        """Size of content in bytes."""
+        return len(self.content) if self.content else 0
+
+
+@dataclass
+class SharepointOptions(object):
+    """Options for Sharepoint I/O (used by both reader and writer).
+
+    This dataclass is shared by the Sharepoint reader and writer. Some fields
+    are required/used only in *read* mode, others only in *write* mode.
+    Use `validate_for_reader()` / `validate_for_writer()` to enforce the
+    correct subsets.
+
+    Common (reader & writer):
+      - client_id (str): Azure AD application (client) ID.
+      - tenant_id (str): Azure AD tenant (directory) ID.
+      - site_name (str): Sharepoint site name.
+      - drive_name (str): Document library/drive name.
+      - secret (str): Client secret.
+      - local_path (str): Local/volume path for staging (read/write temp).
+      - api_version (str): Microsoft Graph API version (default: "v1.0").
+      - conflict_behaviour (Optional[str]): e.g. 'replace', 'fail'.
+      - allowed_extensions (Optional[Collection[str]]):
+          Defaults to SHAREPOINT_SUPPORTED_EXTENSIONS {".csv", ".xlsx"}.
+
+    Reader-specific:
+      - folder_relative_path (Optional[str]): Folder (or full file path)
+          to read from.
+      - file_name (Optional[str]): Name of a single file inside the folder
+          to read. If `folder_relative_path` already points to a file,
+          `file_name` must be None.
+      - file_type (Optional[str]): "csv" or "xlsx" when reading a folder.
+      - file_pattern (Optional[str]): Glob (e.g. '*.csv') when reading a folder.
+      - local_options (Optional[dict]): Spark CSV read options (e.g. header, sep).
+      - chunk_size (Optional[int]): Download chunk size (bytes).
+
+    Writer-specific:
+      - file_name (Optional[str]): Target file name to upload.
+      - local_options (Optional[dict]): Spark CSV write options.
+      - chunk_size (Optional[int]): Upload chunk size (bytes).
+
+    Archiving (reader):
+      - archive_enabled (bool): Whether to move files after a successful/failed read.
+          Default: True.
+      - archive_success_subfolder (Optional[str]): Success folder (default "done").
+          Set None to keep in place.
+      - archive_error_subfolder (Optional[str]): Error folder (default "error").
+          Set None to keep in place.
+    """
+
+    # Common
+    client_id: str
+    tenant_id: str
+    site_name: str
+    drive_name: str
+    secret: str
+    local_path: str
+    file_name: Optional[str] = None  # used by reader (optional) and writer (target)
+    api_version: str = "v1.0"
+    conflict_behaviour: Optional[str] = None
+    allowed_extensions: Optional[Collection[str]] = None
+
+    # Reader
+    file_type: Optional[str] = None
+    folder_relative_path: Optional[str] = None
+    file_pattern: Optional[str] = None
+    chunk_size: Optional[int] = 100 * 1024 * 1024  # 100 MB (read & write)
+    local_options: Optional[dict] = None  # (read & write)
+
+    # Reader archiving
+    archive_enabled: bool = True
+    archive_success_subfolder: Optional[str] = "done"
+    archive_error_subfolder: Optional[str] = "error"
+
+    REQUIRED_READER_OPTS: ClassVar[Tuple[str, ...]] = (
+        "site_name",
+        "drive_name",
+        "folder_relative_path",
+    )
+    REQUIRED_WRITER_OPTS: ClassVar[Tuple[str, ...]] = (
+        "site_name",
+        "drive_name",
+        "local_path",
+    )
+
+    def __post_init__(self) -> None:
+        """Normalize and validate Sharepoint options (types, extensions, etc)."""
+        allowed_extensions = self._get_allowed_extensions()
+        allowed_file_types = {extension.lstrip(".") for extension in allowed_extensions}
+
+        self._validate_file_type(allowed_file_types)
+        self._normalize_folder_relative_path()
+
+        self._validate_folder_relative_path_extension_if_looks_like_file(
+            allowed_extensions
+        )
+        self._validate_single_file_mode_constraints_if_folder_is_file_path(
+            allowed_extensions
+        )
+
+        self._validate_file_name_and_file_pattern_are_not_both_set()
+
+    def _get_allowed_extensions(self) -> set[str]:
+        """Return the supported file extensions (lowercased)."""
+        return {
+            extension.lower()
+            for extension in (
+                self.allowed_extensions or SHAREPOINT_SUPPORTED_EXTENSIONS
+            )
+        }
+
+    def _validate_file_type(self, allowed_file_types: set[str]) -> None:
+        """Validate that `file_type` is supported when provided."""
+        if not self.file_type:
+            return
+
+        if self.file_type.lower() not in allowed_file_types:
+            raise ValueError(
+                f"`file_type` must be one of {sorted(allowed_file_types)}. "
+                f"Got: '{self.file_type}'"
+            )
+
+    def _normalize_folder_relative_path(self) -> None:
+        """Strip leading and trailing slashes from `folder_relative_path`."""
+        if self.folder_relative_path:
+            self.folder_relative_path = self.folder_relative_path.strip("/")
+
+    def _ends_with_supported_extension(
+        self,
+        path_value: str,
+        allowed_extensions: set[str],
+    ) -> bool:
+        """Return True if the path ends with any supported extension."""
+        lowered_path_value = path_value.lower()
+        return any(
+            lowered_path_value.endswith(extension) for extension in allowed_extensions
+        )
+
+    def _validate_single_file_mode_constraints_if_folder_is_file_path(
+        self,
+        allowed_extensions: set[str],
+    ) -> None:
+        """Forbid file name, pattern, and type when folder_relative_path end is file."""
+        if not self.folder_relative_path:
+            return
+
+        if not self._ends_with_supported_extension(
+            self.folder_relative_path, allowed_extensions
+        ):
+            return
+
+        if self.file_name:
+            raise ValueError(
+                "When `folder_relative_path` points to a file, `file_name` must "
+                "be None."
+            )
+        if self.file_pattern:
+            raise ValueError(
+                "When `folder_relative_path` points to a file, `file_pattern` must "
+                "be None."
+            )
+        if self.file_type:
+            raise ValueError(
+                "When `folder_relative_path` points to a file, `file_type` must "
+                "be None (it's derived from file_path extension)"
+            )
+
+    def _validate_file_name_extension(self, allowed_extensions: set[str]) -> None:
+        """Validate that `file_name` ends with a supported extension when provided."""
+        if not self.file_name:
+            return
+
+        if not self._ends_with_supported_extension(self.file_name, allowed_extensions):
+            raise ValueError(
+                f"`file_name` must end with one of {sorted(allowed_extensions)},"
+                f" got: {self.file_name}"
+            )
+
+    def _validate_file_name_and_file_pattern_are_not_both_set(self) -> None:
+        """Validate that `file_name` and `file_pattern` are not both set."""
+        if self.file_name and self.file_pattern:
+            raise ValueError(
+                "Conflicting options: provide either `file_name` or `file_pattern`"
+                ", not both."
+            )
+
+    def _validate_folder_relative_path_extension_if_looks_like_file(
+        self,
+        allowed_extensions: set[str],
+    ) -> None:
+        """Fail if folder_relative_path is a file path but has unsupported extension."""
+        if not self.folder_relative_path:
+            return
+
+        last_segment = self.folder_relative_path.split("/")[-1]
+        looks_like_file = "." in last_segment
+        if not looks_like_file:
+            return
+
+        if self._ends_with_supported_extension(last_segment, allowed_extensions):
+            return
+
+        raise ValueError(
+            f"`folder_relative_path` appears to be a file path but does not end "
+            f"with one of {sorted(allowed_extensions)}: {self.folder_relative_path}"
+        )
+
+    def validate_for_reader(self) -> None:
+        """Validate Sharepoint options required for reading."""
+        missing = [opt for opt in self.REQUIRED_READER_OPTS if not getattr(self, opt)]
+        if missing:
+            raise InputNotFoundException(
+                f"Missing required Sharepoint options for reader: {', '.join(missing)}"
+            )
+        allowed_extensions = self._get_allowed_extensions()
+        if self.file_name and not self._ends_with_supported_extension(
+            self.file_name, allowed_extensions
+        ):
+            raise ValueError(
+                f"`file_name` must end with one of {sorted(allowed_extensions)}, "
+                "got: {self.file_name}"
+            )
+
+    def validate_for_writer(self) -> None:
+        """Validate Sharepoint options required for writing."""
+        missing = [opt for opt in self.REQUIRED_WRITER_OPTS if not getattr(self, opt)]
+        if missing:
+            raise InputNotFoundException(
+                f"Missing required Sharepoint options for writer: {', '.join(missing)}"
+            )
 
 
 class OutputFormat(Enum):
@@ -234,13 +530,10 @@ class DQDefaults(Enum):
     DATASOURCE_EXECUTION_ENGINE = "SparkDFExecutionEngine"
     DATA_CONNECTORS_CLASS_NAME = "RuntimeDataConnector"
     DATA_CONNECTORS_MODULE_NAME = "great_expectations.datasource.data_connector"
-    DATA_CHECKPOINTS_CLASS_NAME = "SimpleCheckpoint"
-    DATA_CHECKPOINTS_CONFIG_VERSION = 1.0
     STORE_BACKEND = "s3"
     EXPECTATIONS_STORE_PREFIX = "dq/expectations/"
     VALIDATIONS_STORE_PREFIX = "dq/validations/"
     CHECKPOINT_STORE_PREFIX = "dq/checkpoints/"
-    VALIDATION_COLUMN_IDENTIFIER = "validationresultidentifier"
     CUSTOM_EXPECTATION_LIST = [
         "expect_column_values_to_be_date_not_older_than",
         "expect_column_pair_a_to_be_smaller_or_equal_than_b",
@@ -322,17 +615,20 @@ class InputSpec(object):
         directory.
     - df_name: dataframe name.
     - db_table: table name in the form of `<db>.<table>`.
-    - location: uri that identifies from where to read data in the specified format.
-    - enforce_schema_from_table: if we want to enforce the table schema or not, by
-        providing a table name in the form of `<db>.<table>`.
-    - query: sql query to execute and return the dataframe. Use it if you do not want to
-        read from a file system nor from a table, but rather from a sql query instead.
-    - schema: dict representation of a schema of the input (e.g., Spark struct type
-        schema).
-    - schema_path: path to a file with a representation of a schema of the input (e.g.,
-        Spark struct type schema).
+    - location: uri that identifies from where to read data in the
+      specified format.
+    - sharepoint_opts: Options to apply when reading from Sharepoint.
+    - enforce_schema_from_table: if we want to enforce the table schema or not,
+    by providing a table name in the form of `<db>.<table>`.
+    - query: sql query to execute and return the dataframe. Use it if you do not want
+        to read from a file system nor from a table, but rather from a sql query.
+    - schema: dict representation of a schema of the input (e.g., Spark struct
+    type schema).
+    - schema_path: path to a file with a representation of a schema of the
+    input (e.g., Spark struct type schema).
     - disable_dbfs_retry: optional flag to disable file storage dbfs.
-    - with_filepath: if we want to include the path of the file that is being read. Only
+    - with_filepath: if we want to include the path of the file that is being
+    read. Only
         works with the file reader (batch and streaming modes are supported).
     - options: dict with other relevant options according to the execution
         environment (e.g., spark) possible sources.
@@ -352,6 +648,7 @@ class InputSpec(object):
     df_name: Optional[DataFrame] = None
     db_table: Optional[str] = None
     location: Optional[str] = None
+    sharepoint_opts: Optional[SharepointOptions] = None
     query: Optional[str] = None
     enforce_schema_from_table: Optional[str] = None
     schema: Optional[dict] = None
@@ -365,6 +662,16 @@ class InputSpec(object):
     generate_predicates: bool = False
     predicates_add_null: bool = True
     temp_view: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        """Normalize Sharepoint options if passed as a raw dictionary.
+
+        Args:
+            self: Instance of the class where `sharepoint_opts` attribute
+                may be either a dictionary or a SharepointOptions object.
+        """
+        if isinstance(self.sharepoint_opts, dict):
+            self.sharepoint_opts = SharepointOptions(**self.sharepoint_opts)
 
 
 @dataclass
@@ -600,45 +907,6 @@ class MergeOptions(object):
 
 
 @dataclass
-class SharepointOptions(object):
-    """options for a sharepoint write operation.
-
-    - client_id (str): azure client ID application.
-    - tenant_id (str): tenant ID associated with the SharePoint site.
-    - site_name (str): name of the SharePoint site where the document library resides.
-    - drive_name (str): name of the document library where the file will be uploaded.
-    - file_name (str): name of the file to be uploaded to local path and to SharePoint.
-    - secret (str): client secret for authentication.
-    - local_path (str): local path (or similar, e.g. mounted file systems like
-        databricks volumes or dbfs) where files will be temporarily stored during
-        the SharePoint write operation.
-    - api_version (str): version of the Graph SharePoint API to be used for operations.
-    - folder_relative_path (Optional[str]): relative folder path within the document
-        library to upload the file.
-    - chunk_size (Optional[int]): Optional; size (in Bytes) of the file chunks for
-        uploading to SharePoint. Default is 100 Mb.
-    - local_options (Optional[dict]): Optional; additional options for customizing
-        write to csv action to local path. You can check the available options
-        here: https://spark.apache.org/docs/3.5.3/sql-data-sources-csv.html
-    - conflict_behaviour (Optional[str]): Optional; behavior to adopt in case
-        of a conflict (e.g., 'replace', 'fail').
-    """
-
-    client_id: str
-    tenant_id: str
-    site_name: str
-    drive_name: str
-    file_name: str
-    secret: str
-    local_path: str
-    api_version: str = "v1.0"
-    folder_relative_path: Optional[str] = None
-    chunk_size: Optional[int] = 100 * 1024 * 1024  # 100 MB
-    local_options: Optional[dict] = None
-    conflict_behaviour: Optional[str] = None
-
-
-@dataclass
 class OutputSpec(object):
     """Specification of an algorithm output.
 
@@ -651,7 +919,7 @@ class OutputSpec(object):
     - data_format: format of the output. Defaults to DELTA.
     - db_table: table name in the form of `<db>.<table>`.
     - location: uri that identifies from where to write data in the specified format.
-    - sharepoint_opts: options to apply on writing on sharepoint operations.
+    - sharepoint_opts: options to apply on writing on Sharepoint operations.
     - partitions: list of partition input_col names.
     - merge_opts: options to apply to the merge operation.
     - streaming_micro_batch_transformers: transformers to invoke for each streaming
@@ -830,8 +1098,8 @@ class SensorSpec(object):
         For Spark readers that do not support checkpoints, use the
         preprocess_query parameter to form a SQL query to filter the result
         from the upstream accordingly.
-    - fail_on_empty_result: if the sensor should throw an error if there is no new
-        data in the upstream. Default: True.
+    - fail_on_empty_result: if the sensor should throw an error if there is no new data
+    in the upstream. Default: True.
     """
 
     sensor_id: str
@@ -996,8 +1264,7 @@ class GABStartOfWeek(Enum):
             dict containing all enum entries as `{name:value}`.
         """
         return {
-            start_of_week.name: start_of_week.value
-            for start_of_week in list(GABStartOfWeek)
+            start_of_week.name: start_of_week.value for start_of_week in GABStartOfWeek
         }
 
     @classmethod
@@ -1007,7 +1274,7 @@ class GABStartOfWeek(Enum):
         Returns:
             set containing all possible values `{value}`.
         """
-        return {start_of_week.value for start_of_week in list(GABStartOfWeek)}
+        return {start_of_week.value for start_of_week in GABStartOfWeek}
 
 
 @dataclass
@@ -1062,7 +1329,7 @@ class GABSpec(object):
             )
         )
 
-        def format_date(date_to_format: Union[datetime, str]) -> datetime:
+        def format_date(date_to_format: datetime | str) -> datetime:
             if isinstance(date_to_format, str):
                 return datetime.strptime(date_to_format, GABDefaults.DATE_FORMAT.value)
             else:
@@ -1101,10 +1368,9 @@ class GABCadence(Enum):
         Returns:
             dict containing ordered cadences as `{name:value}`.
         """
-        cadences = list(GABCadence)
         return {
             cadence.name: cadence.value
-            for cadence in sorted(cadences, key=lambda gab_cadence: gab_cadence.value)
+            for cadence in sorted(GABCadence, key=lambda gab_cadence: gab_cadence.value)
         }
 
     @classmethod
@@ -1114,7 +1380,7 @@ class GABCadence(Enum):
         Returns:
             set containing all possible cadence values as `{value}`.
         """
-        return {cadence.name for cadence in list(GABCadence)}
+        return {cadence.name for cadence in GABCadence}
 
     @classmethod
     def order_cadences(cls, cadences_to_order: list[str]) -> list[str]:
@@ -1604,4 +1870,100 @@ HEARTBEAT_SENSOR_UPDATE_SET: dict = {
     "target.job_state": "src.job_state",
     "target.dependency_flag": "src.dependency_flag",
     "target.sensor_read_type": "src.sensor_read_type",
+}
+
+
+TABLE_MANAGER_OPERATIONS = {
+    "compute_table_statistics": {"table_or_view": {"type": "str", "mandatory": True}},
+    "create_table": {
+        "path": {"type": "str", "mandatory": True},
+        "disable_dbfs_retry": {"type": "bool", "mandatory": False},
+        "delimiter": {"type": "str", "mandatory": False},
+        "advanced_parser": {"type": "bool", "mandatory": False},
+    },
+    "create_tables": {
+        "path": {"type": "str", "mandatory": True},
+        "disable_dbfs_retry": {"type": "bool", "mandatory": False},
+        "delimiter": {"type": "str", "mandatory": False},
+        "advanced_parser": {"type": "bool", "mandatory": False},
+    },
+    "create_view": {
+        "path": {"type": "str", "mandatory": True},
+        "disable_dbfs_retry": {"type": "bool", "mandatory": False},
+        "delimiter": {"type": "str", "mandatory": False},
+        "advanced_parser": {"type": "bool", "mandatory": False},
+    },
+    "drop_table": {"table_or_view": {"type": "str", "mandatory": True}},
+    "drop_view": {"table_or_view": {"type": "str", "mandatory": True}},
+    "execute_sql": {
+        "sql": {"type": "str", "mandatory": True},
+        "delimiter": {"type": "str", "mandatory": False},
+        "advanced_parser": {"type": "bool", "mandatory": False},
+    },
+    "truncate": {"table_or_view": {"type": "str", "mandatory": True}},
+    "vacuum": {
+        "table_or_view": {"type": "str", "mandatory": False},
+        "path": {"type": "str", "mandatory": False},
+        "vacuum_hours": {"type": "int", "mandatory": False},
+    },
+    "describe": {"table_or_view": {"type": "str", "mandatory": True}},
+    "optimize": {
+        "table_or_view": {"type": "str", "mandatory": False},
+        "path": {"type": "str", "mandatory": False},
+        "where_clause": {"type": "str", "mandatory": False},
+        "optimize_zorder_col_list": {"type": "str", "mandatory": False},
+    },
+    "show_tbl_properties": {"table_or_view": {"type": "str", "mandatory": True}},
+    "get_tbl_pk": {"table_or_view": {"type": "str", "mandatory": True}},
+    "repair_table": {
+        "table_or_view": {"type": "str", "mandatory": True},
+        "sync_metadata": {"type": "bool", "mandatory": True},
+    },
+    "delete_where": {
+        "table_or_view": {"type": "str", "mandatory": True},
+        "where_clause": {"type": "str", "mandatory": True},
+    },
+}
+
+
+FILE_MANAGER_OPERATIONS = {
+    "delete_objects": {
+        "bucket": {"type": "str", "mandatory": True},
+        "object_paths": {"type": "list", "mandatory": True},
+        "dry_run": {"type": "bool", "mandatory": True},
+    },
+    "copy_objects": {
+        "bucket": {"type": "str", "mandatory": True},
+        "source_object": {"type": "str", "mandatory": True},
+        "destination_bucket": {"type": "str", "mandatory": True},
+        "destination_object": {"type": "str", "mandatory": True},
+        "dry_run": {"type": "bool", "mandatory": True},
+    },
+    "move_objects": {
+        "bucket": {"type": "str", "mandatory": True},
+        "source_object": {"type": "str", "mandatory": True},
+        "destination_bucket": {"type": "str", "mandatory": True},
+        "destination_object": {"type": "str", "mandatory": True},
+        "dry_run": {"type": "bool", "mandatory": True},
+    },
+    "request_restore": {
+        "bucket": {"type": "str", "mandatory": True},
+        "source_object": {"type": "str", "mandatory": True},
+        "restore_expiration": {"type": "int", "mandatory": True},
+        "retrieval_tier": {"type": "str", "mandatory": True},
+        "dry_run": {"type": "bool", "mandatory": True},
+    },
+    "check_restore_status": {
+        "bucket": {"type": "str", "mandatory": True},
+        "source_object": {"type": "str", "mandatory": True},
+    },
+    "request_restore_to_destination_and_wait": {
+        "bucket": {"type": "str", "mandatory": True},
+        "source_object": {"type": "str", "mandatory": True},
+        "destination_bucket": {"type": "str", "mandatory": True},
+        "destination_object": {"type": "str", "mandatory": True},
+        "restore_expiration": {"type": "int", "mandatory": True},
+        "retrieval_tier": {"type": "str", "mandatory": True},
+        "dry_run": {"type": "bool", "mandatory": True},
+    },
 }

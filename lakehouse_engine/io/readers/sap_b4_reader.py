@@ -112,6 +112,9 @@ class SAPB4Reader(Reader):
             default_max_timestamp=self._input_spec.options.get(
                 "default_max_timestamp", SAPB4Extraction.default_max_timestamp
             ),
+            default_min_timestamp=self._input_spec.options.get(
+                "default_min_timestamp", SAPB4Extraction.default_min_timestamp
+            ),
             max_timestamp_custom_schema=self._input_spec.options.get(
                 "max_timestamp_custom_schema",
                 SAPB4Extraction.max_timestamp_custom_schema,

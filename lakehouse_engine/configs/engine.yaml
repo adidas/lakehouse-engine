@@ -20,3 +20,6 @@ notif_disallowed_email_servers:
   - sample.blocked.email_server
 engine_usage_path: s3://sample-log-bucket
 engine_dev_usage_path: s3://sample-log-dev-bucket
+raise_on_config_not_available: False
+prod_catalog: sample_catalog
+environment: prod

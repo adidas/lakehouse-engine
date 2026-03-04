@@ -49,6 +49,16 @@ class WriteToLocalException(Exception):
 
 
 class SharePointAPIError(Exception):
-    """Custom exception class to handle errors SharePoint API requests."""
+    """Custom exception class to handle errors Sharepoint API requests."""
+
+    pass
+
+
+class InvalidSharepointPathException(Exception):
+    """Raised when folder path conflicts with file name.
+
+    Happens if both `folder_relative_path` and `file_name` are set, but the folder path
+    looks like a file path (last segment has a dot).
+    """
 
     pass

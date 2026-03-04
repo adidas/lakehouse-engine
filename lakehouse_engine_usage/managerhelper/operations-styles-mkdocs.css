@@ -1,0 +1,293 @@
+/* Import base styles */
+/* Operations-specific styles for MkDocs */
+
+.managerhelper-wrapper .operation-selector {
+    background: #e3f2fd;
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #2196f3;
+}
+
+.managerhelper-wrapper .operation-selector label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #1565c0;
+}
+
+.managerhelper-wrapper .operation-selector select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #90caf9;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: white;
+    color: #1565c0;
+    transition: all 0.3s ease;
+}
+
+.managerhelper-wrapper .operation-selector select:focus {
+    border-color: #2196f3;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+/* Operations List */
+.managerhelper-wrapper .operations-list-container {
+    background: #fafafa;
+    border-radius: 4px;
+    margin: 0 2rem 2rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e0e0e0;
+}
+
+.managerhelper-wrapper .operations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #2196f3;
+    color: white;
+}
+
+.managerhelper-wrapper .operations-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.managerhelper-wrapper .operations-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.managerhelper-wrapper .operations-list {
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.managerhelper-wrapper .empty-operations {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.managerhelper-wrapper .empty-operations i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.managerhelper-wrapper .operation-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+}
+
+.managerhelper-wrapper .operation-item:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.managerhelper-wrapper .operation-info {
+    flex: 1;
+}
+
+.managerhelper-wrapper .operation-title {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.managerhelper-wrapper .operation-title i {
+    color: #2196f3;
+}
+
+.managerhelper-wrapper .operation-details {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.managerhelper-wrapper .operation-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 1rem;
+}
+
+.managerhelper-wrapper .btn-edit {
+    background: #ffd54f;
+    color: rgba(0, 0, 0, 0.87);
+    border: none;
+}
+
+.managerhelper-wrapper .btn-edit:hover {
+    background: #ffca28;
+}
+
+.managerhelper-wrapper .btn-remove {
+    background: #f44336;
+    color: white;
+    border: none;
+}
+
+.managerhelper-wrapper .btn-remove:hover {
+    background: #d32f2f;
+}
+
+/* Field Groups */
+.managerhelper-wrapper .field-group {
+    background: #fafafa;
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-left: 3px solid #4caf50;
+}
+
+.managerhelper-wrapper .field-group h4 {
+    color: rgba(0, 0, 0, 0.87);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.managerhelper-wrapper .field-group h4 i {
+    color: #4caf50;
+}
+
+.managerhelper-wrapper .field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.managerhelper-wrapper .field-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.managerhelper-wrapper .field-item label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+}
+
+.managerhelper-wrapper .field-item input,
+.managerhelper-wrapper .field-item select,
+.managerhelper-wrapper .field-item textarea {
+    padding: 10px 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.managerhelper-wrapper .field-item input:focus,
+.managerhelper-wrapper .field-item select:focus,
+.managerhelper-wrapper .field-item textarea:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.managerhelper-wrapper .field-help {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.54);
+    margin-top: 0.25rem;
+}
+
+.managerhelper-wrapper .field-required {
+    color: #f44336;
+}
+
+/* Form validation */
+.managerhelper-wrapper .form-control.invalid {
+    border-color: #f44336;
+    background-color: #ffebee;
+}
+
+.managerhelper-wrapper .form-control.valid {
+    border-color: #4caf50;
+    background-color: #f1f8e9;
+}
+
+.managerhelper-wrapper .validation-message {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.managerhelper-wrapper .validation-message.error {
+    color: #f44336;
+}
+
+.managerhelper-wrapper .validation-message.success {
+    color: #4caf50;
+}
+
+/* Operation Type Badges */
+.managerhelper-wrapper .operation-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.25rem;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+}
+
+.managerhelper-wrapper .badge-table {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.managerhelper-wrapper .badge-file {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .managerhelper-wrapper .field-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .managerhelper-wrapper .operations-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .managerhelper-wrapper .operations-actions {
+        justify-content: center;
+    }
+    
+    .managerhelper-wrapper .operation-item {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .managerhelper-wrapper .operation-actions {
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+    
+    .managerhelper-wrapper .operations-list-container {
+        margin: 0 1rem 1rem;
+    }
+}

@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import requests
 from delta.tables import DeltaTable
@@ -166,7 +166,7 @@ class SensorControlTableManager(object):
         ]
 
     @classmethod
-    def _get_sensor_update_set(cls, **kwargs: Union[Optional[str], List[str]]) -> dict:
+    def _get_sensor_update_set(cls, **kwargs: Optional[str] | List[str]) -> dict:
         """Get the sensor update set.
 
         Args:

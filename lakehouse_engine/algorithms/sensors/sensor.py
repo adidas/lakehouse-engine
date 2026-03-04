@@ -94,9 +94,7 @@ class Sensor(Algorithm):
         """Run sensor in streaming mode (internally runs in batch mode)."""
 
         def foreach_batch_check_new_data(df: DataFrame, batch_id: int) -> None:
-            # forcing session to be available inside forEachBatch on
-            # Spark Connect
-            ExecEnv.get_or_create()
+            ExecEnv.get_for_each_batch_session(df)
 
             Sensor._run_batch_sensor(
                 sensor_spec=sensor_spec,

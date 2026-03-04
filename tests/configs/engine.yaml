@@ -1,4 +1,5 @@
 dq_bucket: /app/tests/lakehouse/out/feature
+dq_dev_bucket: /app/tests/lakehouse/out/feature
 notif_disallowed_email_servers:
   - smtp.test.com
 engine_usage_path: file:///app/tests/lakehouse/logs/lakehouse-engine-logs
@@ -20,3 +21,4 @@ dq_result_sink_columns_to_delete:
 sharepoint_authority: https://login.microsoftonline.com
 sharepoint_api_domain: https://graph.microsoft.com
 sharepoint_company_domain: company_name.sharepoint.com
+prod_catalog: sample_catalog

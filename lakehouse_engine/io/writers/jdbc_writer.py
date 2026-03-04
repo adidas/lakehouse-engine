@@ -5,6 +5,7 @@ from typing import Callable, OrderedDict
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import OutputSpec
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.io.writer import Writer
 
 
@@ -75,6 +76,7 @@ class JDBCWriter(Writer):
         """
 
         def inner(batch_df: DataFrame, batch_id: int) -> None:
+            ExecEnv.get_for_each_batch_session(batch_df)
             transformed_df = Writer.get_transformed_micro_batch(
                 output_spec, batch_df, batch_id, data
             )

@@ -57,6 +57,8 @@ class SAPB4Extraction(JDBCExtraction):
         Default: timestamp DECIMAL(23,0).
     - default_max_timestamp: the timestamp to use as default, when it is not possible
         to derive one.
+    - default_min_timestamp: the timestamp to use as default, when it is not possible
+        to derive one.
     - custom_schema: specify custom_schema for particular columns of the
         returned dataframe in the init/delta extraction of the source table.
     """
@@ -72,6 +74,7 @@ class SAPB4Extraction(JDBCExtraction):
     adso_type: Optional[str] = None
     max_timestamp_custom_schema: str = "timestamp DECIMAL(23,0)"
     default_max_timestamp: str = "1970000000000000000000"
+    default_min_timestamp: str = "1970000000000000000000"
     custom_schema: str = "REQTSN DECIMAL(23,0)"
 
 
@@ -205,6 +208,12 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
             ).first()[0]
         else:
             min_timestamp = self._B4_EXTRACTION.min_timestamp
+
+        min_timestamp = (
+            min_timestamp
+            if min_timestamp
+            else self._B4_EXTRACTION.default_min_timestamp
+        )
 
         max_timestamp = (
             self._B4_EXTRACTION.max_timestamp

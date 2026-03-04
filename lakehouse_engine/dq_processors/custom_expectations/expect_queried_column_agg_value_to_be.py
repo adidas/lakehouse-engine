@@ -1,6 +1,6 @@
 """Expectation to check if aggregated column satisfy the condition."""
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.expectations.expectation import (
@@ -212,7 +212,7 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         metrics: dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
-    ) -> Union[ExpectationValidationResult, dict]:
+    ) -> ExpectationValidationResult | dict:
         """Implementation of the GE _validate method.
 
         This method is used on the tests to validate the result

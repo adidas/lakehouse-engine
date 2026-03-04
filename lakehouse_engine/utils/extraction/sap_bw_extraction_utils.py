@@ -1,6 +1,5 @@
 """Utilities module for SAP BW extraction processes."""
 
-from copy import copy
 from dataclasses import dataclass
 from logging import Logger
 from typing import Optional, Tuple
@@ -50,10 +49,16 @@ class SAPBWExtraction(JDBCExtraction):
         Default: timestamp DECIMAL(23,0).
     - default_max_timestamp: the timestamp to use as default, when it is not possible
         to derive one.
+    - default_min_timestamp: the timestamp to use as default, when it is not possible
+        to derive one.
+    - ods_prefix: the prefix to use when looking for the changelog table in SAP BW.
+         Default: "8".
+     - logsys: the BW source & receiver system ID to use to get the tsprefix
+        (prefix for transfer structures) which is used while deriving the changelog
+        table. Default: None & generated based on the schema.
     """
 
     latest_timestamp_input_col: str = "actrequest_timestamp"
-    act_request_table: str = "SAPPHA.RSODSACTREQ"
     request_col_name: str = "actrequest"
     act_req_join_condition: Optional[str] = None
     odsobject: Optional[str] = None
@@ -61,8 +66,13 @@ class SAPBWExtraction(JDBCExtraction):
     extra_cols_act_request: Optional[str] = None
     get_timestamp_from_act_request: bool = False
     sap_bw_schema: str = "SAPPHA"
+    act_request_table: str = f"{sap_bw_schema}.RSODSACTREQ"
     max_timestamp_custom_schema: str = "timestamp DECIMAL(15,0)"
     default_max_timestamp: str = "197000000000000"
+    default_min_timestamp: str = "197000000000000"
+    ods_prefix: str = "8"
+    logsys: Optional[str] = None
+    custom_schema: Optional[str] = "REQUEST VARCHAR(30), DATAPAKID VARCHAR(6)"
 
 
 class SAPBWExtractionUtils(JDBCExtractionUtils):
@@ -97,21 +107,30 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
             and self._BW_EXTRACTION.changelog_table is None
             and self._BW_EXTRACTION.extraction_type != JDBCExtractionType.INIT.value
         ):
-            escaped_odsobject = copy(self._BW_EXTRACTION.odsobject).replace("_", "$_")
+            logsys_cond = self.get_logsys_cond()
+            prefix = self._BW_EXTRACTION.ods_prefix
+            odsobject = self._BW_EXTRACTION.odsobject
 
             if self._BW_EXTRACTION.sap_bw_schema:
                 system_table = f"{self._BW_EXTRACTION.sap_bw_schema}.RSTSODS"
+                pref_table = f"{self._BW_EXTRACTION.sap_bw_schema}.RSBASIDOC"
             else:
                 system_table = "RSTSODS"
+                pref_table = "RSBASIDOC"
 
+            query = f"""
+                    (SELECT ODSNAME_TECH
+                    FROM {system_table} o
+                    JOIN {pref_table} p ON {logsys_cond}
+                    AND o.ODSNAME = '{prefix}{odsobject}_' || p.tsprefix
+                    AND USERAPP = 'CHANGELOG' AND VERSION = '000')
+                """  # nosec: B608
+            self._LOGGER.info(
+                f"Deriving changelog_table using the following query: {query}"
+            )
             jdbc_args = {
                 "url": self._BW_EXTRACTION.url,
-                "table": f""" -- # nosec
-                    (SELECT ODSNAME_TECH
-                    FROM {system_table}
-                    WHERE ODSNAME LIKE '8{escaped_odsobject}$_%'
-                        ESCAPE '$' AND USERAPP = 'CHANGELOG' AND VERSION = '000')
-                """,  # nosec: B608
+                "table": query,
                 "properties": {
                     "user": self._BW_EXTRACTION.user,
                     "password": self._BW_EXTRACTION.password,
@@ -128,6 +147,15 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                     jdbc_args=jdbc_args,
                 )
             )
+            changelog_tbl_nbr = changelog_df.count()
+            if changelog_tbl_nbr > 1:
+                raise ValueError(
+                    f"More than one changelog table found for {odsobject}."
+                    f"Aborting. {changelog_df.show()}"
+                )
+            if changelog_tbl_nbr == 0:
+                raise ValueError(f"No changelog table found for {odsobject}. Aborting.")
+
             changelog_table = (
                 f'{self._BW_EXTRACTION.sap_bw_schema}."{changelog_df.first()[0]}"'
                 if self._BW_EXTRACTION.sap_bw_schema
@@ -162,6 +190,20 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
             if len(input_spec_opt["dbtable"].split(".")) > 1
             else input_spec_opt["dbtable"]
         )
+
+    def get_logsys_cond(self) -> str:
+        """Get logsys condition to join & get the tsprefix for the changelog derivation.
+
+        Usually the condition on the else is enough.
+
+        Returns:
+            The logsys condition.
+        """
+        if self._BW_EXTRACTION.logsys:
+            logsys = self._BW_EXTRACTION.logsys
+            return f"p.slogsys = '{logsys}' AND p.rlogsys = '{logsys}'"
+        else:
+            return "p.slogsys = p.rlogsys"
 
     def _get_init_query(self) -> Tuple[str, str]:
         """Get a query to do an init load based on a DSO on a SAP BW system.

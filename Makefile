@@ -114,7 +114,7 @@ docs:
 		-w /app \
 		-v "$$PWD":/app \
 		$(image_name):$(version) \
-		/bin/bash -c 'cd $(build_src_dir) && python ./cicd/code_doc/render_docs.py'
+		/bin/bash -c 'cd $(build_src_dir) && pip install . && python ./cicd/code_doc/render_docs.py'
 
 # mypy incremental mode is used by default, so in case there is any cache related issue,
 # you can modify the command to include --no-incremental flag or you can delete mypy_cache folder.

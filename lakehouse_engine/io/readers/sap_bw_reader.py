@@ -110,6 +110,9 @@ class SAPBWReader(Reader):
             default_max_timestamp=self._input_spec.options.get(
                 "default_max_timestamp", SAPBWExtraction.default_max_timestamp
             ),
+            default_min_timestamp=self._input_spec.options.get(
+                "default_min_timestamp", SAPBWExtraction.default_min_timestamp
+            ),
             max_timestamp_custom_schema=self._input_spec.options.get(
                 "max_timestamp_custom_schema",
                 SAPBWExtraction.max_timestamp_custom_schema,
@@ -131,6 +134,13 @@ class SAPBWReader(Reader):
                 SAPBWExtraction.get_timestamp_from_act_request,
             ),
             calc_upper_bound_schema=self._input_spec.calc_upper_bound_schema,
+            sap_bw_schema=self._input_spec.options.get(
+                "sap_bw_schema", SAPBWExtraction.sap_bw_schema
+            ),
+            ods_prefix=self._input_spec.options.get(
+                "ods_prefix", SAPBWExtraction.ods_prefix
+            ),
+            logsys=self._input_spec.options.get("logsys", SAPBWExtraction.logsys),
         )
         return SAPBWExtractionUtils(jdbc_extraction)
 

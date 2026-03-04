@@ -4,24 +4,24 @@
 #
 #    pip-compile --constraint=requirements_full.lock --output-file=requirements_os.lock requirements_os.txt
 #
-delta-spark==3.3.1
+delta-spark==4.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_os.txt
-importlib-metadata==8.7.0
+importlib-metadata==8.7.1
     # via
     #   -c requirements_full.lock
     #   delta-spark
-py4j==0.10.9.7
+py4j==0.10.9.9
     # via
     #   -c requirements_full.lock
     #   pyspark
-pyspark==3.5.5
+pyspark==4.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_os.txt
     #   delta-spark
-zipp==3.22.0
+zipp==3.23.0
     # via
     #   -c requirements_full.lock
     #   importlib-metadata

@@ -1,6 +1,7 @@
 """Module to configure the test environment."""
 
 from typing import Any, Generator
+from unittest.mock import patch
 
 import pytest
 
@@ -16,6 +17,17 @@ LAKEHOUSE_FEATURE_IN = LAKEHOUSE + "in/feature"
 LAKEHOUSE_FEATURE_CONTROL = LAKEHOUSE + "control/feature"
 LAKEHOUSE_FEATURE_OUT = LAKEHOUSE + "out/feature"
 LAKEHOUSE_FEATURE_LOGS = LAKEHOUSE + "logs/lakehouse-engine-logs"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def patch_databricks_utils_job_info() -> Generator:
+    """Patch DatabricksUtils.get_databricks_job_information to return local values."""
+    with patch(
+        "lakehouse_engine.utils.databricks_utils."
+        "DatabricksUtils.get_databricks_job_information",
+        return_value=("local", "local"),
+    ):
+        yield
 
 
 def pytest_addoption(parser: Any) -> Any:

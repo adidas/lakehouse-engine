@@ -1,11 +1,38 @@
 """Module to perform validations and resolve the acon."""
 
-from lakehouse_engine.core.definitions import DQType, InputFormat, OutputFormat
+from lakehouse_engine.core.definitions import (
+    FILE_MANAGER_OPERATIONS,
+    TABLE_MANAGER_OPERATIONS,
+    DQType,
+    InputFormat,
+    OutputFormat,
+)
 from lakehouse_engine.io.exceptions import WrongIOFormatException
 from lakehouse_engine.utils.dq_utils import PrismaUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 _LOGGER = LoggingHandler(__name__).get_logger()
+
+
+def validate_manager_list(acon: dict) -> list:
+    """Function to validate an acon with a list of operations.
+
+    Args:
+        acon: Acon to be validated.
+    """
+    error_list: list[str] = []
+    operations: list[dict] = acon.get("operations", [])
+
+    if not operations:
+        raise RuntimeError("No operations found in the acon.")
+
+    for operation in operations:
+        validate_managers(operation, error_list)
+    if error_list:
+        error_list_str = "\n" + "\n".join(error_list)
+        raise RuntimeError(f"Errors found during validation:{error_list_str}")
+
+    return operations
 
 
 def validate_and_resolve_acon(acon: dict, execution_point: str = "") -> dict:
@@ -21,6 +48,7 @@ def validate_and_resolve_acon(acon: dict, execution_point: str = "") -> dict:
     # Performing validations
     validate_readers(acon)
     validate_writers(acon)
+    validate_managers(acon)
 
     # Resolving the acon
     if execution_point:
@@ -66,6 +94,114 @@ def validate_writers(acon: dict) -> None:
                 raise WrongIOFormatException(
                     f"Output format not supported: {spec.get('data_format')}"
                 )
+
+
+def validate_managers(acon: dict, error_list: list = None) -> None:
+    """Function to validate the managers in the acon.
+
+    Args:
+        acon: Acon to be validated.
+        error_list: List to collect errors.
+    """
+    manager_type = acon.get("manager")
+    temp_error_list = []
+    if not manager_type:
+        return
+
+    function_name = acon.get("function")
+    if not function_name:
+        error = "Missing 'function' parameter for manager"
+        temp_error_list.append(error)
+
+    if manager_type == "file":
+        operations_dict = FILE_MANAGER_OPERATIONS
+    elif manager_type == "table":
+        operations_dict = TABLE_MANAGER_OPERATIONS
+    else:
+        error = f"Manager type not supported: {manager_type}"
+        temp_error_list.append(error)
+
+    if function_name not in operations_dict:
+        error = f"Function '{function_name}' not supported for {manager_type} manager"
+        temp_error_list.append(error)
+    else:
+        expected_params = operations_dict[function_name]
+
+        missing_mandatory = validate_mandatory_parameters(acon, expected_params)
+        if missing_mandatory:
+            error = (
+                f"Missing mandatory parameters for {manager_type} "
+                f"manager function {function_name}: {missing_mandatory}"
+            )
+            temp_error_list.append(error)
+
+        type_errors = validate_parameter_types(acon, expected_params)
+
+        if type_errors:
+            error = (
+                f"Type validation errors for {manager_type} "
+                f"manager function {function_name}: {type_errors}"
+            )
+            temp_error_list.append(error)
+
+    if error_list is not None:
+        error_list.extend(temp_error_list)
+    else:
+        if temp_error_list:
+            error_list_str = "\n".join(temp_error_list)
+            raise RuntimeError(error_list_str)
+
+
+def validate_mandatory_parameters(acon: dict, expected_params: dict) -> list:
+    """Function to validate mandatory parameters in the acon.
+
+    Args:
+        acon: Acon to be validated.
+        expected_params: Expected parameters with their mandatory status.
+
+    Returns:
+        List of missing mandatory parameters.
+    """
+    missing_mandatory = []
+    for param_name, param_info in expected_params.items():
+        if param_info["mandatory"] and param_name not in acon:
+            missing_mandatory.append(param_name)
+
+    return missing_mandatory
+
+
+def validate_parameter_types(acon: dict, expected_params: dict) -> list:
+    """Function to validate parameter types in the acon.
+
+    Args:
+        acon: Acon to be validated.
+        expected_params: Expected parameters with their types.
+
+    Returns:
+        List of type validation errors.
+    """
+    type_errors = []
+    for param_name, param_value in acon.items():
+        if param_name in expected_params:
+            expected_type = expected_params[param_name]["type"]
+            param_type_name = type(param_value).__name__
+
+            expected_python_type = {
+                "str": str,
+                "bool": bool,
+                "int": int,
+                "list": list,
+            }.get(expected_type)
+
+            if expected_python_type and not isinstance(
+                param_value, expected_python_type
+            ):
+                type_errors.append(
+                    f"Parameter '{param_name}' expected {expected_type}, "
+                    f"got {param_type_name}"
+                )
+
+    return type_errors
 
 
 def resolve_dq_functions(acon: dict, execution_point: str) -> dict:

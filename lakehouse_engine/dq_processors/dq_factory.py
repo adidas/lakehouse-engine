@@ -6,7 +6,7 @@ import random
 from copy import deepcopy
 from datetime import datetime, timezone
 from json import dumps, loads
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import great_expectations as gx
 from great_expectations import ExpectationSuite
@@ -540,7 +540,7 @@ class DQFactory(object):
         Returns:
             The DataContextConfig object configuration.
         """
-        store_backend: Union[FilesystemStoreBackendDefaults, S3StoreBackendDefaults]
+        store_backend: FilesystemStoreBackendDefaults | S3StoreBackendDefaults
 
         if dq_spec.store_backend == DQDefaults.FILE_SYSTEM_STORE.value:
             store_backend = FilesystemStoreBackendDefaults(
@@ -553,11 +553,6 @@ class DQFactory(object):
                 checkpoint_store_prefix=dq_spec.checkpoint_store_prefix,
                 expectations_store_prefix=dq_spec.expectations_store_prefix,
             )
-
-        # @todo we should find a way to create a datacontextconfig without
-        # passing a local_fs_root_dir so that we wont have problems with
-        # changing versions of the lakehouse-engine due to the marshmallow
-        # library identifiyng new fields on the checkpoints
 
         return DataContextConfig(
             store_backend_defaults=store_backend,

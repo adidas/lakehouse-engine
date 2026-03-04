@@ -3,5 +3,5 @@
 #
 # ! Do not forget running `make build-lock-files` after updating dependency list !
 #
-pyspark==3.5.5
-delta-spark==3.3.1
+pyspark==4.0.0
+delta-spark==4.0.0

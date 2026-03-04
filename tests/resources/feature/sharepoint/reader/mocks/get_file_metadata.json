@@ -1,0 +1,7 @@
+{
+    "id": "test_item_id",
+    "name": "sample.csv",
+    "createdDateTime": "2026-01-01T00:00:00Z",
+    "lastModifiedDateTime": "2026-01-01T00:00:00Z",
+    "@microsoft.graph.downloadUrl": "https://download.mock/sample.csv"
+}

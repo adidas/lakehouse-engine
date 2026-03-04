@@ -2,7 +2,7 @@
 
 import calendar
 from datetime import datetime, timedelta
-from typing import Tuple, Union, cast
+from typing import Tuple, cast
 
 import pendulum
 from pendulum import DateTime
@@ -186,9 +186,9 @@ class GABCadenceManager(object):
     @classmethod
     def _get_cadence_calculated_date(
         cls, derived_cadence: str, base_date: datetime, is_start: bool
-    ) -> Union[datetime, DateTime]:  # type: ignore
+    ) -> datetime | DateTime:  # type: ignore
         cadence_base_date = cls._get_cadence_base_date(derived_cadence, base_date)
-        cadence_date_calculated: Union[DateTime, datetime]
+        cadence_date_calculated: DateTime | datetime
 
         if derived_cadence.upper() == "WEEK":
             cadence_date_calculated = cls._get_calculated_week_date(
@@ -210,7 +210,7 @@ class GABCadenceManager(object):
     @classmethod
     def _get_cadence_base_date(
         cls, derived_cadence: str, base_date: datetime
-    ) -> Union[datetime, DateTime, str]:  # type: ignore
+    ) -> datetime | DateTime | str:  # type: ignore
         """Get start date for the selected cadence.
 
         Args:

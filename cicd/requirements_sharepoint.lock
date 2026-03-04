@@ -4,36 +4,40 @@
 #
 #    pip-compile --constraint=requirements_full.lock --output-file=requirements_sharepoint.lock requirements_sharepoint.txt
 #
-certifi==2025.4.26
+azure-core==1.38.0
+    # via
+    #   -c requirements_full.lock
+    #   -r requirements_sharepoint.txt
+certifi==2026.1.4
     # via
     #   -c requirements_full.lock
     #   requests
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   -c requirements_full.lock
     #   cryptography
-charset-normalizer==3.4.2
+charset-normalizer==3.4.4
     # via
     #   -c requirements_full.lock
     #   requests
-cryptography==45.0.3
+cryptography==46.0.5
     # via
     #   -c requirements_full.lock
     #   msal
     #   pyjwt
-idna==3.10
+idna==3.11
     # via
     #   -c requirements_full.lock
     #   requests
-msal==1.33.0
+msal==1.32.3
     # via
     #   -c requirements_full.lock
     #   -r requirements_sharepoint.txt
-pycparser==2.22
+pycparser==3.0
     # via
     #   -c requirements_full.lock
     #   cffi
-pyjwt[crypto]==2.10.1
+pyjwt[crypto]==2.11.0
     # via
     #   -c requirements_full.lock
     #   msal
@@ -41,14 +45,17 @@ pyjwt[crypto]==2.10.1
 requests==2.32.4
     # via
     #   -c requirements_full.lock
-    #   -r requirements_sharepoint.txt
+    #   azure-core
     #   msal
 tenacity==9.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_sharepoint.txt
-urllib3==2.5.0
+typing-extensions==4.15.0
     # via
     #   -c requirements_full.lock
-    #   -r requirements_sharepoint.txt
+    #   azure-core
+urllib3==2.6.3
+    # via
+    #   -c requirements_full.lock
     #   requests

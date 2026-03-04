@@ -1,5 +1,6 @@
 """Module with join transformers."""
 
+import uuid
 from typing import Callable, List, Optional
 
 from pyspark.sql import DataFrame
@@ -7,6 +8,7 @@ from pyspark.sql import DataFrame
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.transformers.watermarker import Watermarker
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+from lakehouse_engine.utils.spark_utils import SparkUtils
 
 
 class Joiners(object):
@@ -51,11 +53,10 @@ class Joiners(object):
         """
 
         def inner(df: DataFrame) -> DataFrame:
-            # To enable join on foreachBatch processing we had
-            # to change to global temp view. The goal here is to
-            # avoid problems on simultaneously running process,
-            # so we added application id on table name.
-            app_id = ExecEnv.SESSION.getActiveSession().conf.get("spark.app.id")
+            # The goal here is to avoid problems on
+            # simultaneously running process,
+            # so an id is added as a prefix for the alias.
+            app_id = str(uuid.uuid4())
             left = f"`{app_id}_{left_df_alias}`"
             right = f"`{app_id}_{right_df_alias}`"
             df_join_with = join_with
@@ -73,15 +74,17 @@ class Joiners(object):
                         right_df_watermarking["watermarking_time"],
                     )(df_join_with)
 
-            df.createOrReplaceGlobalTempView(left)  # type: ignore
-            df_join_with.createOrReplaceGlobalTempView(right)  # type: ignore
+            l_prefix = SparkUtils.create_temp_view(df, left, return_prefix=True)
+            r_prefix = SparkUtils.create_temp_view(
+                df_join_with, right, return_prefix=True
+            )
 
             query = f"""
                 SELECT {f"/*+ BROADCAST({right_df_alias}) */" if broadcast_join else ""}
                 {", ".join(select_cols)}
-                FROM global_temp.{left} AS {left_df_alias}
+                FROM {l_prefix}{left} AS {left_df_alias}
                 {join_type.upper()}
-                JOIN global_temp.{right} AS {right_df_alias}
+                JOIN {r_prefix}{right} AS {right_df_alias}
                 ON {join_condition}
             """  # nosec: B608
 

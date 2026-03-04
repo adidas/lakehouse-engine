@@ -1,10 +1,10 @@
 """Module to read configurations."""
 
-import importlib.resources
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import yaml
+from importlib_resources import as_file, files
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
@@ -52,11 +52,16 @@ class ConfigUtils(object):
     def get_config(package: str = "lakehouse_engine.configs") -> Any:
         """Get the lakehouse engine configuration file.
 
+        Args:
+            package: package where the engine default configurations can be found.
+
         Returns:
             Configuration dictionary
         """
-        with importlib.resources.open_binary(package, "engine.yaml") as config:
-            config = yaml.safe_load(config)
+        config_path = files(package) / "engine.yaml"
+        with as_file(config_path) as config_file:
+            with open(config_file, "r") as config:
+                config = yaml.safe_load(config)
         return config
 
     @staticmethod
@@ -115,9 +120,7 @@ class ConfigUtils(object):
         return FileStorageFunctions.read_sql(path, disable_dbfs_retry)
 
     @classmethod
-    def remove_sensitive_info(
-        cls, dict_to_replace: Union[dict, list]
-    ) -> Union[dict, list]:
+    def remove_sensitive_info(cls, dict_to_replace: dict | list) -> dict | list:
         """Remove sensitive info from a dictionary.
 
         Args:

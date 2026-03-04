@@ -18,7 +18,10 @@ from lakehouse_engine.core.sensor_manager import SensorUpstreamManager
 from lakehouse_engine.core.table_manager import TableManager
 from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.terminators.sensor_terminator import SensorTerminator
-from lakehouse_engine.utils.acon_utils import validate_and_resolve_acon
+from lakehouse_engine.utils.acon_utils import (
+    validate_and_resolve_acon,
+    validate_manager_list,
+)
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.engine_usage_stats import EngineUsageStats
 
@@ -132,6 +135,36 @@ def manage_table(
         acon, manage_table.__name__, collect_engine_usage, spark_confs
     )
     TableManager(acon).get_function()
+
+
+def execute_manager(
+    acon: dict,
+    collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
+    spark_confs: dict = None,
+) -> None:
+    """Execute the Lakehouse Engine Manager.
+
+    This function allows users to execute multiple managers in a single
+    call by providing a list of acons.
+
+    Args:
+        acon: list of acons to be executed by the manager.
+        collect_engine_usage: Lakehouse usage statistics collection strategy.
+        spark_confs: optional dictionary with the spark confs to be used when collecting
+            the engine usage.
+    """
+    ExecEnv.get_or_create(app_name="lakehouse_engine_manager")
+    acon_list = validate_manager_list(acon)
+    for acon in acon_list:
+        EngineUsageStats.store_engine_usage(
+            acon, execute_manager.__name__, collect_engine_usage, spark_confs
+        )
+        if acon["manager"] == "file":
+            FileManagerFactory.execute_function(configs=acon)
+        elif acon["manager"] == "table":
+            TableManager(acon).get_function()
+        else:
+            raise ValueError(f"Manager {acon['manager']} not recognized.")
 
 
 def manage_files(

@@ -12,6 +12,7 @@ from lakehouse_engine.io.readers.kafka_reader import KafkaReader
 from lakehouse_engine.io.readers.query_reader import QueryReader
 from lakehouse_engine.io.readers.sap_b4_reader import SAPB4Reader
 from lakehouse_engine.io.readers.sap_bw_reader import SAPBWReader
+from lakehouse_engine.io.readers.sharepoint_reader import SharepointReader
 from lakehouse_engine.io.readers.table_reader import TableReader
 
 
@@ -48,6 +49,9 @@ class ReaderFactory(ABC):  # noqa: B024
             from lakehouse_engine.io.readers.sftp_reader import SFTPReader
 
             read_df = SFTPReader(input_spec=spec).read()
+            return SFTPReader(input_spec=spec).read()
+        elif spec.data_format == InputFormat.SHAREPOINT.value:
+            return SharepointReader(input_spec=spec).read()
         else:
             raise NotImplementedError(
                 f"The requested input spec format {spec.data_format} is not supported."

@@ -1,25 +1,25 @@
 # Write to Sharepoint
 
-There may be scenarios where data products must deliver curated datasets to external platforms like SharePoint, 
+There may be scenarios where data products must deliver curated datasets to external platforms like Sharepoint,
 often to serve business users or reporting tools outside the lakehouse environment.
 
-The SharePointWriter is a specialized writer module designed to export a single file from the lakehouse to a SharePoint document library.
+The SharePointWriter is a specialized writer module designed to export a single file from the lakehouse to a Sharepoint document library.
 It handles the complexities of the export by:
 
-* Writing the dataset to a temporary local file. 
-* Uploading that file to the configured SharePoint location using authenticated APIs. 
+* Writing the dataset to a temporary local file.
+* Uploading that file to the configured Sharepoint location using authenticated APIs.
 * Since it is scoped to handle only a single file per execution, any logic for splitting or generating multiple files must be implemented within your notebook prior to invoking the writer.
 
-!!! note 
+!!! note
     📘 Tip: This writer integrates seamlessly into the lakehouse engine's output step and can be triggered as part of the ACON-based pipeline, just like any other writer module.
 
 !!! warning
     **CSV files do not support complex data types such as array, map, or struct.**
-    If these fields exist in the dataset, they must be converted to string (e.g., via to_json(), cast, or similar) before using the SharePoint Writer, as **these types will cause the export to fail.**
+    If these fields exist in the dataset, they must be converted to string (e.g., via to_json(), cast, or similar) before using the Sharepoint Writer, as **these types will cause the export to fail.**
 
 ### Usage Scenarios
 
-The examples below show how to write data to SharePoint, ranging from simple single-DataFrame writes to more complex multi-DataFrame workflows.
+The examples below show how to write data to Sharepoint, ranging from simple single-DataFrame writes to more complex multi-DataFrame workflows.
 
 1. [Configuration parameters](#1-configuration-parameters)
 2. [**Simple:** Write one Dataframe to Sharepoint](#2-simple-write-one-dataframe-to-sharepoint)
@@ -37,13 +37,13 @@ The examples below show how to write data to SharePoint, ranging from simple sin
 
    - **client_id** (str): azure client ID application, available at the
      Azure Portal -> Azure Active Directory.
-   - **tenant_id** (str): tenant ID associated with the SharePoint site, available at the
+   - **tenant_id** (str): tenant ID associated with the Sharepoint site, available at the
      Azure Portal -> Azure Active Directory.
-   - **site_name** (str): name of the SharePoint site where the document library resides.
+   - **site_name** (str): name of the Sharepoint site where the document library resides.
      Sharepoint URL naming convention is: **https://your_company_name.sharepoint.com/sites/site_name**
    - **drive_name** (str): name of the document library where the file will be uploaded.
      Sharepoint URL naming convention is: **https://your_company_name.sharepoint.com/sites/site_name/drive_name**
-   - **file_name** (str): name of the file to be uploaded to local path and to SharePoint.
+   - **file_name** (str): name of the file to be uploaded to local path and to Sharepoint.
    - **secret** (str): client secret for authentication, available at the
      Azure Portal -> Azure Active Directory.
    - **local_path** (str): Temporary local storage path for the file before uploading.
@@ -51,7 +51,7 @@ The examples below show how to write data to SharePoint, ranging from simple sin
      - Note: The **specified sub-folder is deleted during the process**; it does not perform a recursive
      delete on parent directories.
      - **Avoid using a critical sub-folder.**
-   - **api_version** (str): version of the Graph SharePoint API to be used for operations.
+   - **api_version** (str): version of the Graph Sharepoint API to be used for operations.
      This defaults to "v1.0".
 
 ### The optional parameters are:
@@ -59,7 +59,7 @@ The examples below show how to write data to SharePoint, ranging from simple sin
    - **folder_relative_path** (Optional[str]): relative folder path within the document
        library to upload the file.
    - **chunk_size** (Optional[int]): Optional; size (in Bytes) of the file chunks for
-       uploading to SharePoint. **Default is 100 Mb.**
+       uploading to Sharepoint. **Default is 100 Mb.**
    - **local_options** (Optional[dict]): Optional; additional options for customizing
        write to csv action to local path. You can check the available options
        below.
@@ -67,22 +67,22 @@ The examples below show how to write data to SharePoint, ranging from simple sin
        of a conflict (e.g., 'replace', 'fail').
 
 !!! note
-    For more details about the SharePoint framework, refer to Microsoft's official documentation:
-    
-    > 📖[ Microsoft Graph API - SharePoint](https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0)
-    
-    > 🛠️ [Graph Explorer Tool](https://developer.microsoft.com/en-us/graph/graph-explorer) -  this tool helps you explore available SharePoint Graph API functionalities.
+    For more details about the Sharepoint framework, refer to Microsoft's official documentation:
+
+    > 📖[ Microsoft Graph API - Sharepoint](https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0)
+
+    > 🛠️ [Graph Explorer Tool](https://developer.microsoft.com/en-us/graph/graph-explorer) -  this tool helps you explore available Sharepoint Graph API functionalities.
 
     > 📑 [Spark CSV options](https://spark.apache.org/docs/3.5.3/sql-data-sources-csv.html)
 
 ## 2. Simple: Write one Dataframe to Sharepoint
 
 This section demonstrates both minimal configuration and extended configurations
-when using the SharePoint Writer.
+when using the Sharepoint Writer.
 
 ### i. Minimal Configuration
 
-This approach uses only the mandatory parameters, making it the quickest way to write a DataFrame to SharePoint.
+This approach uses only the mandatory parameters, making it the quickest way to write a DataFrame to Sharepoint.
 
 **Note:** With minimal configurations, not even the header is written on the table. Furthermore, the file is
 written on the Sharepoint Drive root folder.
@@ -124,13 +124,13 @@ load_data(acon=acon)
 
 For more control over the upload process, additional parameters can be specified:
 
->**folder_relative_path (Optional):** Defines the subfolder inside the SharePoint drive
+>**folder_relative_path (Optional):** Defines the subfolder inside the Sharepoint drive
 where the file should be stored.
-> 
+>
 > ‼️ **Important:** The drive within the site acts as the root.
 >
 > **Example:**
-> 
+>
 >   * Site Name: "dummy_sharepoint"
 >   * Drive Name: "dummy_drive"
 >   * Folder Path: "dummy/test/"
@@ -212,7 +212,7 @@ This scenario illustrates how to write multiple files to Sharepoint within a loo
 Some use cases may require uploading files categorized by season, customer type, product category, etc.,
 depending on the business needs.
 
-Partitioning the data ensures better organization and optimized file management in SharePoint.
+Partitioning the data ensures better organization and optimized file management in Sharepoint.
 
 !!!warning
     ‼️ **Caution: Excessive Parallelism!**
@@ -433,5 +433,5 @@ load_data(acon=acon)
 
 ### Relevant Notes
 
-- Multi-file export is not supported. For such use cases, loop through files manually and invoke SharePointWriter per file. 
+- Multi-file export is not supported. For such use cases, loop through files manually and invoke SharePointWriter per file.
 - Authentication details should be handled securely via lakehouse configuration or secret management tools.

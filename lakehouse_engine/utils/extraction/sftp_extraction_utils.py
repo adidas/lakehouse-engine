@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from logging import Logger
 from stat import S_ISREG
-from typing import Any, List, Set, Tuple, Union
+from typing import Any, List, Set, Tuple
 
 import paramiko as p
 from paramiko import Ed25519Key, PKey, RSAKey, Transport
@@ -365,9 +365,7 @@ class SFTPExtractionUtils(object):
         for folder in folder_path:
             file_date = 0
             file_name = ""
-            all_items, file_path = cls._get_folder_items(
-                f"{folder}", sftp, options_args
-            )
+            all_items, _ = cls._get_folder_items(f"{folder}", sftp, options_args)
             for item in all_items:
                 if (
                     folder + item.filename in list_filter_files
@@ -430,7 +428,7 @@ class SFTPExtractionUtils(object):
         Returns:
             A PKey that will be used to authenticate the connection.
         """
-        key: Union[RSAKey, Ed25519Key] = None
+        key: RSAKey | Ed25519Key = None
         if pkey and key_type.lower() == "rsa":
             b_pkey = bytes(pkey, "UTF-8")
             key = p.RSAKey(data=decodebytes(b_pkey))

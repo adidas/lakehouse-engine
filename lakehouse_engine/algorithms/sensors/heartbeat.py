@@ -607,7 +607,7 @@ class Heartbeat(Algorithm):
         )
 
         heartbeat_sensor_table_df = ExecEnv.SESSION.table(heartbeat_sensor_db_table)
-        final_df: DataFrame = None
+        final_df: Optional[DataFrame] = None
 
         for row in jobs_to_trigger:
             run_id = None

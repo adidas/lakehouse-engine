@@ -4,7 +4,7 @@ import ast
 import calendar
 import json
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional
 
 import pendulum
 from pyspark.sql import DataFrame
@@ -32,7 +32,7 @@ class GABUtils(object):
         stage_file_path: str,
         query: str,
         status: str,
-        error_message: Union[Exception, str],
+        error_message: Exception | str,
         target_database: str,
     ) -> None:
         """Store the execution of each stage in the log events table.
@@ -129,7 +129,7 @@ class GABUtils(object):
         extract_column_without_alias: bool = False,
         table_alias: Optional[str] = None,
         is_extracted_value_as_name: bool = True,
-    ) -> Union[tuple[list[str], list[str]], list[str]]:
+    ) -> tuple[list[str], list[str]] | list[str]:
         """Extract and transform columns to SQL select statement.
 
         Args:
@@ -183,7 +183,7 @@ class GABUtils(object):
         cls,
         is_dimension: bool,
         column_name: str,
-        column_value: Union[str, dict],
+        column_value: str | dict,
         is_extracted_value_as_name: bool = True,
     ) -> tuple[str, str]:
         """Extract column name with alias.
@@ -212,7 +212,7 @@ class GABUtils(object):
         cls,
         is_dimension: bool,
         column_name: str,
-        column_value: Union[str, dict],
+        column_value: str | dict,
         is_extracted_value_as_name: bool = True,
     ) -> str:
         """Extract column name without alias.

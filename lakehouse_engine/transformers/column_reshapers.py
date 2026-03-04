@@ -270,7 +270,7 @@ class ColumnReshapers(object):
             return df.select(
                 *cols_to_select,
                 key_col,
-                from_avro(col(value_col), schema, options if options else {}).alias(
+                from_avro(col(value_col), schema, options if options else None).alias(
                     value_col
                 ),
             ).select(
@@ -326,7 +326,7 @@ class ColumnReshapers(object):
                         data=col(key_col),
                         subject=key_schema,
                         schemaRegistryAddress=schema_registry,  # type: ignore
-                        options=options if options else {},
+                        options=options if options else None,
                     ).alias(key_col)
                     if key_schema
                     else key_col
@@ -335,7 +335,7 @@ class ColumnReshapers(object):
                     data=col(value_col),
                     subject=value_schema,
                     schemaRegistryAddress=schema_registry,  # type: ignore
-                    options=options if options else {},
+                    options=options if options else None,
                 ).alias(value_col),
             ).select(
                 *cols_to_select,

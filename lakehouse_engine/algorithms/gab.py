@@ -2,7 +2,6 @@
 
 import copy
 from datetime import datetime, timedelta
-from typing import Union
 
 import pendulum
 from jinja2 import Template
@@ -75,7 +74,15 @@ class GAB(Algorithm):
             )
         )
 
-        lookup_query_builder_df.cache()
+        cached = True
+        try:
+            lookup_query_builder_df.cache()
+        except Exception as e:
+            cached = False
+            self._LOGGER.warning(
+                "Could not cache lookup_query_builder_df dataframe. "
+                f"Continuing without caching. Exception: {e}"
+            )
 
         for use_case in lookup_query_builder_df.collect():
             self._process_use_case(
@@ -85,7 +92,8 @@ class GAB(Algorithm):
                 gab_path=gab_path,
             )
 
-        lookup_query_builder_df.unpersist()
+        if cached:
+            lookup_query_builder_df.unpersist()
 
     def _process_use_case(
         self,
@@ -750,7 +758,7 @@ class GAB(Algorithm):
         """
         run_start_time = datetime.now()
         creation_status: str
-        error_message: Union[Exception, str]
+        error_message: Exception | str
 
         try:
             tmp = ExecEnv.SESSION.sql(rendered_template)
@@ -838,7 +846,7 @@ class GAB(Algorithm):
         """
         run_start_time = datetime.now()
         creation_status: str
-        error_message: Union[Exception, str]
+        error_message: Exception | str
 
         GABDeleteGenerator(
             query_id=query_id,

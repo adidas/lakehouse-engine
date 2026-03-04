@@ -14,7 +14,10 @@ from lakehouse_engine.utils.sql_parser_utils import SQLParserUtils
 
 
 class TableManager(object):
-    """Set of actions to manipulate tables/views in several ways."""
+    """Set of actions to manipulate tables/views in several ways.
+
+    {{ get_table_manager_operations() }}
+    """
 
     def __init__(self, configs: dict):
         """Construct TableManager algorithm instances.

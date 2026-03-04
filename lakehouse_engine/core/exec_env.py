@@ -1,13 +1,12 @@
 """Module to take care of creating a singleton of the execution environment class."""
 
-import ast
-import os
 from dataclasses import replace
 
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 
 from lakehouse_engine.core.definitions import EngineConfig
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
+from lakehouse_engine.utils.databricks_utils import DatabricksUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
@@ -20,8 +19,8 @@ class ExecEnv(object):
 
     SESSION: SparkSession
     _LOGGER = LoggingHandler(__name__).get_logger()
-    DEFAULT_AWS_REGION = "eu-west-1"
     ENGINE_CONFIG: EngineConfig = EngineConfig(**ConfigUtils.get_config())
+    IS_SERVERLESS = DatabricksUtils.is_serverless_workload()
 
     @classmethod
     def set_default_engine_config(
@@ -74,15 +73,18 @@ class ExecEnv(object):
             app_name: application name.
             config: extra spark configs to supply to the spark session.
         """
-        default_config = {
-            "spark.databricks.delta.optimizeWrite.enabled": True,
-            "spark.sql.adaptive.enabled": True,
-            "spark.databricks.delta.merge.enableLowShuffle": True,
-        }
-        cls._LOGGER.info(
-            f"Using the following default configs you may want to override them for "
-            f"your job: {default_config}"
-        )
+        if not cls.IS_SERVERLESS:
+            default_config = {
+                "spark.databricks.delta.optimizeWrite.enabled": True,
+                "spark.sql.adaptive.enabled": True,
+                "spark.databricks.delta.merge.enableLowShuffle": True,
+            }
+            cls._LOGGER.info(
+                f"Using the following default configs you may want to override them "
+                f"for your job: {default_config}"
+            )
+        else:
+            default_config = {}
         final_config: dict = {**default_config, **(config if config else {})}
         cls._LOGGER.info(f"Final config is: {final_config}")
 
@@ -90,43 +92,58 @@ class ExecEnv(object):
             cls.SESSION = session
         elif SparkSession.getActiveSession():
             cls.SESSION = SparkSession.getActiveSession()
-            for key, value in final_config.items():
-                cls.SESSION.conf.set(key, value)
+            cls._set_spark_configs(final_config)
         else:
             cls._LOGGER.info("Creating a new Spark Session")
 
             session_builder = SparkSession.builder.appName(app_name)
-            for k, v in final_config.items():
-                session_builder.config(k, v)
+            cls._set_spark_configs(final_config, session_builder)
 
             if enable_hive_support:
                 session_builder = session_builder.enableHiveSupport()
             cls.SESSION = session_builder.getOrCreate()
 
-        if not session:
-            cls._set_environment_variables(final_config.get("os_env_vars"))
+    @classmethod
+    def get_for_each_batch_session(cls, df: DataFrame) -> None:
+        """Get the execution environment session for foreachBatch operations.
+
+        For Spark connect scenarios, spark is not able to re-use the Spark session
+        from an external scope as it cannot serialise it, so the session
+        needs to be retrieved and stored again in the ExecEnv class.
+        """
+        cls.SESSION = df.sparkSession.getActiveSession()
 
     @classmethod
-    def _set_environment_variables(cls, os_env_vars: dict = None) -> None:
-        """Set environment variables at OS level.
+    def _set_spark_configs(
+        cls, final_config: dict, session_builder: SparkSession.Builder = None
+    ) -> None:
+        """Set Spark session configurations based on final_config.
 
-        By default, we are setting the AWS_DEFAULT_REGION as we have identified this is
-        beneficial to avoid getBucketLocation permission problems.
+        This method attempts to set each configuration key-value pair in the provided
+        final_config dictionary to the Spark session. If a configuration key is not
+        available in the current environment, it logs a warning and skips that key.
 
         Args:
-            os_env_vars: this parameter can be used to pass the environment variables to
-                be defined.
+            final_config: dictionary with spark configurations to set.
+            session_builder: spark session builder.
         """
-        if os_env_vars is None:
-            os_env_vars = {}
-
-        for env_var in os_env_vars.items():
-            os.environ[env_var[0]] = env_var[1]
-
-        if "AWS_DEFAULT_REGION" not in os_env_vars:
-            os.environ["AWS_DEFAULT_REGION"] = cls.SESSION.conf.get(
-                "spark.databricks.clusterUsageTags.region", cls.DEFAULT_AWS_REGION
-            )
+        for key, value in final_config.items():
+            try:
+                if session_builder:
+                    session_builder.config(key, value)
+                else:
+                    cls.SESSION.conf.set(key, value)
+            except Exception as e:
+                if (
+                    "[CONFIG_NOT_AVAILABLE]" in str(e)
+                    and not ExecEnv.ENGINE_CONFIG.raise_on_config_not_available
+                ):
+                    cls._LOGGER.warning(
+                        f"Spark config '{key}' is not available in this "
+                        f"environment and will be skipped."
+                    )
+                else:
+                    raise e
 
     @classmethod
     def get_environment(cls) -> str:
@@ -135,13 +152,11 @@ class ExecEnv(object):
         Returns:
             Name of the environment.
         """
-        tag_array = ast.literal_eval(
-            cls.SESSION.conf.get(
-                "spark.databricks.clusterUsageTags.clusterAllTags", "[]"
-            )
-        )
+        if cls.ENGINE_CONFIG.environment:
+            return cls.ENGINE_CONFIG.environment
 
-        for key_val in tag_array:
-            if key_val["key"] == "environment":
-                return str(key_val["value"])
-        return "prod"
+        catalog = cls.SESSION.sql("SELECT current_catalog()").collect()[0][0]
+        if catalog.lower() == cls.ENGINE_CONFIG.prod_catalog:
+            return "prod"
+        else:
+            return "dev"

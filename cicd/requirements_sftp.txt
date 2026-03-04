@@ -2,3 +2,4 @@
 # ! Do not forget running `make build-lock-files` after updating dependency list !
 #
 paramiko==4.0.0
+pynacl==1.6.2

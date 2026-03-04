@@ -9,7 +9,7 @@ name = "lakehouse-engine"
 requires-python = ">=3.12"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-version = "1.27.1"
+version = "2.0.0"
 authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
 description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
 keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
@@ -71,11 +71,15 @@ module = [
     "importlib.*",
     "yaml.*",
     "ruamel.*",
-    "msal.*"
+    "msal.*",
+    "dbruntime.databricks_repl_context.*"
 ]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
 filterwarnings = [
     # coming from GX and also on their pyproject ignores
     "ignore: Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning", #1 warning
@@ -89,5 +93,7 @@ filterwarnings = [
     "ignore: The default dtype for empty Series will be 'object' instead of 'float64' in a future version.:DeprecationWarning",
     "ignore: The default dtype for empty Series will be:FutureWarning",
     # Warning about host keys on local ftp tests with paramiko
-    "ignore: Unknown ssh-rsa host key for : UserWarning"
+    "ignore: Unknown ssh-rsa host key for : UserWarning",
+    # GX library is using fields.Number from marshmallow, which is deprecated and will be removed in Marshmallow 4.0
+    "ignore: `Number` field should not be instantiated. Use `Integer`, `Float`, or `Decimal` instead.:DeprecationWarning"
 ]

@@ -1,5 +1,6 @@
 """Module to define behaviour to write to dataframe."""
 
+import uuid
 from typing import Callable, Optional, OrderedDict
 
 from pyspark.sql import DataFrame
@@ -10,6 +11,7 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.io.exceptions import NotSupportedException
 from lakehouse_engine.io.writer import Writer
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+from lakehouse_engine.utils.spark_utils import SparkUtils
 
 
 class DataFrameWriter(Writer):
@@ -26,6 +28,7 @@ class DataFrameWriter(Writer):
             data: list of all dfs generated on previous steps before writer.
         """
         super().__init__(output_spec, df, data)
+        self.view_prefix = "global_temp" if not ExecEnv.IS_SERVERLESS else ""
 
     def write(self) -> Optional[OrderedDict]:
         """Write data to dataframe."""
@@ -55,23 +58,26 @@ class DataFrameWriter(Writer):
 
         return written_dfs
 
-    @staticmethod
-    def _create_global_view(df: DataFrame, stream_df_view_name: str) -> None:
-        """Given a dataframe create a global temp view to be available for consumption.
+    def _get_prefixed_view_name(self, stream_df_view_name: str) -> str:
+        """Return the fully qualified view name with prefix if needed."""
+        return ".".join(filter(None, [self.view_prefix, stream_df_view_name]))
+
+    def _create_temp_view(self, df: DataFrame, stream_df_view_name: str) -> None:
+        """Given a dataframe create a temp view to be available for consumption.
 
         Args:
             df: dataframe to be shown.
             stream_df_view_name: stream df view name.
         """
-        if DataFrameWriter._table_exists(stream_df_view_name):
-            DataFrameWriter._logger.info("Global temp view exists")
-            existing_data = ExecEnv.SESSION.table(f"global_temp.{stream_df_view_name}")
+        prefixed_view_name = self._get_prefixed_view_name(stream_df_view_name)
+        if self._table_exists(stream_df_view_name):
+            self._logger.info("Temp view already exists")
+            existing_data = ExecEnv.SESSION.table(f"{prefixed_view_name}")
             df = existing_data.union(df)
 
-        df.createOrReplaceGlobalTempView(f"{stream_df_view_name}")
+        SparkUtils.create_temp_view(df, stream_df_view_name)
 
-    @staticmethod
-    def _write_streaming_df(stream_df_view_name: str) -> Callable:
+    def _write_streaming_df(self, stream_df_view_name: str) -> Callable:
         """Define how to create a df from streaming df.
 
         Args:
@@ -82,13 +88,13 @@ class DataFrameWriter(Writer):
         """
 
         def inner(batch_df: DataFrame, batch_id: int) -> None:
-            DataFrameWriter._create_global_view(batch_df, stream_df_view_name)
+            ExecEnv.get_for_each_batch_session(batch_df)
+            self._create_temp_view(batch_df, stream_df_view_name)
 
         return inner
 
-    @staticmethod
     def _write_to_dataframe_in_streaming_mode(
-        df: DataFrame, output_spec: OutputSpec, data: OrderedDict
+        self, df: DataFrame, output_spec: OutputSpec, data: OrderedDict
     ) -> DataFrame:
         """Write to DataFrame in streaming mode.
 
@@ -97,14 +103,15 @@ class DataFrameWriter(Writer):
             output_spec: output specification.
             data: list of all dfs generated on previous steps before writer.
         """
-        app_id = ExecEnv.SESSION.getActiveSession().conf.get("spark.app.id")
+        app_id = str(uuid.uuid4())
         stream_df_view_name = f"`{app_id}_{output_spec.spec_id}`"
-        DataFrameWriter._logger.info("Drop temp view if exists")
+        self._logger.info("Drop temp view if exists")
+        prefixed_view_name = self._get_prefixed_view_name(stream_df_view_name)
 
-        if DataFrameWriter._table_exists(stream_df_view_name):
-            # Cleaning global temp view to not maintain state and impact other acon runs
-            view_name = stream_df_view_name.strip("`")
-            ExecEnv.SESSION.sql(f"DROP VIEW global_temp.`{view_name}`")
+        if self._table_exists(stream_df_view_name):
+            # Cleaning Temp view to not maintain state and impact
+            # consecutive acon runs
+            ExecEnv.SESSION.sql(f"DROP VIEW {prefixed_view_name}")
 
         df_writer = df.writeStream.trigger(**Writer.get_streaming_trigger(output_spec))
 
@@ -116,7 +123,7 @@ class DataFrameWriter(Writer):
                 df_writer.options(**output_spec.options if output_spec.options else {})
                 .format(OutputFormat.NOOP.value)
                 .foreachBatch(
-                    DataFrameWriter._write_transformed_micro_batch(
+                    self._write_transformed_micro_batch(
                         output_spec, data, stream_df_view_name
                     )
                 )
@@ -126,20 +133,18 @@ class DataFrameWriter(Writer):
             stream_df = (
                 df_writer.options(**output_spec.options if output_spec.options else {})
                 .format(OutputFormat.NOOP.value)
-                .foreachBatch(DataFrameWriter._write_streaming_df(stream_df_view_name))
+                .foreachBatch(self._write_streaming_df(stream_df_view_name))
                 .start()
             )
 
         if output_spec.streaming_await_termination:
             stream_df.awaitTermination(output_spec.streaming_await_termination_timeout)
 
-        DataFrameWriter._logger.info("Reading stream data as df if exists")
-        if DataFrameWriter._table_exists(stream_df_view_name):
-            stream_data_as_df = ExecEnv.SESSION.table(
-                f"global_temp.{stream_df_view_name}"
-            )
+        self._logger.info("Reading stream data as df if exists")
+        if self._table_exists(stream_df_view_name):
+            stream_data_as_df = ExecEnv.SESSION.table(f"{prefixed_view_name}")
         else:
-            DataFrameWriter._logger.info(
+            self._logger.info(
                 f"DataFrame writer couldn't find any data to return "
                 f"for streaming, check if you are using checkpoint "
                 f"for step {output_spec.spec_id}."
@@ -150,34 +155,22 @@ class DataFrameWriter(Writer):
 
         return stream_data_as_df
 
-    @staticmethod
-    def _table_exists(  # type: ignore
-        table_name: str, db_name: str = "global_temp"
-    ) -> bool:
-        """Check if the table exists in the session catalog.
+    def _table_exists(self, table_name: str) -> bool:
+        """Check if the table or view exists in the session catalog.
 
         Args:
             table_name: table/view name to check if exists in the session.
-            db_name: database name that you want to check if the table/view exists,
-                default value is the global_temp.
-
-        Returns:
-            A bool representing if the table/view exists.
         """
-        ExecEnv.get_or_create()
-        table_name = table_name.strip("`")
+        if not ExecEnv.IS_SERVERLESS:
+            tables = ExecEnv.SESSION.sql(f"SHOW TABLES IN {self.view_prefix}")
+        else:
+            tables = ExecEnv.SESSION.sql("SHOW TABLES")
         return (
-            len(
-                ExecEnv.SESSION.sql(f"SHOW  TABLES  IN `{db_name}`")
-                .filter(f"tableName = '{table_name}'")
-                .collect()
-            )
-            > 0
+            len(tables.filter(f"tableName = '{table_name.strip('`')}'").collect()) > 0
         )
 
-    @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict, stream_as_df_view
+    def _write_transformed_micro_batch(
+        self, output_spec: OutputSpec, data: OrderedDict, stream_as_df_view: str
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 
@@ -191,6 +184,7 @@ class DataFrameWriter(Writer):
         """
 
         def inner(batch_df: DataFrame, batch_id: int) -> None:
+            ExecEnv.get_for_each_batch_session(batch_df)
             transformed_df = Writer.get_transformed_micro_batch(
                 output_spec, batch_df, batch_id, data
             )
@@ -200,6 +194,6 @@ class DataFrameWriter(Writer):
                     transformed_df, output_spec.streaming_micro_batch_dq_processors
                 )
 
-            DataFrameWriter._create_global_view(transformed_df, stream_as_df_view)
+            self._create_temp_view(transformed_df, stream_as_df_view)
 
         return inner

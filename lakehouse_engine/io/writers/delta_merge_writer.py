@@ -195,6 +195,7 @@ class DeltaMergeWriter(Writer):
         """
 
         def inner(batch_df: DataFrame, batch_id: int) -> None:
+            ExecEnv.get_for_each_batch_session(batch_df)
             transformed_df = Writer.get_transformed_micro_batch(
                 output_spec, batch_df, batch_id, data
             )

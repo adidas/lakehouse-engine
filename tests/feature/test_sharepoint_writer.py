@@ -22,25 +22,25 @@ from tests.utils.local_storage import LocalStorage
 from tests.utils.mocks import MockRESTResponse
 
 """
-Tests for SharePoint-related utilities and functionality.
+Tests for Sharepoint-related utilities and functionality.
 
-This test suite validates the behavior of the SharePoint writer, ensuring
+This test suite validates the behavior of the Sharepoint writer, ensuring
 that it handles various scenarios correctly. The tests cover validation of
 mandatory inputs, unsupported operations, endpoint existence checks, and
-successful writing to SharePoint.
+successful writing to Sharepoint.
 
 Scenarios tested:
-- Attempting to use streaming with the SharePoint writer raises a
+- Attempting to use streaming with the Sharepoint writer raises a
   `NotSupportedException`.
 - Missing mandatory options (`site_name`, `drive_name`, `local_path`) raises
   an `InputNotFoundException`.
 - Providing an invalid endpoint raises an `EndpointNotFoundException`.
-- Successful writing to SharePoint and associated log validation.
+- Successful writing to Sharepoint and associated log validation.
 
 Mocks:
 - `SharepointWriter._get_sharepoint_utils` is patched to simulate the behavior
-  of the SharePoint utilities without making actual external calls.
-- Mock REST responses simulate SharePoint API interactions for success cases.
+  of the Sharepoint utilities without making actual external calls.
+- Mock REST responses simulate Sharepoint API interactions for success cases.
 
 Dependencies:
 - Uses pytest for parameterized testing of different scenarios.

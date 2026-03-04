@@ -8,7 +8,10 @@ from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFun
 
 
 class FileManager(ABC):  # noqa: B024
-    """Abstract file manager class."""
+    """Abstract file manager class.
+
+    {{ get_file_manager_operations() }}
+    """
 
     def __init__(self, configs: dict):
         """Construct FileManager algorithm instances.

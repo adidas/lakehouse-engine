@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from logging import Logger
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from lakehouse_engine.core.definitions import InputFormat, InputSpec, ReadType
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -83,8 +83,8 @@ class JDBCExtraction(object):
     extraction_type: str = JDBCExtractionType.DELTA.value
     driver: str = "com.sap.db.jdbc.Driver"
     num_partitions: Optional[int] = None
-    lower_bound: Optional[Union[int, float, str]] = None
-    upper_bound: Optional[Union[int, float, str]] = None
+    lower_bound: Optional[int | float | str] = None
+    upper_bound: Optional[int | float | str] = None
     default_upper_bound: str = "1"
     fetch_size: str = "100000"
     compress: bool = True

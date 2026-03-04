@@ -5,7 +5,14 @@ from typing import List
 
 import pyspark.sql.functions as spark_fns
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import abs, coalesce, col, lit, when  # noqa: A004
+from pyspark.sql.functions import (  # noqa: A004
+    abs,
+    coalesce,
+    col,
+    lit,
+    try_divide,
+    when,
+)
 from pyspark.sql.types import FloatType
 
 from lakehouse_engine.algorithms.exceptions import ReconciliationFailedException
@@ -190,7 +197,13 @@ class Reconciliator(Executable):
         transformed_df = df
 
         if preprocess_query_args is None:
-            transformed_df = df.transform(Optimizers.cache())
+            try:
+                transformed_df = df.transform(Optimizers.cache())
+            except Exception as e:
+                Reconciliator._logger.warning(
+                    f"Could not apply default caching to the dataframe."
+                    f"Continuing without caching. Exception: {e}"
+                )
         elif len(preprocess_query_args) > 0:
             for transformation in preprocess_query_args:
                 rec_func = ReconciliationTransformers.AVAILABLE_TRANSFORMERS.value[
@@ -248,11 +261,13 @@ class Reconciliator(Executable):
                             # we need to make sure we don't produce negative values
                             # because our thresholds only accept > or >= comparisons.
                             abs(
-                                (
-                                    col(f"current.{m['metric']}")
-                                    - col(f"truth.{m['metric']}")
+                                try_divide(
+                                    (
+                                        col(f"current.{m['metric']}")
+                                        - col(f"truth.{m['metric']}")
+                                    ),
+                                    abs(col(f"truth.{m['metric']}")),
                                 )
-                                / abs(col(f"truth.{m['metric']}"))
                             )
                         ),
                         # if the formula above produces null, we need to consider where

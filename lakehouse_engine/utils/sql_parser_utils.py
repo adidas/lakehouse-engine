@@ -1,7 +1,5 @@
 """Module to parse sql files."""
 
-from typing import Union
-
 from lakehouse_engine.core.definitions import SQLParser
 
 
@@ -148,7 +146,7 @@ class SQLParserUtils(object):
                 )
             )
 
-    def _character_validation(self, value: Union[str, list]) -> bool:
+    def _character_validation(self, value: str | list) -> bool:
         """Validate if character is the opening/closing/inside of a comment.
 
         Args:

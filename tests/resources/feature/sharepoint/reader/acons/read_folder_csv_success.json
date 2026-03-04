@@ -1,0 +1,36 @@
+{
+    "input_specs": [
+        {
+            "spec_id": "sharepoint_input",
+            "read_type": "batch",
+            "data_format": "sharepoint",
+            "sharepoint_opts": {
+                "client_id": "CLIENT_ID",
+                "tenant_id": "TENANT_ID",
+                "secret": "SECRET",
+                "site_name": "mock_site",
+                "drive_name": "mock_drive",
+                "local_path": "/app/tests/lakehouse/out/feature/sharepoint/reader/tmp/",
+                "folder_relative_path": "sp_test",
+                "file_pattern": "*",
+                "file_type": "csv",
+                "local_options": {
+                    "header": true,
+                    "delimiter": ",",
+                    "inferSchema": true
+                },
+                "archive_enabled": false
+            }
+        }
+    ],
+    "output_specs": [
+        {
+            "spec_id": "sharepoint_output",
+            "input_id": "sharepoint_input",
+            "data_format": "delta",
+            "db_table": "test_db.sharepoint_reader_folder",
+            "write_type": "overwrite",
+            "location": "/app/tests/lakehouse/out/feature/sharepoint/reader/delta_folder/"
+        }
+    ]
+}

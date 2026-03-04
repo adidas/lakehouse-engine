@@ -7,7 +7,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 from pyspark.sql import DataFrame
 
-from lakehouse_engine.core.definitions import OutputFormat
+from lakehouse_engine.core.definitions import OutputFormat, WriteType
 from lakehouse_engine.engine import load_data
 from lakehouse_engine.utils.extraction.sap_bw_extraction_utils import (
     SAPBWExtraction,
@@ -567,12 +567,11 @@ def _validate(scenario: str, extra_params: dict, min_timestamp: bool) -> None:
         {
             "name": "derive_changelog_table_name",
             "odsobject": "testtable",
-            "table_name": "RSTSODS",
+            "logsys": "DHACLNT003",
         },
         {
             "name": "derive_changelog_table_name",
             "odsobject": "test_table",
-            "table_name": "RSTSODS",
         },
     ],
 )
@@ -591,21 +590,23 @@ def test_changelog_table_name_derivation(scenario: dict) -> None:
         f"""{TEST_LAKEHOUSE_IN}/{scenario["name"]}/""",
     )
 
-    source_df = DataframeHelpers.read_from_file(
-        location=f"""{TEST_LAKEHOUSE_IN}/{scenario["name"]}/"""
-        f"""source/{scenario["table_name"]}.csv""",
-        schema=SchemaUtils.from_file_to_dict(
-            f"""file://{TEST_LAKEHOUSE_IN}/{scenario["name"]}/"""
-            f"""{scenario["table_name"]}_schema.json"""
-        ),
-        options={"header": True, "delimiter": "|", "dateFormat": "yyyyMMdd"},
-    )
+    for table in ["RSTSODS", "RSBASIDOC"]:
+        source_df = DataframeHelpers.read_from_file(
+            location=f"""{TEST_LAKEHOUSE_IN}/{scenario["name"]}/"""
+            f"""source/{table}.csv""",
+            schema=SchemaUtils.from_file_to_dict(
+                f"""file://{TEST_LAKEHOUSE_IN}/{scenario["name"]}/"""
+                f"""{table}_schema.json"""
+            ),
+            options={"header": True, "delimiter": "|"},
+        )
 
-    DataframeHelpers.write_into_jdbc_table(
-        source_df,
-        f"""jdbc:sqlite:{TEST_LAKEHOUSE_IN}/{scenario["name"]}/tests.db""",
-        "RSTSODS",
-    )
+        DataframeHelpers.write_into_jdbc_table(
+            source_df,
+            f"""jdbc:sqlite:{TEST_LAKEHOUSE_IN}/{scenario["name"]}/tests.db""",
+            table,
+            write_type=WriteType.OVERWRITE.value,
+        )
 
     extraction_utils = SAPBWExtractionUtils(
         SAPBWExtraction(  # nosec B106
@@ -616,6 +617,11 @@ def test_changelog_table_name_derivation(scenario: dict) -> None:
             user="dummy_user",
             password="dummy_pwd",
             url=f"""jdbc:sqlite:{TEST_LAKEHOUSE_IN}/{scenario["name"]}/tests.db""",
+            **(
+                {"logsys": scenario["logsys"]}
+                if "logsys" in scenario and scenario["logsys"] is not None
+                else {}
+            ),
         )
     )
 
