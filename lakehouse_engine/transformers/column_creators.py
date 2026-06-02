@@ -18,10 +18,7 @@ class ColumnCreators(object):
     _logger = LoggingHandler(__name__).get_logger()
 
     @classmethod
-    def with_row_id(
-        cls,
-        output_col: str = "lhe_row_id",
-    ) -> Callable:
+    def with_row_id(cls, output_col: str = "lhe_row_id") -> Callable:
         """Create a sequential but not consecutive id.
 
         Args:
@@ -83,10 +80,7 @@ class ColumnCreators(object):
         return inner
 
     @classmethod
-    def with_literals(
-        cls,
-        literals: Dict[str, Any],
-    ) -> Callable:
+    def with_literals(cls, literals: Dict[str, Any]) -> Callable:
         """Create columns given a map of column names and literal values (constants).
 
         Args:

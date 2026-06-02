@@ -24,6 +24,8 @@ TEST_LAKEHOUSE_CONTROL = f"{LAKEHOUSE_FEATURE_CONTROL}/{TEST_PATH}"
 TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
 
 
+# This test needs to be marked as local only because it uses rdd operations
+@pytest.mark.local_only
 @pytest.mark.parametrize(
     "scenario",
     ["update_column_set", "insert_column_set", "update_all"],

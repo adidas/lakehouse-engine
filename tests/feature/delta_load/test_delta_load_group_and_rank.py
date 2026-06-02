@@ -25,6 +25,8 @@ TEST_LAKEHOUSE_CONTROL = f"{LAKEHOUSE_FEATURE_CONTROL}/{TEST_PATH}"
 TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
 
 
+# This test needs to be marked as local only because it uses rdd operations
+@pytest.mark.local_only
 @pytest.mark.parametrize(
     "scenario",
     [
@@ -125,8 +127,7 @@ def _create_table(scenario: List[str]) -> None:
     Args:
         scenario: scenario being tested.
     """
-    ExecEnv.SESSION.sql(
-        f"""
+    ExecEnv.SESSION.sql(f"""
         CREATE TABLE IF NOT EXISTS test_db.{scenario[0]}_{scenario[1]} (
             salesorder int,
             item int,
@@ -144,5 +145,4 @@ def _create_table(scenario: List[str]) -> None:
         )
         USING delta
         LOCATION '{TEST_LAKEHOUSE_OUT}/{scenario[0]}/{scenario[1]}/data'
-        """
-    )
+        """)

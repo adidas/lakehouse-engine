@@ -195,8 +195,7 @@ def _create_table(table_name: str, location: str) -> None:
         table_name: name of the table.
         location: location of the table.
     """
-    ExecEnv.SESSION.sql(
-        f"""
+    ExecEnv.SESSION.sql(f"""
         CREATE TABLE IF NOT EXISTS test_db.{table_name} (
             actrequest_timestamp string,
             request string,
@@ -213,5 +212,4 @@ def _create_table(table_name: str, location: str) -> None:
         )
         USING delta
         LOCATION '{location}'
-        """
-    )
+        """)

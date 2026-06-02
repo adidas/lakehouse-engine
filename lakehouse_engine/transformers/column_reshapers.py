@@ -157,11 +157,7 @@ class ColumnReshapers(object):
         return inner
 
     @classmethod
-    def _get_columns(
-        cls,
-        df: DataFrame,
-        data_type: Any,
-    ) -> List:
+    def _get_columns(cls, df: DataFrame, data_type: Any) -> List:
         """Get a list of columns from the dataframe of the data types specified.
 
         Args:
@@ -204,7 +200,11 @@ class ColumnReshapers(object):
         return inner
 
     @classmethod
-    def rename(cls, cols: Dict[str, str], escape_col_names: bool = True) -> Callable:
+    def rename(
+        cls,
+        cols: Dict[str, str],
+        escape_col_names: bool = True,
+    ) -> Callable:
         """Rename specific columns into the designated name.
 
         Args:
@@ -410,7 +410,10 @@ class ColumnReshapers(object):
 
     @classmethod
     def to_json(
-        cls, in_cols: List[str], out_col: str, json_options: Optional[dict] = None
+        cls,
+        in_cols: List[str],
+        out_col: str,
+        json_options: Optional[dict] = None,
     ) -> Callable:
         """Convert dataframe columns into a json value.
 

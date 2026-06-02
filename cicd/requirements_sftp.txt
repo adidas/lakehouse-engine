@@ -3,3 +3,5 @@
 #
 paramiko==4.0.0
 pynacl==1.6.2
+
+cryptography==46.0.6 # pinning the version to avoid vulnerabilities

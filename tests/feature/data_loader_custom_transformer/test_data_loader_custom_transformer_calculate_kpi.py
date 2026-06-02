@@ -34,13 +34,11 @@ def yet_another_kpi_calculator(df: DataFrame) -> DataFrame:
     """
     session = ExecEnv.SESSION
     df.createOrReplaceTempView("sales")
-    kpi_df = session.sql(
-        """
+    kpi_df = session.sql("""
             SELECT date, SUM(amount) AS amount
             FROM sales
             GROUP BY date
-        """
-    )
+        """)
     return kpi_df
 
 

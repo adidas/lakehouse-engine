@@ -1,0 +1,44 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: 'Version increment (patch, minor, major)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    environment: create-release-app
+    runs-on: adidas-docker-ubuntu-latest
+    steps:
+      # we authenticate as a GitHub App to have bypass access
+      # to the repository and create releases on master
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.CREATE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.CREATE_RELEASE_PK }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Install make
+        run: sudo apt-get update && sudo apt-get install -y make
+
+      - name: Build Lakehouse-Engine Image
+        run: make build-image
+
+      - name: Run release commands
+        env:
+          increment: ${{ github.event.inputs.increment }}
+        run: |
+          make prepare-release increment=$increment
+          make commit-release
+          make push-release

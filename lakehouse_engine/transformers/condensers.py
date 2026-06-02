@@ -89,7 +89,10 @@ class Condensers(object):
 
     @classmethod
     def group_and_rank(
-        cls, group_key: List[str], ranking_key: List[str], descending: bool = True
+        cls,
+        group_key: List[str],
+        ranking_key: List[str],
+        descending: bool = True,
     ) -> Callable:
         """Condense data based on a simple group by + take latest mechanism.
 

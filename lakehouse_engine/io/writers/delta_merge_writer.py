@@ -35,7 +35,9 @@ class DeltaMergeWriter(Writer):
                 )
                 .foreachBatch(
                     self._write_transformed_micro_batch(
-                        self._output_spec, self._data, delta_table
+                        self._output_spec,
+                        self._data,
+                        delta_table,
                     )
                 )
                 .trigger(**Writer.get_streaming_trigger(self._output_spec))
@@ -118,6 +120,9 @@ class DeltaMergeWriter(Writer):
         delta_merge = delta_table.alias("current").merge(
             df.alias("new"), output_spec.merge_opts.merge_predicate
         )
+
+        if output_spec.merge_opts.merge_schema:
+            delta_merge = delta_merge.withSchemaEvolution()
 
         if not output_spec.merge_opts.insert_only:
             if output_spec.merge_opts.delete_predicate:

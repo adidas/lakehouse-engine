@@ -28,7 +28,8 @@ class DataFrameWriter(Writer):
             data: list of all dfs generated on previous steps before writer.
         """
         super().__init__(output_spec, df, data)
-        self.view_prefix = "global_temp" if not ExecEnv.IS_SERVERLESS else ""
+        self._is_serverless = ExecEnv.IS_SERVERLESS
+        self.view_prefix = "global_temp" if not self._is_serverless else ""
 
     def write(self) -> Optional[OrderedDict]:
         """Write data to dataframe."""
@@ -75,7 +76,9 @@ class DataFrameWriter(Writer):
             existing_data = ExecEnv.SESSION.table(f"{prefixed_view_name}")
             df = existing_data.union(df)
 
-        SparkUtils.create_temp_view(df, stream_df_view_name)
+        SparkUtils.create_temp_view(
+            df, stream_df_view_name, is_serverless=self._is_serverless
+        )
 
     def _write_streaming_df(self, stream_df_view_name: str) -> Callable:
         """Define how to create a df from streaming df.
@@ -161,7 +164,7 @@ class DataFrameWriter(Writer):
         Args:
             table_name: table/view name to check if exists in the session.
         """
-        if not ExecEnv.IS_SERVERLESS:
+        if not self._is_serverless:
             tables = ExecEnv.SESSION.sql(f"SHOW TABLES IN {self.view_prefix}")
         else:
             tables = ExecEnv.SESSION.sql("SHOW TABLES")

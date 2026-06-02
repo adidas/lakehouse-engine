@@ -80,8 +80,7 @@ def _feed_dim_calendar(df: DataFrame) -> DataFrame:
     """Feed dim calendar table."""
     df.createOrReplaceTempView("dates_completed")
 
-    df_cal = ExecEnv.SESSION.sql(
-        """
+    df_cal = ExecEnv.SESSION.sql("""
         WITH monday_calendar AS (
             SELECT
                  calendar_date,
@@ -129,8 +128,7 @@ def _feed_dim_calendar(df: DataFrame) -> DataFrame:
             year_start,
             ADD_MONTHS(year_start, 12)-1 AS year_end
         FROM calendar_complementary_values
-        """
-    )
+        """)
 
     return df_cal
 

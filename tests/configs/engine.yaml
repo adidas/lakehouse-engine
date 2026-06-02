@@ -22,3 +22,4 @@ sharepoint_authority: https://login.microsoftonline.com
 sharepoint_api_domain: https://graph.microsoft.com
 sharepoint_company_domain: company_name.sharepoint.com
 prod_catalog: sample_catalog
+maven_repo: https://repo1.maven.org/maven2/

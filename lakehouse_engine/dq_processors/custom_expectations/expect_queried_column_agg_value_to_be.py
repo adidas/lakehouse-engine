@@ -254,10 +254,8 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
                 "condition" in template_dict,
             ]
         ):
-            raise KeyError(
-                "The following keys have to be in the \
-                    template dict: column, group_column_list, condition, agg_type"
-            )
+            raise KeyError("The following keys have to be in the \
+                    template dict: column, group_column_list, condition, agg_type")
 
         return template_dict
 

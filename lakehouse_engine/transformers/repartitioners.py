@@ -33,7 +33,9 @@ class Repartitioners(object):
 
     @classmethod
     def repartition(
-        cls, num_partitions: Optional[int] = None, cols: Optional[List[str]] = None
+        cls,
+        num_partitions: Optional[int] = None,
+        cols: Optional[List[str]] = None,
     ) -> Callable:
         """Repartition a dataframe into n partitions.
 

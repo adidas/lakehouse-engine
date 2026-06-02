@@ -48,7 +48,6 @@ class ReaderFactory(ABC):  # noqa: B024
         elif spec.data_format == InputFormat.SFTP.value:
             from lakehouse_engine.io.readers.sftp_reader import SFTPReader
 
-            read_df = SFTPReader(input_spec=spec).read()
             return SFTPReader(input_spec=spec).read()
         elif spec.data_format == InputFormat.SHAREPOINT.value:
             return SharepointReader(input_spec=spec).read()

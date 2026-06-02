@@ -1,5 +1,3 @@
-@Library(['GlobalJenkinsLibrary']) _
-
 pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '30'))
@@ -35,7 +33,9 @@ pipeline {
                         checkout([
                                 $class           : 'GitSCM',
                                 branches         : scm.branches,
-                                userRemoteConfigs: [[url: 'https://bitbucket.tools.3stripes.net/scm/lak/lakehouse-engine.git', credentialsId: GIT_CREDENTIALS_ID]]
+                                userRemoteConfigs: scm.userRemoteConfigs,
+                                // when using Sonar Quality Gate, a full clone is required
+                                extensions: [[$class: 'CloneOption', shallow: false]]
                         ])
                     }
                 }
@@ -45,6 +45,12 @@ pipeline {
         stage('Build Image') {
             steps {
                 sh 'make build-image version=$VERSION'
+            }
+        }
+
+        stage('Build whl') {
+            steps {
+                sh 'make build version=$VERSION'
             }
         }
 
@@ -81,19 +87,36 @@ pipeline {
                         sh 'make test-deps version=$VERSION'
                     }
                 }
+            }
+        }
 
-                stage('Test') {
-                    steps {
-                        sh 'make test version=$VERSION'
-                    }
-                }
+        stage('Test Local') {
+            steps {
+                sh 'make test-local version=$VERSION'
+            }
+        }
+
+        stage('Test Connect') {
+            steps {
+                sh 'make test-spark-connect version=$VERSION'
+            }
+        }
+
+        stage ('Combine Coverage') {
+            steps {
+                sh 'make combine-coverage version=$VERSION'
             }
         }
 
         stage('Sonar') {
             steps {
-                script {
-                    tools.sonar.run(env: 'COMMUNITY-PRD', version: '1.0', branch: env.BRANCH_NAME)
+                withSonarQubeEnv('COMMUNITY-PRD') {
+                    script {
+                        def scanner_home = tool 'SonarQube 7.0'
+                        def version_number = sh script: "make print-variable var=version_number", returnStdout: true
+
+                        sh "${scanner_home}/bin/sonar-scanner -Dsonar.projectVersion=${version_number}"
+                    }
                 }
             }
         }
@@ -104,7 +127,7 @@ pipeline {
             archiveArtifacts artifacts: 'artefacts/docs/**/*'
             archiveArtifacts artifacts: 'artefacts/*.json'
             junit 'artefacts/tests.xml'
-            step([$class: 'CoberturaPublisher', coberturaReportFile: 'artefacts/coverage.xml'])
+            recordCoverage(tools: [[parser: 'COBERTURA', pattern: "artefacts/coverage.xml"]])
         }
     }
 }

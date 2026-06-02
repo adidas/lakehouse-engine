@@ -79,7 +79,8 @@ class KafkaWriter(Writer):
 
     @staticmethod
     def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+        output_spec: OutputSpec,
+        data: OrderedDict,
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

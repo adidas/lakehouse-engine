@@ -51,7 +51,8 @@ class TableWriter(Writer):
                     )
                     .foreachBatch(
                         self._write_transformed_micro_batch(
-                            self._output_spec, self._data
+                            self._output_spec,
+                            self._data,
                         )
                     )
                     .start()

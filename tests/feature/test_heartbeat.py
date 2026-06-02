@@ -455,14 +455,10 @@ def test_heartbeat(scenario: dict) -> None:
     _LOGGER.info("Preparing heartbeat and sensor table")
     records_to_insert = scenario["trigger_heartbeat_sensor_jobs_records"]
 
-    ExecEnv.SESSION.sql(
-        f"""INSERT INTO {heartbeat_control_table_name}
-            VALUES {records_to_insert["heartbeat"]}"""  # nosec
-    )
-    ExecEnv.SESSION.sql(
-        f"""INSERT INTO {sensor_table_name}
-        VALUES {records_to_insert["sensors"]}"""  # nosec
-    )
+    ExecEnv.SESSION.sql(f"""INSERT INTO {heartbeat_control_table_name}
+            VALUES {records_to_insert["heartbeat"]}""")  # nosec
+    ExecEnv.SESSION.sql(f"""INSERT INTO {sensor_table_name}
+        VALUES {records_to_insert["sensors"]}""")  # nosec
 
     ctrl_heart_tbl_trig_job_fname = control_files["ctrl_heart_tbl_trigger_job_fname"]
     ctrl_heart_tbl_trig_job_path = (

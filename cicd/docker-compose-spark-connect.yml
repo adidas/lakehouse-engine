@@ -1,0 +1,70 @@
+services:
+  spark-connect-server:
+    image: lakehouse-engine:${VERSION:-latest}
+    container_name: spark-connect-server
+    user: "0:0"
+    command: >
+      /bin/bash -c "
+      pip install \$(find /app/dist -name '*.whl' -type f | head -1)[cicd] &&
+      spark-4.0.2-bin-hadoop3/sbin/start-connect-server.sh
+      --packages io.delta:delta-connect-server_2.13:4.0.1,org.xerial:sqlite-jdbc:3.50.3.0,com.google.protobuf:protobuf-java:3.25.1
+      --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+      --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+      --conf spark.driver.memory=8g
+      --conf spark.executor.memory=4g
+      --conf spark.sql.shuffle.partitions=4
+      --conf spark.sql.warehouse.dir=/app/tests/lakehouse/spark-warehouse
+      --conf spark.connect.grpc.binding.port=15002
+      --conf spark.sql.legacy.charVarcharAsString=true
+      --conf 'spark.connect.extensions.relation.classes=org.apache.spark.sql.connect.delta.DeltaRelationPlugin'
+      --conf 'spark.connect.extensions.command.classes=org.apache.spark.sql.connect.delta.DeltaCommandPlugin'
+      "
+    ports:
+      - "15002:15002"
+      - "4040:4040"
+    volumes:
+      - ${PWD}:/app
+      - spark-warehouse-data:/app/tests/lakehouse/spark-warehouse
+      - ivy-cache:/root/.ivy2
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    deploy:
+      resources:
+        limits:
+          memory: 10g
+    networks:
+      - spark-network
+
+  lakehouse-engine-tests:
+    image: lakehouse-engine:${VERSION:-latest}
+    container_name: lakehouse-engine-tests
+    user: "0:0"
+    working_dir: /app
+    volumes:
+      - ${PWD}:/app
+    environment:
+      - SPARK_REMOTE=sc://spark-connect-server:15002
+    depends_on:
+      - spark-connect-server
+    networks:
+      - spark-network
+    command: >
+      /bin/bash -c "echo 'Waiting for Spark Connect server to be ready...' &&
+      pip install \$(find /app/dist -name '*.whl' -type f | head -1)[cicd] &&
+      sleep 30 &&
+      pytest
+      --junitxml=artefacts/tests-connect.xml
+      --cov-report xml --cov-report xml:artefacts/coverage-connect.xml
+      --cov-report term-missing --cov=lakehouse_engine
+      --log-cli-level=INFO --color=yes -x -vv
+      --spark_mode=connect ${TEST_ONLY:-}"
+
+volumes:
+  spark-warehouse-data:
+    driver: local
+  ivy-cache:
+    driver: local
+
+networks:
+  spark-network:
+    driver: bridge

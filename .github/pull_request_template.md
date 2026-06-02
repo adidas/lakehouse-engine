@@ -1,16 +1,20 @@
-- [ ] Description of PR changes above includes a link to [an existing GitHub issue](https://github.com/adidas/lakehouse-engine/issues)
-- [ ] PR title is prefixed with one of: [BUGFIX], [FEATURE]
-- [ ] Appropriate tests and docs have been updated
-- [ ] Code is linted and tested -
-```
-  make style
-  make lint
-  make test
-  make test-security
-```
+**Below you’ll find a PR description template. It is very important that you follow it.**
 
-For more information about contributing, see [Contribute](https://github.com/adidas/lakehouse-engine/blob/master/CONTRIBUTING.md).
+**❓Problem**: 
+- please describe the problem that this PR tries to address. Can include how to reproduce the problem.
 
-After you submit your PR, keep **monitoring its statuses and discuss/apply fixes for any issues or suggestions coming from the PR Reviews**. 
+**💡 Solution**: 
+- please describe what is the solution the PR proposes to solve the problem.
 
-Thanks for contributing!
+**🔍 Test Cases**: 
+- please describe what test cases were done to make sure the solution works properly and how to reproduce them.
+
+**📚 Docs & Additional Info:** 
+- please include links for documentation, any other related PRs and other additional information that might be useful. For **dashboard oriented PRs, please add some links and prints of the results**.
+
+**📌 Note**: 
+- Always include a well-structured title including the user story and main contribution, e.g. **"[LAKEHOUSE-123] Add SAP BW Reader"**
+- In case there is a **GitHub issue associated**, you should also include in a Commit message or PR Description, e.g. **"Closes #123"**
+- PR title is prefixed with one of: [BUGFIX], [FEATURE]
+- Appropriate tests and docs have been updated
+- Code is linted and tested

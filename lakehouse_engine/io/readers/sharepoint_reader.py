@@ -67,6 +67,10 @@ class SharepointReader(Reader):
 
         self.pattern = self.opts.file_pattern  # may be None
 
+        self._set_folder_paths()
+
+    def _set_folder_paths(self) -> None:
+        """Set self.file_path, self.success_folder, and self.error_folder."""
         # Compute archive base folder from final self.file_path
         archive_base_folder = None
         if self.file_path:
@@ -224,18 +228,15 @@ class SharepointCsvReader(SharepointReader):
                     "is empty or could not be downloaded."
                 )
 
-            with self.sharepoint_utils.staging_area() as tmp_dir_raw:
-                tmp_dir: Path = Path(tmp_dir_raw)
+            sp_file, df = self._load_csv_to_spark(sp_file)
+            archive_target = success_folder  # only mark success after full read
 
-                sp_file, df = self._load_csv_to_spark(sp_file, tmp_dir)
-                archive_target = success_folder  # only mark success after full read
-
-                _LOGGER.info(
-                    f"Successfully read '{sp_file.file_path}' into Spark DataFrame."
-                )
-                df = df.cache()
-                df.count()  # Force materialization
-                return df
+            _LOGGER.info(
+                f"Successfully read '{sp_file.file_path}' into Spark DataFrame."
+            )
+            df = df.cache()
+            df.count()  # Force materialization
+            return df
 
         except Exception as e:
             _LOGGER.error(f"Error processing '{sp_file.file_name}': {e}")
@@ -282,22 +283,20 @@ class SharepointCsvReader(SharepointReader):
             if not file.is_csv:
                 continue
 
-            if pattern:
-                if not fnmatch.fnmatch(file.file_name, pattern):
-                    continue
+            if pattern and not fnmatch.fnmatch(file.file_name, pattern):
+                continue
 
             files.append(file)
 
         return sorted(files, key=lambda f: f.file_name)
 
     def _load_csv_to_spark(
-        self, sp_file: SharepointFile, tmp_dir: Path
+        self, sp_file: SharepointFile
     ) -> tuple[SharepointFile, DataFrame]:
         """Load a staged CSV into Spark and return file + DataFrame.
 
         Args:
             sp_file: Sharepoint file metadata.
-            tmp_dir: Local staging directory.
 
         Returns:
             (SharepointFile, Spark DataFrame).
@@ -320,10 +319,8 @@ class SharepointCsvReader(SharepointReader):
                 .load(str(local_file))
                 .cache()
             )
-            _LOGGER.info(
-                f"""Finished reading file: {sp_file.file_name} in
-                {round(time.time() - start_time, 2)} seconds"""
-            )
+            _LOGGER.info(f"""Finished reading file: {sp_file.file_name} in
+                {round(time.time() - start_time, 2)} seconds""")
             df.count()  # force materialization
 
             return sp_file, df
@@ -364,20 +361,15 @@ class SharepointCsvReader(SharepointReader):
         valid_files, dfs = [], []
         base_schema = None
 
-        with self.sharepoint_utils.staging_area() as tmp_dir_raw:
-            tmp_dir: Path = Path(tmp_dir_raw)
-
-            for file in files:
-                try:
-                    file_with_content, df = self._validate_and_read_file(
-                        file, tmp_dir, base_schema
-                    )
-                    base_schema = base_schema or df.schema
-                    dfs.append(df)
-                    valid_files.append(file_with_content)
-                except Exception as e:
-                    self._handle_file_error(file, folder_path, e)
-                    raise
+        for file in files:
+            try:
+                file_with_content, df = self._validate_and_read_file(file, base_schema)
+                base_schema = base_schema or df.schema
+                dfs.append(df)
+                valid_files.append(file_with_content)
+            except Exception as e:
+                self._handle_file_error(file, e)
+                raise
 
         if not dfs:
             raise ValueError("No valid CSV files could be loaded from folder.")
@@ -401,14 +393,12 @@ class SharepointCsvReader(SharepointReader):
     def _validate_and_read_file(
         self,
         file: SharepointFile,
-        tmp_dir: Path,
         base_schema: Optional[StructType],
     ) -> tuple[SharepointFile, DataFrame]:
         """Validate schema and read CSV file into a Spark DataFrame.
 
         Args:
             file: Sharepoint file to read.
-            tmp_dir: Temporary staging directory.
             base_schema: Schema to validate against.
 
         Returns:
@@ -417,7 +407,7 @@ class SharepointCsvReader(SharepointReader):
         Raises:
             ValueError: Schema mismatch.
         """
-        file_with_content, df = self._load_csv_to_spark(file, tmp_dir)
+        file_with_content, df = self._load_csv_to_spark(file)
 
         if base_schema and df.schema != base_schema:
             _LOGGER.error(
@@ -436,7 +426,6 @@ class SharepointCsvReader(SharepointReader):
     def _handle_file_error(
         self,
         file: SharepointFile,
-        folder_path: str,
         error: Exception,
     ) -> None:
         """Handle file read or processing errors by logging and archiving.
@@ -447,7 +436,6 @@ class SharepointCsvReader(SharepointReader):
 
         Args:
             file: Problematic SharepointFile.
-            folder_path: Folder path for fallback archiving.
             error: Exception encountered.
         """
         _LOGGER.error(f"Error processing '{file.file_name}': {error}")

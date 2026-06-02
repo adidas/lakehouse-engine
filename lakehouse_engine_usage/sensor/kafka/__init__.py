@@ -1,3 +1,0 @@
-"""
-.. include::kafka.md
-"""

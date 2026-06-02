@@ -3,7 +3,6 @@
 from typing import Any
 
 import pytest
-from py4j.protocol import Py4JJavaError
 
 from lakehouse_engine.engine import load_data
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
@@ -85,7 +84,7 @@ def test_failfast_append_load(scenario: str) -> None:
         f"{TEST_LAKEHOUSE_IN}/{scenario}/data/",
     )
 
-    with pytest.raises(Py4JJavaError) as e:
+    with pytest.raises(Exception) as e:
         # should raise malformed records due to failfast, as amount column was
         # renamed to amount2 and there is one more column in the pat-03.csv file.
         acon = ConfigUtils.get_acon(f"file://{TEST_RESOURCES}/{scenario}/batch.json")

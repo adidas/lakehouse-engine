@@ -12,7 +12,9 @@ meta_os_conf_file := cicd/meta_os.yaml
 group_id := $(shell id -g ${USER})
 engine_conf_file := lakehouse_engine/configs/engine.yaml
 engine_os_conf_file := lakehouse_engine/configs/engine_os.yaml
-remove_files_from_os := $(engine_conf_file) $(meta_conf_file) CODEOWNERS sonar-project.properties CONTRIBUTING.md CHANGELOG.md assets/img/os_strategy.png
+engine_conf_test_file := tests/configs/engine.yaml
+engine_os_conf_test_file := tests/configs/engine_os.yaml
+remove_files_from_os := $(engine_conf_file) $(engine_conf_test_file) $(meta_conf_file) CODEOWNERS sonar-project.properties CONTRIBUTING.md CHANGELOG.md assets/img/os_strategy.png
 last_commit_msg := "$(shell git log -1 --pretty=%B)"
 git_tag := $(shell git describe --tags --abbrev=0)
 commits_url := $(shell cat $(meta_conf_file) | grep commits_url | cut -f 2 -d " ")
@@ -100,7 +102,6 @@ build:
 	perl -pi -e 's/version = "$(wheel_version_reg_safe)"/version = "$(project_version)"/g' pyproject.toml && \
 	perl -pi -e 's/name = "$(project_name)"/name = "lakehouse-engine"/g' pyproject.toml
 
-
 deploy: build
 	$(container_cli) run --rm \
 		-w /app \
@@ -151,19 +152,62 @@ terminal:
 # You can also hack it by doing ```make test test_only="-rx tests/feature/test_delta_load_record_mode_cdc.py"```
 # to show complete output even of passed tests.
 # We also fix the coverage filepaths, using perl, so that report has the correct paths
-test:
+test-local:
 	$(container_cli) run \
 		--rm \
 		-w /app \
         -v "$$PWD":/app \
 		$(image_name):$(version) \
 		/bin/bash -c "pytest \
-            --junitxml=artefacts/tests.xml \
-            --cov-report xml --cov-report xml:artefacts/coverage.xml \
+            --junitxml=artefacts/tests-local.xml \
+            --cov-report xml:artefacts/coverage-local.xml \
             --cov-report term-missing --cov=lakehouse_engine \
             --log-cli-level=INFO --color=yes -x -vv \
-            --spark_driver_memory=$(spark_driver_memory) $(test_only)" && \
-	perl -pi -e 's/filename=\"/filename=\"lakehouse_engine\//g' artefacts/coverage.xml
+            --spark_driver_memory=$(spark_driver_memory) --spark_mode=local $(test_only)" && \
+	mv .coverage artefacts/.coverage.local
+
+# Run tests with Spark Connect using docker-compose
+# Usage: make test-spark-connect-compose
+#        make test-spark-connect-compose test_only="tests/feature/test_delta_load.py"
+# The stop-spark-connect target is a dependency of this target to ensure a clean environment before running the tests
+test-spark-connect: stop-spark-connect
+	VERSION=$(version) TEST_ONLY="$(test_only)" $(container_cli)-compose \
+		-f cicd/docker-compose-spark-connect.yml up \
+		--no-attach spark-connect-server \
+		--abort-on-container-exit \
+		--exit-code-from lakehouse-engine-tests && \
+	mv .coverage artefacts/.coverage.connect
+
+# Since we are running the tests in local and connect modes, we need to combine the coverage reports
+# to have a complete picture of the coverage in the project.
+combine-coverage:
+	$(container_cli) run \
+    	--rm \
+    	-w /app \
+        -v "$$PWD":/app \
+    	$(image_name):$(version) \
+        /bin/bash -c "coverage combine --data-file artefacts/coverage-combined artefacts/.coverage.local artefacts/.coverage.connect && \
+                coverage xml --data-file artefacts/coverage-combined -o artefacts/coverage.xml && \
+                junitparser merge artefacts/tests-local.xml artefacts/tests-connect.xml artefacts/tests.xml"
+
+# Stop and remove Spark Connect containers and volumes
+stop-spark-connect:
+	$(container_cli)-compose -f cicd/docker-compose-spark-connect.yml down -v
+
+# Start only the Spark Connect server (useful for manual testing)
+# Access Spark UI at http://localhost:4040
+start-spark-connect:
+	VERSION=$(version) $(container_cli)-compose \
+		-f cicd/docker-compose-spark-connect.yml up -d spark-connect-server
+	@echo "Spark Connect server starting... waiting for health check..."
+	@echo "Server will be available at sc://localhost:15002"
+	@echo "Spark UI available at http://localhost:4040"
+
+
+# Run the complete test suite
+# Usage: make test
+test: test-local test-spark-connect
+	@echo "✅ All tests completed in both local and Spark Connect modes"
 
 test-security:
 	$(container_cli) run \
@@ -261,9 +305,10 @@ sync-to-github: prepare-github-repo
 		-v $(git_credentials_file):$(container_user_dir)/.ssh/id_rsa \
 		$(image_name):$(version) \
 		/bin/bash -c """cd tmp_os/lakehouse-engine; \
-		rsync -r --exclude=.git --exclude=.*cache* --exclude=venv --exclude=dist --exclude=tmp_os /app/ . ; \
-		rm $(remove_files_from_os); \
+		rsync -r --delete --exclude=.git --exclude=.*cache* --exclude=venv --exclude=dist --exclude=tmp_os /app/ . ; \
+		rm -f $(remove_files_from_os); \
 		mv $(engine_os_conf_file) $(engine_conf_file); \
+		mv $(engine_os_conf_test_file) $(engine_conf_test_file); \
 		mv $(meta_os_conf_file) $(meta_conf_file); \
 		mv CONTRIBUTING_OS.md CONTRIBUTING.md; \
 		$(trust_git_host); \
@@ -320,9 +365,16 @@ bump-up-version:
 prepare-release: bump-up-version create-changelog
 	echo "Prepared version and changelog to release!"
 
-commit-release:
-	git commit -a -m 'Create release $(version)' && \
-    git tag -a 'v$(version)' -m 'Release $(version)'
+create-release-commit:
+	git config --global user.email "lakehouse-engine@adidas.com"
+	git config --global user.name "Lakehouse Engine Bot"
+	git commit -a -m 'Create release $(version)'
+
+tag-release-commit:
+	git tag -a '$(version)' -m 'Release $(version)'
+
+commit-release: create-release-commit tag-release-commit
+	echo "Committed release!"
 
 push-release:
 	git push --follow-tags

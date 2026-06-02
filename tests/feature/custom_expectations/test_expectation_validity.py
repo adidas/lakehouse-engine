@@ -31,6 +31,9 @@ METRIC_NAME_TYPES = [
 MAP_METRICS = []
 
 
+# This test needs to be marked as local only because GX tests are not
+# compatible with Spark Connect
+@pytest.mark.local_only
 @pytest.mark.parametrize("expectation", DQDefaults.CUSTOM_EXPECTATION_LIST.value)
 def test_expectation_validity(expectation: str) -> None:
     """Validates the custom expectations defined in the project.

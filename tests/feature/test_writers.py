@@ -75,11 +75,15 @@ def test_write_to_files(scenario: dict) -> None:
     assert not DataframeHelpers.has_diff(result_df, control_df)
 
 
+# Streaming test is marked as local_only since the Spark Connect does not
+# get the patch context for the api test.
 @pytest.mark.parametrize(
     "scenario",
     [
         {"scenario_name": "write_batch_rest_api"},
-        {"scenario_name": "write_streaming_rest_api"},
+        pytest.param(
+            {"scenario_name": "write_streaming_rest_api"}, marks=pytest.mark.local_only
+        ),
     ],
 )
 def test_write_to_rest_api(scenario: dict) -> None:
@@ -166,6 +170,9 @@ def test_write_to_table(scenario: dict) -> None:
     assert not DataframeHelpers.has_diff(result_df, control_df)
 
 
+# Tests are marked as local only because they rely on console output
+# which is not fully available when using Spark Connect
+@pytest.mark.local_only
 @pytest.mark.parametrize(
     "scenario",
     [

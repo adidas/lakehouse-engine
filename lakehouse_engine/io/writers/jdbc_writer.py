@@ -53,17 +53,21 @@ class JDBCWriter(Writer):
             df: dataframe to write.
             output_spec: output specification.
         """
-        df.write.format(output_spec.data_format).partitionBy(
-            output_spec.partitions
-        ).options(**output_spec.options if output_spec.options else {}).mode(
-            output_spec.write_type
-        ).save(
-            output_spec.location
+        df_writer = (
+            df.write.format(output_spec.data_format)
+            .options(**output_spec.options if output_spec.options else {})
+            .mode(output_spec.write_type)
         )
+
+        if output_spec.partitions:
+            df_writer = df_writer.partitionBy(output_spec.partitions)
+
+        df_writer.save(output_spec.location)
 
     @staticmethod
     def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+        output_spec: OutputSpec,
+        data: OrderedDict,
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

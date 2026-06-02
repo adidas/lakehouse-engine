@@ -27,7 +27,14 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
     "scenario",
     [
         {"scenario_name": "streaming_drop_duplicates", "loads": 2},
-        {"scenario_name": "streaming_drop_duplicates_overall_watermark", "loads": 2},
+        # Marking as local_only because of issues with the watermark function
+        pytest.param(
+            {
+                "scenario_name": "streaming_drop_duplicates_overall_watermark",
+                "loads": 2,
+            },
+            marks=pytest.mark.local_only,
+        ),
     ],
 )
 def test_drop_duplicates_with_watermark(scenario: dict) -> None:
@@ -164,8 +171,7 @@ def _drop_and_create_table(table_name: str, location: str) -> None:
         location: location of the table.
     """
     ExecEnv.SESSION.sql(f"DROP TABLE IF EXISTS test_db.{table_name}")
-    ExecEnv.SESSION.sql(
-        f"""
+    ExecEnv.SESSION.sql(f"""
         CREATE TABLE IF NOT EXISTS test_db.{table_name} (
             salesorder int,
             item int,
@@ -177,5 +183,4 @@ def _drop_and_create_table(table_name: str, location: str) -> None:
         )
         USING delta
         LOCATION '{location}'
-        """
-    )
+        """)

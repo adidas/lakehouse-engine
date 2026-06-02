@@ -35,7 +35,8 @@ class DataframeHelpers(object):
         """Check if a dataframe has differences comparing to another dataframe.
 
         Note: the order of the columns and rows are not considered as differences
-        by default.
+        by default. For list/array columns, the order of elements within the list
+        is also not considered as a difference.
 
         Args:
             df: one dataframe.
@@ -45,13 +46,29 @@ class DataframeHelpers(object):
         Returns:
             True if it has a difference, false otherwise.
         """
+        from pyspark.sql import functions as F
+        from pyspark.sql.types import ArrayType
 
         def print_diff(desc: str, diff_df: DataFrame) -> None:
             cls._logger.debug(desc)
             for row in diff_df.collect():
                 cls._logger.debug(row)
 
+        def sort_array_columns(dataframe: DataFrame) -> DataFrame:
+            """Sort array/list columns to ignore order during comparison."""
+            for field in dataframe.schema.fields:
+                if isinstance(field.dataType, ArrayType):
+                    dataframe = dataframe.withColumn(
+                        field.name, F.array_sort(F.col(field.name))
+                    )
+            return dataframe
+
         cls._logger.debug("Checking if Dataframes have diff...")
+
+        # Sort array columns in both dataframes to ignore list order
+        df = sort_array_columns(df)
+        another_df = sort_array_columns(another_df)
+
         cols_to_group = df.columns
         if group_and_order:
             df = df.select(*cols_to_group).orderBy(*cols_to_group)
@@ -209,12 +226,10 @@ class DataframeHelpers(object):
             db: database name.
             enable_cdf: whether to enable change data feed, or not.
         """
-        ExecEnv.SESSION.sql(
-            f"""
+        ExecEnv.SESSION.sql(f"""
             CREATE EXTERNAL TABLE {db}.{table} (
                 {','.join([f'{cname} {ctype}' for cname, ctype in cols.items()])}
             )
             USING delta
             TBLPROPERTIES (delta.enableChangeDataFeed = {str(enable_cdf).lower()})
-            """
-        )
+            """)

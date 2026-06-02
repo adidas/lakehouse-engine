@@ -59,6 +59,7 @@ class EngineConfig(object):
     - sharepoint_authority: authority for the Sharepoint api.
     - sharepoint_company_domain: company domain for the Sharepoint api.
     - sharepoint_api_domain: api domain for the Sharepoint api.
+    - maven_repo: repository to use to fetch maven dependencies.
     """
 
     dq_bucket: Optional[str] = None
@@ -75,6 +76,7 @@ class EngineConfig(object):
     raise_on_config_not_available: bool = False
     prod_catalog: Optional[str] = None
     environment: Optional[str] = None
+    maven_repo: Optional[str] = None
 
 
 class EngineStats(object):
@@ -886,6 +888,7 @@ class MergeOptions(object):
         historical data.
     - insert_only: indicates if the merge should only insert data (e.g., deduplicate
         scenarios).
+    - merge_schema: indicates if the merge should merge schema data.
     - delete_predicate: predicate to apply to the delete operation.
     - update_predicate: predicate to apply to the update operation.
     - insert_predicate: predicate to apply to the insert operation.
@@ -899,6 +902,7 @@ class MergeOptions(object):
 
     merge_predicate: str
     insert_only: bool = False
+    merge_schema: bool = False
     delete_predicate: Optional[str] = None
     update_predicate: Optional[str] = None
     insert_predicate: Optional[str] = None

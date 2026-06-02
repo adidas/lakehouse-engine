@@ -27,8 +27,7 @@ def _create_dq_functions_source_table(
         f"{lakehouse_in_path}/{test_name}/{scenario}/dq_functions/",
     )
 
-    ExecEnv.SESSION.sql(
-        f"""
+    ExecEnv.SESSION.sql(f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             dq_rule_id STRING,
             dq_check_type STRING,
@@ -48,8 +47,7 @@ def _create_dq_functions_source_table(
           'lakehouse.primary_key'='dq_rule_id',
           'delta.enableChangeDataFeed'='false'
         )
-        """
-    )
+        """)
     dq_functions = (
         ExecEnv.SESSION.read.option("delimiter", "|")
         .option("header", True)

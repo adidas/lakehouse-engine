@@ -322,8 +322,7 @@ class GABViewGenerator(GABSQLGenerator):
             with_snapshot_cadences: cadences with snapshot.
         """
         cls._LOGGER.info("Generating consumption view statement...")
-        cls._LOGGER.info(
-            f"""
+        cls._LOGGER.info(f"""
             {{
                 target_database: {target_database},
                 target_table: {target_table},
@@ -338,8 +337,7 @@ class GABViewGenerator(GABSQLGenerator):
                 final_calculated_script: {final_calculated_script},
                 final_calculated_script_snapshot: {final_calculated_script_snapshot},
                 view_filter: {view_filter}
-            }}"""
-        )
+            }}""")
         if (
             "Y" in cadence_snapshot_status.values()
             and "N" in cadence_snapshot_status.values()

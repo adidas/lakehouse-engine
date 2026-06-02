@@ -254,15 +254,13 @@ class S3FileManager(FileManager):
             source_bucket, source_object
         )
 
-        self._logger.info(
-            f"""
+        self._logger.info(f"""
             Restore status:
             - Not Started: {restore_status.get('not_started_objects')}
             - Ongoing: {restore_status.get('ongoing_objects')}
             - Restored: {restore_status.get('restored_objects')}
             Total objects in this restore process: {restore_status.get('total_objects')}
-            """
-        )
+            """)
 
     def request_restore_to_destination_and_wait(self) -> None:
         """Request and wait for the restore to complete, polling the restore status.

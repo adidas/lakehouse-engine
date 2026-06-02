@@ -46,7 +46,7 @@ pipeline {
                         checkout([
                                 $class           : 'GitSCM',
                                 branches         : [['name': env.DEPLOY_GIT_OBJECT]],
-                                userRemoteConfigs: [[url: 'https://bitbucket.tools.3stripes.net/scm/lak/lakehouse-engine.git', credentialsId: GIT_CREDENTIALS_ID]]
+                                userRemoteConfigs: [[url: 'https://github.com/enabling-adidas/lakehouse-engine.git', credentialsId: GIT_CREDENTIALS_ID]]
                         ])
                     }
                 }
@@ -95,7 +95,7 @@ pipeline {
 
                 stage('Test') {
                     steps {
-                        sh 'make test version=' + "${env.DEPLOY_VERSION}"
+                        sh 'make test-all version=' + "${env.DEPLOY_VERSION}"
                     }
                 }
 

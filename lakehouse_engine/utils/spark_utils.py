@@ -10,7 +10,10 @@ class SparkUtils(object):
 
     @staticmethod
     def create_temp_view(
-        df: DataFrame, view_name: str, return_prefix: bool = False
+        df: DataFrame,
+        view_name: str,
+        return_prefix: bool = False,
+        is_serverless: bool = None,
     ) -> None | str:
         """Create a temporary view from a dataframe.
 
@@ -27,12 +30,16 @@ class SparkUtils(object):
             view_name: name of the view to create.
             return_prefix: whether to return the prefix to use in queries
             for this view or not.
+            is_serverless: if workload is running in serverless
 
         Returns:
             None or the prefix to use in queries for this view, depending on the
             value of return_prefix.
         """
-        if ExecEnv.IS_SERVERLESS:
+        if is_serverless is None:
+            is_serverless = ExecEnv.IS_SERVERLESS
+
+        if is_serverless:
             df.createOrReplaceTempView(view_name)
             prefix = ""
         else:

@@ -81,8 +81,7 @@ def _create_heartbeat_table() -> None:
         {
             "use_case_name": "sap_b4_no_trigger",
             "sensor_source": "sap_b4",
-            "trigger_jobs_records": {
-                "heartbeat": """
+            "trigger_jobs_records": {"heartbeat": """
                     ("sap_b4","dummy_test3","batch",
                     "delta_table_order_events",NULL,NULL,NULL,
                     "8203746159283746","events_orders","NEW_EVENT_AVAILABLE",
@@ -91,8 +90,7 @@ def _create_heartbeat_table() -> None:
                     "delta_table_order_events",NULL,NULL,NULL,
                     "8203746159283746","events_orders","COMPLETE",
                     NULL,NULL,NULL,"UNPAUSED","TRUE")
-                    """
-            },
+                    """},
             "jobs_triggered_count": 0,
         },
     ],
@@ -137,10 +135,8 @@ def test_anchor_job(mock_run_job: Mock, scenario: dict) -> None:
 
     _create_heartbeat_table()
 
-    ExecEnv.SESSION.sql(
-        f"""INSERT INTO {heartbeat_table}
-            VALUES {records}"""  # nosec
-    )
+    ExecEnv.SESSION.sql(f"""INSERT INTO {heartbeat_table}
+            VALUES {records}""")  # nosec
 
     trigger_heartbeat_sensor_jobs(acon=acon)
     assert mock_run_job.call_count == jobs_triggered_count

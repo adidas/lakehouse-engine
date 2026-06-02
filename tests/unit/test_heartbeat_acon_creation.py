@@ -250,10 +250,8 @@ def test_get_sensor_acon(mock_get_db_utils: Mock, scenario: dict) -> None:
     _create_heartbeat_table()
 
     _LOGGER.info("Inserting records in heartbeat table.")
-    ExecEnv.SESSION.sql(
-        f"""INSERT INTO {heartbeat_table}
-            VALUES {records}"""  # nosec
-    )
+    ExecEnv.SESSION.sql(f"""INSERT INTO {heartbeat_table}
+            VALUES {records}""")  # nosec
 
     if scenario_name == "sap_b4":
         _LOGGER.info("Inserting records in sensors table.")

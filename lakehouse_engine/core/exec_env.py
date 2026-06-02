@@ -135,7 +135,7 @@ class ExecEnv(object):
                     cls.SESSION.conf.set(key, value)
             except Exception as e:
                 if (
-                    "[CONFIG_NOT_AVAILABLE]" in str(e)
+                    "[CONFIG_NOT_AVAILABLE" in str(e)
                     and not ExecEnv.ENGINE_CONFIG.raise_on_config_not_available
                 ):
                     cls._LOGGER.warning(

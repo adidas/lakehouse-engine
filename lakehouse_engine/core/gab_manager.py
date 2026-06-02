@@ -735,8 +735,7 @@ class GABViewManager(object):
             window_function_end = calculated_metric["window_function"][i]["window"][1]
             window_label = calculated_metric["window_function"][i]["label"]
 
-            calculated_script.append(
-                f"""
+            calculated_script.append(f"""
                 NVL(
                     {window_function}({metric_key}) OVER
                     (
@@ -748,12 +747,10 @@ class GABViewManager(object):
                     0
                 ) AS
                 {window_label}
-                """
-            )
+                """)
 
             if "Y" in cadence_snapshot_status.values():
-                calculated_script_snapshot.append(
-                    f"""
+                calculated_script_snapshot.append(f"""
                     NVL(
                         {window_function}({metric_key}) OVER
                         (
@@ -765,8 +762,7 @@ class GABViewManager(object):
                         0
                     ) AS
                     {window_label}
-                    """
-                )
+                    """)
 
         return calculated_script, calculated_script_snapshot
 

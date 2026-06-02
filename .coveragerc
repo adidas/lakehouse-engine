@@ -1,0 +1,8 @@
+[run]
+source = lakehouse_engine
+relative_files = True
+
+[paths]
+source =
+    .
+    /app

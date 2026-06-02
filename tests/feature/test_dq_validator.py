@@ -165,6 +165,8 @@ def test_dq_rule_id_uniqueness(scenario: dict, caplog: Any) -> None:
         assert "A duplicate dq_rule_id was found!!!" not in caplog.text
 
 
+# Some tests are marked as local only since they rely on console output
+# that is not fully available when using Spark Connect.
 @pytest.mark.parametrize(
     "scenario",
     [
@@ -188,16 +190,19 @@ def test_dq_rule_id_uniqueness(scenario: dict, caplog: Any) -> None:
             "critical_functions": None,
             "max_percentage_failure": None,
         },
-        {
-            "name": "streaming_failure_disabled",
-            "read_type": "streaming",
-            "input_type": "table_reader",
-            "dq_validator_result": "failure_disabled",
-            "restore_prev_version": False,
-            "fail_on_error": False,
-            "critical_functions": None,
-            "max_percentage_failure": None,
-        },
+        pytest.param(
+            {
+                "name": "streaming_failure_disabled",
+                "read_type": "streaming",
+                "input_type": "table_reader",
+                "dq_validator_result": "failure_disabled",
+                "restore_prev_version": False,
+                "fail_on_error": False,
+                "critical_functions": None,
+                "max_percentage_failure": None,
+            },
+            marks=pytest.mark.local_only,
+        ),
         {
             "name": "batch_failure",
             "read_type": "batch",
@@ -208,81 +213,99 @@ def test_dq_rule_id_uniqueness(scenario: dict, caplog: Any) -> None:
             "critical_functions": None,
             "max_percentage_failure": None,
         },
-        {
-            "name": "streaming_failure",
-            "read_type": "streaming",
-            "input_type": "file_reader",
-            "dq_validator_result": "failure",
-            "restore_prev_version": True,
-            "fail_on_error": True,
-            "critical_functions": None,
-            "max_percentage_failure": None,
-        },
-        {
-            "name": "streaming_failure_critical",
-            "read_type": "streaming",
-            "input_type": "file_reader",
-            "dq_validator_result": "failure",
-            "restore_prev_version": True,
-            "fail_on_error": True,
-            "critical_functions": [
-                {
-                    "function": "expect_table_row_count_to_be_between",
-                    "args": {"min_value": 3, "max_value": 11},
-                }
-            ],
-            "max_percentage_failure": None,
-        },
-        {
-            "name": "streaming_failure_critical_notes",
-            "read_type": "streaming",
-            "input_type": "file_reader",
-            "dq_validator_result": "failure",
-            "restore_prev_version": True,
-            "fail_on_error": True,
-            "critical_functions": [
-                {
-                    "function": "expect_table_row_count_to_be_between",
-                    "args": {
-                        "min_value": 3,
-                        "max_value": 11,
-                        "meta": {"notes": "Test notes"},
-                    },
-                }
-            ],
-            "max_percentage_failure": None,
-        },
-        {
-            "name": "streaming_failure_critical_markdown",
-            "read_type": "streaming",
-            "input_type": "file_reader",
-            "dq_validator_result": "failure",
-            "restore_prev_version": True,
-            "fail_on_error": True,
-            "critical_functions": [
-                {
-                    "function": "expect_table_row_count_to_be_between",
-                    "args": {
-                        "min_value": 3,
-                        "max_value": 11,
-                        "meta": {
-                            "notes": {"format": "markdown", "content": "**Test Notes**"}
+        pytest.param(
+            {
+                "name": "streaming_failure",
+                "read_type": "streaming",
+                "input_type": "file_reader",
+                "dq_validator_result": "failure",
+                "restore_prev_version": True,
+                "fail_on_error": True,
+                "critical_functions": None,
+                "max_percentage_failure": None,
+            },
+            marks=pytest.mark.local_only,
+        ),
+        pytest.param(
+            {
+                "name": "streaming_failure_critical",
+                "read_type": "streaming",
+                "input_type": "file_reader",
+                "dq_validator_result": "failure",
+                "restore_prev_version": True,
+                "fail_on_error": True,
+                "critical_functions": [
+                    {
+                        "function": "expect_table_row_count_to_be_between",
+                        "args": {"min_value": 3, "max_value": 11},
+                    }
+                ],
+                "max_percentage_failure": None,
+            },
+            marks=pytest.mark.local_only,
+        ),
+        pytest.param(
+            {
+                "name": "streaming_failure_critical_notes",
+                "read_type": "streaming",
+                "input_type": "file_reader",
+                "dq_validator_result": "failure",
+                "restore_prev_version": True,
+                "fail_on_error": True,
+                "critical_functions": [
+                    {
+                        "function": "expect_table_row_count_to_be_between",
+                        "args": {
+                            "min_value": 3,
+                            "max_value": 11,
+                            "meta": {"notes": "Test notes"},
                         },
-                    },
-                }
-            ],
-            "max_percentage_failure": None,
-        },
-        {
-            "name": "streaming_failure_percentage",
-            "read_type": "streaming",
-            "input_type": "file_reader",
-            "dq_validator_result": "failure",
-            "restore_prev_version": True,
-            "fail_on_error": True,
-            "critical_functions": None,
-            "max_percentage_failure": 0.2,
-        },
+                    }
+                ],
+                "max_percentage_failure": None,
+            },
+            marks=pytest.mark.local_only,
+        ),
+        pytest.param(
+            {
+                "name": "streaming_failure_critical_markdown",
+                "read_type": "streaming",
+                "input_type": "file_reader",
+                "dq_validator_result": "failure",
+                "restore_prev_version": True,
+                "fail_on_error": True,
+                "critical_functions": [
+                    {
+                        "function": "expect_table_row_count_to_be_between",
+                        "args": {
+                            "min_value": 3,
+                            "max_value": 11,
+                            "meta": {
+                                "notes": {
+                                    "format": "markdown",
+                                    "content": "**Test Notes**",
+                                }
+                            },
+                        },
+                    }
+                ],
+                "max_percentage_failure": None,
+            },
+            marks=pytest.mark.local_only,
+        ),
+        pytest.param(
+            {
+                "name": "streaming_failure_percentage",
+                "read_type": "streaming",
+                "input_type": "file_reader",
+                "dq_validator_result": "failure",
+                "restore_prev_version": True,
+                "fail_on_error": True,
+                "critical_functions": None,
+                "max_percentage_failure": 0.2,
+            },
+            marks=pytest.mark.local_only,
+        ),
         {
             "name": "table_batch_success",
             "dq_type": "prisma",
@@ -599,8 +622,7 @@ def _create_table(table_name: str) -> None:
     Args:
         table_name: name of the test table.
     """
-    ExecEnv.SESSION.sql(
-        f"""
+    ExecEnv.SESSION.sql(f"""
         CREATE TABLE IF NOT EXISTS test_db.{table_name} (
             salesorder string,
             item string,
@@ -615,8 +637,7 @@ def _create_table(table_name: str) -> None:
           'lakehouse.primary_key'='salesorder, `item`, date ,`customer`',
           'delta.enableChangeDataFeed'='false'
         )
-        """
-    )
+        """)
 
 
 def _execute_load(load_type: str) -> None:

@@ -681,10 +681,8 @@ class Heartbeat(Algorithm):
 
         delta_table.alias("trgt").merge(
             heartbeat_sensor_data_feed_csv_df.alias("source"),
-            (
-                """source.sensor_id = trgt.sensor_id and
-                trgt.trigger_job_id = source.trigger_job_id"""
-            ),
+            ("""source.sensor_id = trgt.sensor_id and
+                trgt.trigger_job_id = source.trigger_job_id"""),
         ).whenNotMatchedInsert(
             values={
                 "sensor_source": "source.sensor_source",
@@ -815,11 +813,9 @@ class Heartbeat(Algorithm):
             delta_table.alias("target")
             .merge(
                 job_id_filter_control_table_df.alias("source"),
-                (
-                    f"""target.sensor_source = source.sensor_source and
+                (f"""target.sensor_source = source.sensor_source and
                 target.sensor_id = source.sensor_id and
-                target.trigger_job_id = '{job_id}'"""
-                ),
+                target.trigger_job_id = '{job_id}'"""),
             )
             .whenMatchedUpdate(
                 set={

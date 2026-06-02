@@ -21,6 +21,9 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get -y clean
 ENV JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-${CPU_ARCHITECTURE}
 
+RUN wget https://dlcdn.apache.org/spark/spark-4.0.2/spark-4.0.2-bin-hadoop3.tgz && \
+    tar -xvf spark-4.0.2-bin-hadoop3.tgz
+
 # useradd -l is necessary to avoid docker build hanging in export image phase when using large uids
 RUN groupadd -g ${GROUP_ID} appuser && \
     useradd -rm -l -u ${USER_ID} -d /home/appuser -s /bin/bash -g appuser appuser
@@ -30,8 +33,8 @@ COPY cicd/requirements_full.lock /tmp/requirements.txt
 USER appuser
 
 ENV PATH="/home/appuser/.local/bin:$PATH"
-RUN python -m pip install --upgrade pip==25.2 setuptools==74.* --user
-RUN python -m pip install --user -r /tmp/requirements.txt
+RUN python3 -m pip install --upgrade pip==25.2 setuptools==74.* --user
+RUN python3 -m pip install -r /tmp/requirements.txt
 
 RUN mkdir /home/appuser/.ssh/ && touch /home/appuser/.ssh/known_hosts
 
