@@ -371,7 +371,7 @@ create-release-commit:
 	git commit -a -m 'Create release $(version)'
 
 tag-release-commit:
-	git tag -a '$(version)' -m 'Release $(version)'
+	git tag -a 'v$(version)' -m 'Release $(version)'
 
 commit-release: create-release-commit tag-release-commit
 	echo "Committed release!"
