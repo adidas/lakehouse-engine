@@ -21,8 +21,8 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get -y clean
 ENV JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-${CPU_ARCHITECTURE}
 
-RUN wget https://dlcdn.apache.org/spark/spark-4.0.2/spark-4.0.2-bin-hadoop3.tgz && \
-    tar -xvf spark-4.0.2-bin-hadoop3.tgz
+RUN wget https://downloads01-he-fi.apache.org/spark/spark-4.1.3/spark-4.1.3-bin-hadoop3.tgz && \
+    tar -xvf spark-4.1.3-bin-hadoop3.tgz
 
 # useradd -l is necessary to avoid docker build hanging in export image phase when using large uids
 RUN groupadd -g ${GROUP_ID} appuser && \

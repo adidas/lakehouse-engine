@@ -17,7 +17,6 @@ from great_expectations.data_context import EphemeralDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     FilesystemStoreBackendDefaults,
-    S3StoreBackendDefaults,
 )
 from great_expectations.expectations.expectation_configuration import (
     ExpectationConfiguration,
@@ -540,24 +539,45 @@ class DQFactory(object):
         Returns:
             The DataContextConfig object configuration.
         """
-        store_backend: FilesystemStoreBackendDefaults | S3StoreBackendDefaults
-
         if dq_spec.store_backend == DQDefaults.FILE_SYSTEM_STORE.value:
-            store_backend = FilesystemStoreBackendDefaults(
-                root_directory=dq_spec.local_fs_root_dir
+            return DataContextConfig(
+                store_backend_defaults=FilesystemStoreBackendDefaults(
+                    root_directory=dq_spec.local_fs_root_dir
+                ),
+                analytics_enabled=False,
             )
         elif dq_spec.store_backend == DQDefaults.FILE_SYSTEM_S3_STORE.value:
-            store_backend = S3StoreBackendDefaults(
-                default_bucket_name=dq_spec.bucket,
-                validation_results_store_prefix=dq_spec.validations_store_prefix,
-                checkpoint_store_prefix=dq_spec.checkpoint_store_prefix,
-                expectations_store_prefix=dq_spec.expectations_store_prefix,
+            return DataContextConfig(
+                analytics_enabled=False,
+                stores={
+                    "expectations_store": {
+                        "class_name": "ExpectationsStore",
+                        "store_backend": {
+                            "class_name": "TupleS3StoreBackend",
+                            "bucket": dq_spec.bucket,
+                            "prefix": dq_spec.expectations_store_prefix,
+                        },
+                    },
+                    "validations_store": {
+                        "class_name": "ValidationsStore",
+                        "store_backend": {
+                            "class_name": "TupleS3StoreBackend",
+                            "bucket": dq_spec.bucket,
+                            "prefix": dq_spec.validations_store_prefix,
+                        },
+                    },
+                    "checkpoint_store": {
+                        "class_name": "CheckpointStore",
+                        "store_backend": {
+                            "class_name": "TupleS3StoreBackend",
+                            "bucket": dq_spec.bucket,
+                            "prefix": dq_spec.checkpoint_store_prefix,
+                        },
+                    },
+                },
             )
 
-        return DataContextConfig(
-            store_backend_defaults=store_backend,
-            analytics_enabled=False,
-        )
+        return DataContextConfig(analytics_enabled=False)
 
     @classmethod
     def _get_data_source_defaults(cls, dq_spec: DQSpec) -> dict:

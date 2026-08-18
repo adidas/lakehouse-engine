@@ -32,6 +32,7 @@ nav:
           - Streaming Delta Load with Group and Rank Condensation: lakehouse_engine_usage/data_loader/streaming_delta_load_with_group_and_rank_condensation/streaming_delta_load_with_group_and_rank_condensation.md
           - Streaming Delta Load with Late Arriving and Out of Order Events (with and without watermarking): lakehouse_engine_usage/data_loader/streaming_delta_with_late_arriving_and_out_of_order_events/streaming_delta_with_late_arriving_and_out_of_order_events.md
           - Write and Read Dataframe: lakehouse_engine_usage/data_loader/write_and_read_dataframe/write_and_read_dataframe.md
+          - Writing Paimon Tables: lakehouse_engine_usage/data_loader/writing_paimon_tables/writing_paimon_tables.md
           - Write to Console: lakehouse_engine_usage/data_loader/write_to_console/write_to_console.md
           - Write to REST API: lakehouse_engine_usage/data_loader/write_to_rest_api/write_to_rest_api.md
           - Write to Sharepoint: lakehouse_engine_usage/data_loader/write_to_sharepoint/write_to_sharepoint.md

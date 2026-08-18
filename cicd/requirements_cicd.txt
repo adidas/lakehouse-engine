@@ -4,7 +4,7 @@
 #
 
 # cicd
-pytest==8.4.1
+pytest==9.0.3
 pytest-cov==6.2.1
 isort==6.0.1
 flake8==7.3.0
@@ -22,7 +22,7 @@ flake8-expression-complexity==0.0.11
 mypy==1.17.1
 bandit==1.8.6
 bump2version==1.0.1
-lxml==6.0.0
+lxml==6.1.0
 pytest-sftpserver==1.3.0
 pip-tools==7.5.0
 pip-audit==2.10.0
@@ -52,12 +52,12 @@ mkdocstrings[python]==1.0.0
 mkdocs-gen-files==0.6.0
 mkdocs-section-index==0.3.10
 mkdocs-literate-nav==0.6.2
-pymdown-extensions==10.20
+pymdown-extensions==11.0.1
 pyyaml_env_tag==0.1
 regex==2023.6.3
 watchdog==3.0.0
-pygments==2.19.2 # Fixing the version to solve known vulnerabilities
-requests==2.32.4 # when updating also update in all files
+pygments==2.20.0 # Fixing the version to solve known vulnerabilities
+requests==2.33.0 # when updating also update in all files
 
 
 # types

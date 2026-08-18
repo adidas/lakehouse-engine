@@ -241,6 +241,8 @@ class SharepointOptions(object):
     Archiving (reader):
       - archive_enabled (bool): Whether to move files after a successful/failed read.
           Default: True.
+      - skip_rename (bool): Whether to skip archive timestamp rename.
+          Can only be True when archive_enabled is False.
       - archive_success_subfolder (Optional[str]): Success folder (default "done").
           Set None to keep in place.
       - archive_error_subfolder (Optional[str]): Error folder (default "error").
@@ -268,6 +270,7 @@ class SharepointOptions(object):
 
     # Reader archiving
     archive_enabled: bool = True
+    skip_rename: bool = False
     archive_success_subfolder: Optional[str] = "done"
     archive_error_subfolder: Optional[str] = "error"
 
@@ -411,6 +414,10 @@ class SharepointOptions(object):
             raise InputNotFoundException(
                 f"Missing required Sharepoint options for reader: {', '.join(missing)}"
             )
+        if self.skip_rename and self.archive_enabled:
+            raise ValueError(
+                "`skip_rename=True` is only supported when `archive_enabled=False`."
+            )
         allowed_extensions = self._get_allowed_extensions()
         if self.file_name and not self._ends_with_supported_extension(
             self.file_name, allowed_extensions
@@ -438,6 +445,7 @@ class OutputFormat(Enum):
     CSV = "csv"
     PARQUET = "parquet"
     DELTAFILES = "delta"
+    PAIMON = "paimon"
     KAFKA = "kafka"
     CONSOLE = "console"
     NOOP = "noop"
@@ -476,6 +484,7 @@ FILE_OUTPUT_FORMATS = [
     OutputFormat.PARQUET.value,
     OutputFormat.CSV.value,
     OutputFormat.DELTAFILES.value,
+    OutputFormat.PAIMON.value,
 ]
 
 

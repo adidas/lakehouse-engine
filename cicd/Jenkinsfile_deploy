@@ -59,46 +59,55 @@ pipeline {
             }
         }
 
-        stage('Parallel') {
+        stage('Validations') {
             when {
                 expression {
                     (!params.SKIP_VALIDATIONS && params.BRANCH != 'master')
                 }
             }
-            parallel {
+            stages {
+                stage('Parallel') {
+                    parallel {
 
-                stage('Lint') {
-                    steps {
-                        sh 'make lint version=' + "${env.DEPLOY_VERSION}"
-                    }
-                }
+                        stage('Lint') {
+                            steps {
+                                sh 'make lint version=' + "${env.DEPLOY_VERSION}"
+                            }
+                        }
 
-                stage('Test Security') {
-                    steps {
-                        sh 'make test-security version=' + "${env.DEPLOY_VERSION}"
-                    }
-                }
+                        stage('Test Security') {
+                            steps {
+                                sh 'make test-security version=' + "${env.DEPLOY_VERSION}"
+                            }
+                        }
 
-                stage('Audit Dependency Safety'){
-                    steps{
-                        catchError(message: "${STAGE_NAME} is unstable", buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                            sh 'make audit-dep-safety version=$VERSION'
+                        stage('Audit Dependency Safety'){
+                            steps{
+                                catchError(message: "${STAGE_NAME} is unstable", buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                                    sh 'make audit-dep-safety version=' + "${env.DEPLOY_VERSION}"
+                                }
+                            }
+                        }
+
+                        stage('Test dependencies') {
+                            steps {
+                                sh 'make test-deps version=' + "${env.DEPLOY_VERSION}"
+                            }
                         }
                     }
                 }
 
-                stage('Test dependencies') {
+                stage('Test Local') {
                     steps {
-                        sh 'make test-deps version=' + "${env.DEPLOY_VERSION}"
+                        sh 'make test-local version=' + "${env.DEPLOY_VERSION}"
                     }
                 }
 
-                stage('Test') {
+                stage('Test Connect') {
                     steps {
-                        sh 'make test-all version=' + "${env.DEPLOY_VERSION}"
+                        sh 'make test-spark-connect version=' + "${env.DEPLOY_VERSION}"
                     }
                 }
-
             }
         }
 

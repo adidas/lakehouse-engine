@@ -24,6 +24,7 @@ from lakehouse_engine.engine import load_data
 from lakehouse_engine.io.exceptions import NotSupportedException
 from lakehouse_engine.io.writers.dataframe_writer import DataFrameWriter
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
+from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
     FEATURE_RESOURCES,
     LAKEHOUSE_FEATURE_CONTROL,
@@ -31,6 +32,7 @@ from tests.conftest import (
     LAKEHOUSE_FEATURE_OUT,
 )
 from tests.utils.dataframe_helpers import DataframeHelpers
+from tests.utils.jdbc_helpers import JdbcHelpers
 from tests.utils.local_storage import LocalStorage
 
 TEST_NAME = "writers"
@@ -125,6 +127,11 @@ def test_write_to_jdbc(scenario: dict) -> None:
 
     acon = ConfigUtils.get_acon(
         f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
+    )
+    JdbcHelpers.create_table_if_not_exists(
+        SchemaUtils.from_file(f"file://{TEST_LAKEHOUSE_IN}/schema/sales_schema.json"),
+        acon["output_specs"][0]["options"]["url"],
+        acon["output_specs"][0]["options"]["dbtable"],
     )
     load_data(acon=acon)
 

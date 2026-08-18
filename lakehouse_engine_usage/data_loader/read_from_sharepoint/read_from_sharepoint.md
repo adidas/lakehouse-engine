@@ -84,6 +84,10 @@ The examples below show how to read data from Sharepoint, ranging from simple si
    - **file_type** (Optional[str]): type of the files to be read from Sharepoint
      (for example, `"csv"`). The reader uses this to decide which Spark data source
      to use when reading from `local_path`.
+   - **skip_rename** (Optional[bool]): when `True`, skips timestamp-based rename
+     after processing.
+     - Allowed only when `archive_enabled` is `False`.
+     - Default is `False`.
 
 
 !!! note
@@ -160,6 +164,11 @@ top of the minimal configuration:
 > * Successful reads go to the *success* subfolder; failures go to the *error*
 >   subfolder.
 
+> **skip_rename (Optional):** Skips timestamp-based rename after processing.
+>
+> * Use only with `archive_enabled=False`.
+> * If `archive_enabled=True`, setting `skip_rename=True` is invalid.
+
 > **archive_success_subfolder (Optional):** Name of the subfolder used to store
 > successfully processed files (default is `"done"`).
 > The folder is created under the same `folder_relative_path` and `drive_name`.
@@ -210,6 +219,7 @@ acon = {
                 "archive_enabled": True,
                 "archive_success_subfolder": "successful",
                 "archive_error_subfolder": "with_error",
+                "skip_rename": False,
                 "local_options": LOCAL_OPTIONS,
                 "chunk_size": 5 * 1024 * 1024,
             },

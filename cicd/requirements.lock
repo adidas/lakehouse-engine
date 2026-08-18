@@ -51,11 +51,11 @@ six==1.17.0
     # via
     #   -c requirements_full.lock
     #   python-dateutil
-tzdata==2025.3
+tzdata==2026.3
     # via
     #   -c requirements_full.lock
     #   pendulum
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -c requirements_full.lock
     #   botocore

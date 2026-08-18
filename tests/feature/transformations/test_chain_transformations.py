@@ -97,6 +97,17 @@ def test_chain_transformations(scenario: dict, caplog: Any) -> None:
                 f"{TEST_LAKEHOUSE_CONTROL}/data/chain_control.csv"
             )
 
+        # For streaming_batch, lhe_row_id is excluded from comparison
+        # because it is a technical field with Spark-version-dependent values.
+        # Business columns are fully compared against the control dataset.
+        if (
+            scenario["scenario_name"] == "streaming_batch"
+            and "lhe_row_id" in result_df.columns
+            and "lhe_row_id" in control_df.columns
+        ):
+            result_df = result_df.drop("lhe_row_id")
+            control_df = control_df.drop("lhe_row_id")
+
         assert not DataframeHelpers.has_diff(result_df, control_df)
 
 

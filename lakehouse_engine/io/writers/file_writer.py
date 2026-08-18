@@ -4,9 +4,10 @@ from typing import Callable, OrderedDict
 
 from pyspark.sql import DataFrame
 
-from lakehouse_engine.core.definitions import OutputSpec
+from lakehouse_engine.core.definitions import OutputFormat, OutputSpec
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.io.writer import Writer
+from lakehouse_engine.utils.paimon_utils import PaimonUtils
 
 
 class FileWriter(Writer):
@@ -39,6 +40,12 @@ class FileWriter(Writer):
             df: dataframe to write.
             output_spec: output specification.
         """
+        if output_spec.data_format == OutputFormat.PAIMON.value:
+            PaimonUtils.ensure_table_exists(ExecEnv.SESSION, df, output_spec)
+            df = PaimonUtils.align_dataframe_with_table_schema(
+                ExecEnv.SESSION, df, output_spec
+            )
+
         df.write.format(output_spec.data_format).partitionBy(
             output_spec.partitions
         ).options(**output_spec.options if output_spec.options else {}).mode(
@@ -58,6 +65,12 @@ class FileWriter(Writer):
             output_spec: output specification.
             data: list of all dfs generated on previous steps before writer.
         """
+        if output_spec.data_format == OutputFormat.PAIMON.value:
+            PaimonUtils.ensure_table_exists(ExecEnv.SESSION, df, output_spec)
+            df = PaimonUtils.align_dataframe_with_table_schema(
+                ExecEnv.SESSION, df, output_spec
+            )
+
         df_writer = df.writeStream.trigger(**Writer.get_streaming_trigger(output_spec))
 
         if (

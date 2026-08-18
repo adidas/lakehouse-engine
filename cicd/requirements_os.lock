@@ -4,21 +4,21 @@
 #
 #    pip-compile --cert=None --client-cert=None --constraint=requirements_full.lock --index-url=None --output-file=requirements_os.lock --pip-args=None requirements_os.txt
 #
-delta-spark==4.0.1
+delta-spark==4.3.1
     # via
     #   -c requirements_full.lock
     #   -r requirements_os.txt
-googleapis-common-protos==1.72.0
+googleapis-common-protos==1.75.1
     # via
     #   -c requirements_full.lock
     #   grpcio-status
     #   pyspark
-grpcio==1.78.0
+grpcio==1.83.0
     # via
     #   -c requirements_full.lock
     #   grpcio-status
     #   pyspark
-grpcio-status==1.78.0
+grpcio-status==1.83.0
     # via
     #   -c requirements_full.lock
     #   pyspark
@@ -26,16 +26,16 @@ importlib-metadata==8.7.1
     # via
     #   -c requirements_full.lock
     #   delta-spark
-numpy==2.4.2
+numpy==2.5.2
     # via
     #   -c requirements_full.lock
     #   pandas
     #   pyspark
-pandas==3.0.1
+pandas==3.0.5
     # via
     #   -c requirements_full.lock
     #   pyspark
-protobuf==6.33.5
+protobuf==7.35.1
     # via
     #   -c requirements_full.lock
     #   googleapis-common-protos
@@ -44,11 +44,11 @@ py4j==0.10.9.9
     # via
     #   -c requirements_full.lock
     #   pyspark
-pyarrow==23.0.1
+pyarrow==25.0.1
     # via
     #   -c requirements_full.lock
     #   pyspark
-pyspark[connect]==4.0.2
+pyspark[connect]==4.1.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_os.txt
@@ -61,11 +61,15 @@ six==1.17.0
     # via
     #   -c requirements_full.lock
     #   python-dateutil
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -c requirements_full.lock
     #   grpcio
-zipp==3.23.0
+zipp==4.1.0
     # via
     #   -c requirements_full.lock
     #   importlib-metadata
+zstandard==0.25.0
+    # via
+    #   -c requirements_full.lock
+    #   pyspark

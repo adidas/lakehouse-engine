@@ -2,6 +2,7 @@
 
 import sys
 import types
+from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 from lakehouse_engine.utils.databricks_utils import DatabricksUtils
@@ -22,6 +23,14 @@ CONTROL_DATA = {
     "dp_name": "sadp-template",
     "environment": "dev",
 }
+
+
+@dataclass
+class FileInfoFixture:
+    """Minimal DBUtils FileInfo fixture for unit tests."""
+
+    path: str
+    name: str
 
 
 def test_get_usage_context_for_serverless() -> None:
@@ -54,3 +63,24 @@ def test_get_usage_context_for_serverless() -> None:
     # Clean up after test
     del sys.modules["dbruntime.databricks_repl_context"]
     del sys.modules["dbruntime"]
+
+
+def test_dbutils_entry_name_and_path() -> None:
+    """Dutils ls helpers normalize FileInfo-like entries."""
+    entry = FileInfoFixture(path="/path/schema-1", name="schema-1")
+
+    assert DatabricksUtils.get_dbutils_entry_name(entry) == "schema-1"
+    assert DatabricksUtils.get_dbutils_entry_path(entry) == "/path/schema-1"
+
+
+def test_dbutils_path_exists_true_and_false() -> None:
+    """Dutils path helper returns True only when ls succeeds."""
+    ok_dbutils = MagicMock()
+    ok_dbutils.fs.ls.return_value = [
+        FileInfoFixture(path="/some/path/file1", name="file1")
+    ]
+    assert DatabricksUtils.check_dbutils_path_exists(ok_dbutils, "/some/path") is True
+
+    bad_dbutils = MagicMock()
+    bad_dbutils.fs.ls.side_effect = Exception("not found")
+    assert DatabricksUtils.check_dbutils_path_exists(bad_dbutils, "/missing") is False

@@ -33,8 +33,10 @@ class Unions(object):
 
         def inner(df: DataFrame) -> DataFrame:
             union_df = reduce(lambda x, y: x.union(y), [df] + union_with)
+            if deduplication and not union_df.isStreaming:
+                return union_df.distinct()
 
-            return union_df.distinct() if deduplication else union_df
+            return union_df
 
         return inner
 
@@ -67,6 +69,8 @@ class Unions(object):
                 [df] + union_with,
             )
 
-            return union_df.distinct() if deduplication else union_df
+            if deduplication and not union_df.isStreaming:
+                return union_df.distinct()
+            return union_df
 
         return inner

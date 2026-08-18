@@ -3,11 +3,5 @@
 # ! Do not forget running `make build-lock-files` after updating dependency list !
 #
 msgraph-sdk==1.40.0
-aiohttp==3.13.3 # msgraph-sdk uses a version with known vulnerabilities
-h2==4.3.0 # msgraph-sdk uses a version with known vulnerabilities
-azure-core==1.38.0
 nest-asyncio==1.6.0
-msal==1.32.3
-PyJWT==2.12.0 # pinning because msal uses a version with known vulnerabilities
-requests==2.32.4 # when updating also update in all files
-cryptography==46.0.6 # pinning the version to avoid vulnerabilities
+msal==1.37.0

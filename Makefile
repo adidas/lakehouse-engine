@@ -18,6 +18,7 @@ remove_files_from_os := $(engine_conf_file) $(engine_conf_test_file) $(meta_conf
 last_commit_msg := "$(shell git log -1 --pretty=%B)"
 git_tag := $(shell git describe --tags --abbrev=0)
 commits_url := $(shell cat $(meta_conf_file) | grep commits_url | cut -f 2 -d " ")
+spark_repositories_url := $(shell cat $(meta_conf_file) | grep spark_repositories_url | cut -f 2 -d " ")
 
 ifneq ($(project_version), $(version))
 wheel_version := $(project_version)+$(subst _,.,$(subst -,.,$(version)))
@@ -171,9 +172,8 @@ test-local:
 #        make test-spark-connect-compose test_only="tests/feature/test_delta_load.py"
 # The stop-spark-connect target is a dependency of this target to ensure a clean environment before running the tests
 test-spark-connect: stop-spark-connect
-	VERSION=$(version) TEST_ONLY="$(test_only)" $(container_cli)-compose \
+	VERSION=$(version) TEST_ONLY="$(test_only)" SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(container_cli)-compose \
 		-f cicd/docker-compose-spark-connect.yml up \
-		--no-attach spark-connect-server \
 		--abort-on-container-exit \
 		--exit-code-from lakehouse-engine-tests && \
 	mv .coverage artefacts/.coverage.connect
@@ -197,7 +197,7 @@ stop-spark-connect:
 # Start only the Spark Connect server (useful for manual testing)
 # Access Spark UI at http://localhost:4040
 start-spark-connect:
-	VERSION=$(version) $(container_cli)-compose \
+	VERSION=$(version) SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(container_cli)-compose \
 		-f cicd/docker-compose-spark-connect.yml up -d spark-connect-server
 	@echo "Spark Connect server starting... waiting for health check..."
 	@echo "Server will be available at sc://localhost:15002"

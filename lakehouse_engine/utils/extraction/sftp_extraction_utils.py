@@ -1,5 +1,6 @@
 """Utilities module for SFTP extraction processes."""
 
+import inspect
 import stat
 from base64 import decodebytes
 from datetime import datetime
@@ -194,28 +195,37 @@ class SFTPExtractionUtils(object):
                 ssh_client.load_system_host_keys()
                 ssh_client.set_missing_host_key_policy(p.RejectPolicy())
 
-            ssh_client.connect(
-                hostname=options_args.get("hostname"),
-                port=options_args.get("port", 22),
-                username=options_args.get("username", None),
-                password=options_args.get("password", None),
-                key_filename=options_args.get("key_filename", None),
-                timeout=options_args.get("timeout", None),
-                allow_agent=options_args.get("allow_agent", True),
-                look_for_keys=options_args.get("look_for_keys", True),
-                compress=options_args.get("compress", False),
-                sock=options_args.get("sock", None),
-                gss_auth=options_args.get("gss_auth", False),
-                gss_kex=options_args.get("gss_kex", False),
-                gss_deleg_creds=options_args.get("gss_deleg_creds", False),
-                gss_host=options_args.get("gss_host", False),
-                banner_timeout=options_args.get("banner_timeout", None),
-                auth_timeout=options_args.get("auth_timeout", None),
-                gss_trust_dns=options_args.get("gss_trust_dns", None),
-                passphrase=options_args.get("passphrase", None),
-                disabled_algorithms=options_args.get("disabled_algorithms", None),
-                transport_factory=options_args.get("transport_factory", None),
-            )
+            connect_kwargs = {
+                "hostname": options_args.get("hostname"),
+                "port": options_args.get("port", 22),
+                "username": options_args.get("username", None),
+                "password": options_args.get("password", None),
+                "key_filename": options_args.get("key_filename", None),
+                "timeout": options_args.get("timeout", None),
+                "allow_agent": options_args.get("allow_agent", True),
+                "look_for_keys": options_args.get("look_for_keys", True),
+                "compress": options_args.get("compress", False),
+                "sock": options_args.get("sock", None),
+                "banner_timeout": options_args.get("banner_timeout", None),
+                "auth_timeout": options_args.get("auth_timeout", None),
+                "passphrase": options_args.get("passphrase", None),
+                "disabled_algorithms": options_args.get("disabled_algorithms", None),
+                "transport_factory": options_args.get("transport_factory", None),
+            }
+            supported_params = inspect.signature(ssh_client.connect).parameters
+            gss_kwargs = {
+                "gss_auth": options_args.get("gss_auth", False),
+                "gss_kex": options_args.get("gss_kex", False),
+                "gss_deleg_creds": options_args.get("gss_deleg_creds", False),
+                "gss_host": options_args.get("gss_host", False),
+                "gss_trust_dns": options_args.get("gss_trust_dns", None),
+            }
+
+            for param_name, value in gss_kwargs.items():
+                if param_name in supported_params:
+                    connect_kwargs[param_name] = value
+
+            ssh_client.connect(**connect_kwargs)
 
             sftp = ssh_client.open_sftp()
             transport = ssh_client.get_transport()

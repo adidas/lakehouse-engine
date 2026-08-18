@@ -77,6 +77,47 @@ class DatabricksUtils(object):
         ].get("jobName")
 
     @staticmethod
+    def get_dbutils_entry_name(entry: Any) -> str:
+        """Extract entry name from a dbutils.fs.ls response item.
+
+        Args:
+            entry: A dbutils.fs.ls response item.
+
+        Returns:
+            The name of the entry.
+        """
+        return str(getattr(entry, "name", "") or "").strip()
+
+    @staticmethod
+    def get_dbutils_entry_path(entry: Any) -> str:
+        """Extract entry path from a dbutils.fs.ls response item.
+
+        Args:
+            entry: A dbutils.fs.ls response item.
+
+        Returns:
+            The path of the entry.
+        """
+        return str(getattr(entry, "path", "") or "").strip()
+
+    @staticmethod
+    def check_dbutils_path_exists(dbutils: Any, path: str) -> bool:
+        """Check if a path exists using dbutils.
+
+        Args:
+            dbutils: The dbutils instance.
+            path: The path to check.
+
+        Returns:
+            True if the path exists, False otherwise.
+        """
+        try:
+            dbutils.fs.ls(path)
+            return True
+        except Exception:  # noqa: BLE001
+            return False
+
+    @staticmethod
     def _get_dp_name(job_name: str) -> str:
         """Extract the dp_name from a Databricks job name.
 

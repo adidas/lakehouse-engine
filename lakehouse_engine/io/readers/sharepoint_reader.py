@@ -184,6 +184,13 @@ class SharepointCsvReader(SharepointReader):
         )
         return self.read_csv_folder(file_path, pattern)
 
+    def _with_archive_flags(self, sp_file: SharepointFile) -> SharepointFile:
+        """Apply archive-related runtime flags before archiving a file."""
+        sp_file.skip_rename = bool(
+            self._input_spec.sharepoint_opts.skip_rename
+        ) or getattr(sp_file, "skip_rename", False)
+        return sp_file
+
     def _load_and_archive_file(self, sp_file: SharepointFile) -> DataFrame:
         """Download a Sharepoint CSV, stage it locally, load with Spark, and archive it.
 
@@ -244,7 +251,7 @@ class SharepointCsvReader(SharepointReader):
 
         finally:
             self.sharepoint_utils.archive_sharepoint_file(
-                sp_file=sp_file,
+                sp_file=self._with_archive_flags(sp_file),
                 to_path=archive_target,
                 move_enabled=self.opts.archive_enabled,
             )
@@ -379,7 +386,7 @@ class SharepointCsvReader(SharepointReader):
 
         for sp_file in valid_files:
             self.sharepoint_utils.archive_sharepoint_file(
-                sp_file,
+                self._with_archive_flags(sp_file),
                 to_path=(
                     f"{folder_path}/{self.opts.archive_success_subfolder}"
                     if self.opts.archive_success_subfolder
@@ -415,7 +422,7 @@ class SharepointCsvReader(SharepointReader):
                 Found: {df.schema}"""
             )
             self.sharepoint_utils.archive_sharepoint_file(
-                sp_file=file_with_content,
+                sp_file=self._with_archive_flags(file_with_content),
                 to_path=self.error_folder,
                 move_enabled=self.opts.archive_enabled,
             )

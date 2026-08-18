@@ -21,6 +21,7 @@ from lakehouse_engine.io.readers.jdbc_reader import JDBCReader
 from lakehouse_engine.io.readers.table_reader import TableReader
 from lakehouse_engine.io.writers.jdbc_writer import JDBCWriter
 from lakehouse_engine.utils.logging_handler import LoggingHandler
+from tests.utils.jdbc_helpers import JdbcHelpers
 
 
 class DataframeHelpers(object):
@@ -177,6 +178,8 @@ class DataframeHelpers(object):
             driver: driver class.
             data: list of all dfs generated on previous steps before writer.
         """
+        JdbcHelpers.create_table_if_not_exists(df.schema, uri, db_table)
+
         spec = OutputSpec(
             spec_id=random.choice(string.ascii_letters),  # nosec
             input_id=random.choice(string.ascii_letters),  # nosec

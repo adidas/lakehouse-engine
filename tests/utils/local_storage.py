@@ -32,7 +32,19 @@ class LocalStorage(object):
         :param str folder_path: path of the folder to clean.
         """
         if Path(folder_path).is_dir():
-            rmtree(folder_path)
+
+            def handle_error(func: object, path: str, exc_info: object) -> None:
+                if Path(path).is_symlink():
+                    Path(path).unlink(missing_ok=True)
+                    return
+
+                error = exc_info[1] if isinstance(exc_info, tuple) else exc_info
+                if isinstance(error, BaseException):
+                    raise error
+
+                raise RuntimeError(f"Unexpected rmtree exception payload: {error!r}")
+
+            rmtree(folder_path, onexc=handle_error)
 
     @staticmethod
     def delete_file(file_path: str) -> None:

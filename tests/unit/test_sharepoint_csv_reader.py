@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, cast
 
+from lakehouse_engine.core.definitions import SharepointFile
 from lakehouse_engine.io.readers.sharepoint_reader import SharepointCsvReader
 
 
@@ -17,11 +18,16 @@ class DummySharepointOptions:
     Args:
         local_options: Dictionary of local CSV read options (for example, header,
             delimiter, sep).
+        skip_rename: When True, skips the timestamp-rename step during archiving.
+            Only valid when archive_enabled is False.
     """
 
-    def __init__(self, local_options: Dict[str, Any]) -> None:
+    def __init__(
+        self, local_options: Dict[str, Any], skip_rename: bool = False
+    ) -> None:
         """Initialize the dummy options with the provided local options."""
         self.local_options = local_options
+        self.skip_rename = skip_rename
 
 
 class DummyInputSpec:
@@ -36,20 +42,39 @@ class DummyInputSpec:
         self.sharepoint_opts = sharepoint_options
 
 
-def create_csv_reader(local_options: Dict[str, Any]) -> SharepointCsvReader:
+def create_csv_reader(
+    local_options: Dict[str, Any], skip_rename: bool = False
+) -> SharepointCsvReader:
     """Create a `SharepointCsvReader` instance without calling its constructor.
 
     Args:
         local_options: Dictionary of local CSV read options.
+        skip_rename: When True, skips the timestamp-rename step during archiving.
+            Only valid when archive_enabled is False.
 
     Returns:
         SharepointCsvReader: A partially-initialized reader instance.
     """
     csv_reader: SharepointCsvReader = SharepointCsvReader.__new__(SharepointCsvReader)
     csv_reader._input_spec = cast(
-        Any, DummyInputSpec(DummySharepointOptions(local_options))
+        Any, DummyInputSpec(DummySharepointOptions(local_options, skip_rename))
     )
     return csv_reader
+
+
+def test_with_archive_flags_sets_skip_rename_from_options() -> None:
+    """It should propagate `skip_rename` from options into the Sharepoint file."""
+    csv_reader: SharepointCsvReader = create_csv_reader({}, skip_rename=True)
+    sp_file = SharepointFile(
+        file_name="sample.csv",
+        time_created="",
+        time_modified="",
+        _folder="sp_test",
+    )
+
+    flagged = csv_reader._with_archive_flags(sp_file)
+
+    assert flagged.skip_rename is True
 
 
 def test_detect_delimiter_uses_user_provided_delimiter() -> None:

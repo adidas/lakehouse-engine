@@ -8,21 +8,20 @@ bcrypt==5.0.0
     # via
     #   -c requirements_full.lock
     #   paramiko
-cffi==2.0.0
+cffi==2.1.1
     # via
     #   -c requirements_full.lock
     #   cryptography
     #   pynacl
-cryptography==46.0.6
-    # via
-    #   -c requirements_full.lock
-    #   -r requirements_sftp.txt
-    #   paramiko
-invoke==2.2.1
+cryptography==50.0.0
     # via
     #   -c requirements_full.lock
     #   paramiko
-paramiko==4.0.0
+invoke==3.0.3
+    # via
+    #   -c requirements_full.lock
+    #   paramiko
+paramiko==5.0.0
     # via
     #   -c requirements_full.lock
     #   -r requirements_sftp.txt
@@ -33,5 +32,4 @@ pycparser==3.0
 pynacl==1.6.2
     # via
     #   -c requirements_full.lock
-    #   -r requirements_sftp.txt
     #   paramiko

@@ -46,17 +46,14 @@ def sftp_client(sftpserver: SFTPServer) -> Generator:
     Args:
         sftpserver: a local SFTP-Server provided by the plugin pytest-sftpserver.
     """
-    conn_cred = {"username": "a", "password": "b"}
     transport = Transport((sftpserver.host, sftpserver.port))
+    username = "a"
+    password = "b"  # nosec B105 - test-only dummy credential for pytest_sftpserver
     transport.connect(
         hostkey=None,
-        **conn_cred,
+        username=username,
+        password=password,
         pkey=None,
-        gss_host=None,
-        gss_auth=False,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        gss_trust_dns=True,
     )
     client = SFTPClient.from_transport(transport)
     yield client

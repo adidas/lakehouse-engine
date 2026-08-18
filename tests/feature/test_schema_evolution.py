@@ -532,7 +532,7 @@ def _create_table(table_name: str, location: str) -> None:
     """Create test table."""
     ExecEnv.SESSION.sql(f"DROP TABLE IF EXISTS test_db.{table_name}")
     ExecEnv.SESSION.sql(f"""
-        CREATE TABLE IF NOT EXISTS test_db.{table_name} (
+        CREATE OR REPLACE TABLE test_db.{table_name} (
             actrequest_timestamp string,
             request string,
             datapakid int,
@@ -550,3 +550,4 @@ def _create_table(table_name: str, location: str) -> None:
         USING delta
         LOCATION '{TEST_LAKEHOUSE_OUT}/{location}/data'
         """)
+    ExecEnv.SESSION.sql(f"REFRESH TABLE test_db.{table_name}")
