@@ -1,6 +1,7 @@
 """Module that defines the behaviour to write to Kafka."""
 
-from typing import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -12,7 +13,9 @@ from lakehouse_engine.io.writer import Writer
 class KafkaWriter(Writer):
     """Class to write to a Kafka target."""
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict
+    ) -> None:
         """Construct KafkaWriter instances.
 
         Args:
@@ -78,9 +81,9 @@ class KafkaWriter(Writer):
             stream_df.awaitTermination(output_spec.streaming_await_termination_timeout)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
+    def _write_transformed_micro_batch(
         output_spec: OutputSpec,
-        data: OrderedDict,
+        data: OrderedDict | None,
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

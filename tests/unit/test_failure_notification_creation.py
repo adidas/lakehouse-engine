@@ -48,6 +48,8 @@ def test_failure_notification_creation(scenario: dict) -> None:
     """
     expected_output = scenario["expected"]
 
+    smtp_server: SMTPServer | None = None
+
     try:
         port = scenario["port"]
         server = scenario["server"]
@@ -67,7 +69,8 @@ def test_failure_notification_creation(scenario: dict) -> None:
         assert message == expected_output
 
     finally:
-        smtp_server.stop()
+        if smtp_server:
+            smtp_server.stop()
 
 
 def _parse_email_output(mail_content: str) -> str:
@@ -104,6 +107,9 @@ def _parse_email_output(mail_content: str) -> str:
     Returns:
         The parsed email message.
     """
-    message = re.search("(?<=bit\n).*?(?=--=)", mail_content, re.S).group()[1:-1]
+    message_match = re.search("(?<=bit\n).*?(?=--=)", mail_content, re.DOTALL)
+    if message_match is None:
+        raise ValueError("Could not parse email output from SMTP debug server.")
+    message = message_match.group()[1:-1]
 
     return str(message)

@@ -16,7 +16,7 @@ from lakehouse_engine.io.readers.sharepoint_reader import SharepointReader
 from lakehouse_engine.io.readers.table_reader import TableReader
 
 
-class ReaderFactory(ABC):  # noqa: B024
+class ReaderFactory(ABC):
     """Class for reader factory."""
 
     @classmethod

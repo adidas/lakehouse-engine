@@ -27,7 +27,7 @@ class Sensor(Algorithm):
 
     _LOGGER = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct Sensor instances.
 
         Args:
@@ -43,12 +43,16 @@ class Sensor(Algorithm):
 
     def execute(self) -> bool:
         """Execute the sensor."""
-        self._LOGGER.info(f"Starting {self.spec.input_spec.data_format} sensor...")
+        if not self.spec.input_spec:
+            raise ValueError("sensor input_spec must be provided.")
+        input_spec = self.spec.input_spec
+
+        self._LOGGER.info(f"Starting {input_spec.data_format} sensor...")
 
         new_data_df = SensorUpstreamManager.read_new_data(sensor_spec=self.spec)
-        if self.spec.input_spec.read_type == ReadType.STREAMING.value:
+        if input_spec.read_type == ReadType.STREAMING.value:
             Sensor._run_streaming_sensor(sensor_spec=self.spec, new_data_df=new_data_df)
-        elif self.spec.input_spec.read_type == ReadType.BATCH.value:
+        elif input_spec.read_type == ReadType.BATCH.value:
             Sensor._run_batch_sensor(
                 sensor_spec=self.spec,
                 new_data_df=new_data_df,
@@ -60,8 +64,7 @@ class Sensor(Algorithm):
         )
 
         self._LOGGER.info(
-            f"Sensor {self.spec.sensor_id} has previously "
-            f"acquired data? {has_new_data}"
+            f"Sensor {self.spec.sensor_id} has previously acquired data? {has_new_data}"
         )
 
         if self.spec.fail_on_empty_result and not has_new_data:
@@ -146,19 +149,28 @@ class Sensor(Algorithm):
 
     def _validate_sensor_spec(self) -> None:
         """Validate if sensor spec Read Type is allowed for the selected Data Format."""
-        if InputFormat.exists(self.spec.input_spec.data_format):
+        if not self.spec.input_spec:
+            raise ValueError("Input specification must be defined.")
+        input_spec = self.spec.input_spec
+
+        if not input_spec.data_format:
+            raise NotImplementedError("Data format must be defined.")
+        if not input_spec.read_type:
+            raise NotImplementedError("Read type must be defined.")
+
+        if InputFormat.exists(input_spec.data_format):
             if (
-                self.spec.input_spec.data_format
-                not in SENSOR_ALLOWED_DATA_FORMATS[self.spec.input_spec.read_type]
+                input_spec.data_format
+                not in SENSOR_ALLOWED_DATA_FORMATS[input_spec.read_type]
             ):
                 raise NotImplementedError(
                     f"A sensor has not been implemented yet for this data format or, "
                     f"this data format is not available for the read_type"
-                    f" {self.spec.input_spec.read_type}. "
+                    f" {input_spec.read_type}. "
                     f"Check the allowed combinations of read_type and data_formats:"
                     f" {SENSOR_ALLOWED_DATA_FORMATS}"
                 )
         else:
             raise NotImplementedError(
-                f"Data format {self.spec.input_spec.data_format} isn't implemented yet."
+                f"Data format {input_spec.data_format} isn't implemented yet."
             )

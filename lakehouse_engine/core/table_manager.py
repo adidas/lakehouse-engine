@@ -1,7 +1,5 @@
 """Table manager module."""
 
-from typing import List
-
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import translate
@@ -13,13 +11,13 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.sql_parser_utils import SQLParserUtils
 
 
-class TableManager(object):
+class TableManager:
     """Set of actions to manipulate tables/views in several ways.
 
     {{ get_table_manager_operations() }}
     """
 
-    def __init__(self, configs: dict):
+    def __init__(self, configs: dict) -> None:
         """Construct TableManager algorithm instances.
 
         Args:
@@ -49,9 +47,9 @@ class TableManager(object):
             "delete_where": self.delete_where,
         }
 
-        self._logger.info("Function being executed: {}".format(self.function))
+        self._logger.info(f"Function being executed: {self.function}")
 
-        if self.function in available_functions.keys():
+        if self.function in available_functions:
             func = available_functions[self.function]
             func()
         else:
@@ -61,11 +59,7 @@ class TableManager(object):
 
     def create(self) -> None:
         """Create a new table or view on metastore."""
-        disable_dbfs_retry = (
-            self.configs["disable_dbfs_retry"]
-            if "disable_dbfs_retry" in self.configs.keys()
-            else False
-        )
+        disable_dbfs_retry = self.configs.get("disable_dbfs_retry", False)
         sql = ConfigUtils.read_sql(self.configs["path"], disable_dbfs_retry)
         try:
             sql_commands = SQLParserUtils().split_sql_commands(
@@ -196,11 +190,7 @@ class TableManager(object):
         In this function the path to the files is separated by comma.
         """
         for table_metadata_file in self.configs["path"].split(","):
-            disable_dbfs_retry = (
-                self.configs["disable_dbfs_retry"]
-                if "disable_dbfs_retry" in self.configs.keys()
-                else False
-            )
+            disable_dbfs_retry = self.configs.get("disable_dbfs_retry", False)
             sql = ConfigUtils.read_sql(table_metadata_file.strip(), disable_dbfs_retry)
             sql_commands = SQLParserUtils().split_sql_commands(
                 sql_commands=sql,
@@ -215,8 +205,11 @@ class TableManager(object):
 
     def execute_sql(self) -> None:
         """Execute sql commands separated by semicolon (;)."""
+        sql_text = self.configs.get("sql")
+        if not sql_text:
+            raise ValueError("Missing 'sql' command to execute.")
         sql_commands = SQLParserUtils().split_sql_commands(
-            sql_commands=self.configs.get("sql"),
+            sql_commands=sql_text,
             delimiter=self.configs.get("delimiter", ";"),
             advanced_parser=self.configs.get("advanced_parser", False),
         )
@@ -242,20 +235,22 @@ class TableManager(object):
         self._logger.info(output)
         return output
 
-    def get_tbl_pk(self) -> List[str]:
+    def get_tbl_pk(self) -> list[str]:
         """Get the primary key of a particular table.
 
         Returns:
             The list of columns that are part of the primary key.
         """
-        output: List[str] = (
+        pk_row = (
             self.show_tbl_properties()
             .filter("key == 'lakehouse.primary_key'")
             .select("value")
             .withColumn("value", translate("value", " `", ""))
-            .first()[0]
-            .split(",")
+            .first()
         )
+        if not pk_row:
+            raise ValueError("Table property 'lakehouse.primary_key' was not found.")
+        output: list[str] = pk_row[0].split(",")
         self._logger.info(output)
 
         return output
@@ -266,8 +261,7 @@ class TableManager(object):
         sync_metadata = self.configs["sync_metadata"]
 
         repair_stmt = (
-            f"MSCK REPAIR TABLE {table_name} "
-            f"{'SYNC METADATA' if sync_metadata else ''}"
+            f"MSCK REPAIR TABLE {table_name} {'SYNC METADATA' if sync_metadata else ''}"
         )
 
         self._logger.info(f"sql command: {repair_stmt}")

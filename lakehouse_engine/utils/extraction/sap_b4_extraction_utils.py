@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from logging import Logger
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from lakehouse_engine.core.definitions import InputSpec, ReadType
 from lakehouse_engine.transformers.aggregators import Aggregators
@@ -66,12 +66,12 @@ class SAPB4Extraction(JDBCExtraction):
     latest_timestamp_input_col: str = "REQTSN"
     request_status_tbl: str = "SAPHANADB.RSPMREQUEST"
     request_col_name: str = "REQUEST_TSN"
-    data_target: Optional[str] = None
-    act_req_join_condition: Optional[str] = None
-    include_changelog_tech_cols: Optional[bool] = None
-    extra_cols_req_status_tbl: Optional[str] = None
-    request_status_tbl_filter: Optional[str] = None
-    adso_type: Optional[str] = None
+    data_target: str | None = None
+    act_req_join_condition: str | None = None
+    include_changelog_tech_cols: bool | None = None
+    extra_cols_req_status_tbl: str | None = None
+    request_status_tbl_filter: str | None = None
+    adso_type: str | None = None
     max_timestamp_custom_schema: str = "timestamp DECIMAL(23,0)"
     default_max_timestamp: str = "1970000000000000000000"
     default_min_timestamp: str = "1970000000000000000000"
@@ -81,7 +81,7 @@ class SAPB4Extraction(JDBCExtraction):
 class SAPB4ExtractionUtils(JDBCExtractionUtils):
     """Utils for managing data extraction from SAP B4."""
 
-    def __init__(self, sap_b4_extraction: SAPB4Extraction):
+    def __init__(self, sap_b4_extraction: SAPB4Extraction) -> None:
         """Construct SAPB4ExtractionUtils.
 
         Args:
@@ -97,7 +97,7 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
                     {self._B4_EXTRACTION.default_max_timestamp}) as timestamp
                 FROM {self._B4_EXTRACTION.request_status_tbl}
                 WHERE {self._B4_EXTRACTION.request_status_tbl_filter})
-            """  # nosec: B608
+            """  # noqa: S608
         super().__init__(sap_b4_extraction)
 
     @staticmethod
@@ -123,7 +123,7 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
 
         return data_target
 
-    def _get_init_query(self) -> Tuple[str, str]:
+    def _get_init_query(self) -> tuple[str, str]:
         """Get a query to do an init load based on a ADSO on a SAP B4 system.
 
         Returns:
@@ -136,7 +136,7 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
         predicates_query = f"""
         (SELECT DISTINCT({self._B4_EXTRACTION.partition_column})
         FROM {self._B4_EXTRACTION.dbtable} t)
-        """  # nosec: B608
+        """  # noqa: S608
 
         return extraction_query, predicates_query
 
@@ -159,11 +159,11 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
                     CAST({self._B4_EXTRACTION.extraction_timestamp}
                         AS DECIMAL(15,0)) AS extraction_start_timestamp
                 FROM {self._B4_EXTRACTION.dbtable} t
-                )"""  # nosec: B608
+                )"""  # noqa: S608
 
         return extraction_query
 
-    def _get_delta_query(self) -> Tuple[str, str]:
+    def _get_delta_query(self) -> tuple[str, str]:
         """Get a delta query for an SAP B4 ADSO.
 
         An SAP B4 ADSO requires a join with a special type of table often called
@@ -205,7 +205,12 @@ class SAPB4ExtractionUtils(JDBCExtractionUtils):
                 Aggregators.get_max_value(
                     self._B4_EXTRACTION.latest_timestamp_input_col
                 )
-            ).first()[0]
+            ).first()
+            if not min_timestamp:
+                raise ValueError(
+                    "Could not derive min timestamp for SAP B4 extraction."
+                )
+            min_timestamp = min_timestamp[0]
         else:
             min_timestamp = self._B4_EXTRACTION.min_timestamp
 

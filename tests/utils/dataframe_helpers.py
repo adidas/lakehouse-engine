@@ -2,7 +2,7 @@
 
 import random
 import string
-from typing import Optional, OrderedDict
+from collections import OrderedDict
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
@@ -24,7 +24,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from tests.utils.jdbc_helpers import JdbcHelpers
 
 
-class DataframeHelpers(object):
+class DataframeHelpers:
     """Class with helper functions to interact with test dataframes."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -91,8 +91,8 @@ class DataframeHelpers(object):
     def read_from_file(
         location: str,
         file_format: str = InputFormat.CSV.value,
-        schema: Optional[dict] = None,
-        options: Optional[dict] = None,
+        schema: dict | None = None,
+        options: dict | None = None,
     ) -> DataFrame:
         """Read data from a file into a dataframe.
 
@@ -109,7 +109,7 @@ class DataframeHelpers(object):
         if options is None and file_format == InputFormat.CSV.value:
             options = {"header": True, "delimiter": "|", "inferSchema": True}
         spec = InputSpec(
-            spec_id=random.choice(string.ascii_letters),  # nosec
+            spec_id=random.choice(string.ascii_letters),  # noqa
             read_type=ReadType.BATCH.value,
             data_format=file_format,
             location=location,
@@ -119,7 +119,7 @@ class DataframeHelpers(object):
         return FileReader(input_spec=spec).read()
 
     @staticmethod
-    def read_from_table(db_table: str, options: Optional[dict] = None) -> DataFrame:
+    def read_from_table(db_table: str, options: dict | None = None) -> DataFrame:
         """Read data from a table into a dataframe.
 
         Args:
@@ -130,7 +130,7 @@ class DataframeHelpers(object):
             DataFrame: the dataframe that was read.
         """
         spec = InputSpec(
-            spec_id=random.choice(string.ascii_letters),  # nosec
+            spec_id=random.choice(string.ascii_letters),  # noqa
             read_type=ReadType.BATCH.value,
             db_table=db_table,
             options=options,
@@ -152,7 +152,7 @@ class DataframeHelpers(object):
             DataFrame: the dataframe that was read.
         """
         spec = InputSpec(
-            spec_id=random.choice(string.ascii_letters),  # nosec
+            spec_id=random.choice(string.ascii_letters),  # noqa
             db_table=db_table,
             read_type=ReadType.BATCH.value,
             options={"url": uri, "dbtable": db_table, "driver": driver},
@@ -166,7 +166,7 @@ class DataframeHelpers(object):
         db_table: str,
         write_type: str = WriteType.APPEND.value,
         driver: str = "org.sqlite.JDBC",
-        data: OrderedDict = None,
+        data: OrderedDict | None = None,
     ) -> None:
         """Write data into a jdbc table.
 
@@ -181,8 +181,8 @@ class DataframeHelpers(object):
         JdbcHelpers.create_table_if_not_exists(df.schema, uri, db_table)
 
         spec = OutputSpec(
-            spec_id=random.choice(string.ascii_letters),  # nosec
-            input_id=random.choice(string.ascii_letters),  # nosec
+            spec_id=random.choice(string.ascii_letters),  # noqa
+            input_id=random.choice(string.ascii_letters),  # noqa
             write_type=write_type,
             data_format=OutputFormat.JDBC.value,
             options={"url": uri, "dbtable": db_table, "driver": driver},
@@ -231,7 +231,7 @@ class DataframeHelpers(object):
         """
         ExecEnv.SESSION.sql(f"""
             CREATE EXTERNAL TABLE {db}.{table} (
-                {','.join([f'{cname} {ctype}' for cname, ctype in cols.items()])}
+                {",".join([f"{cname} {ctype}" for cname, ctype in cols.items()])}
             )
             USING delta
             TBLPROPERTIES (delta.enableChangeDataFeed = {str(enable_cdf).lower()})

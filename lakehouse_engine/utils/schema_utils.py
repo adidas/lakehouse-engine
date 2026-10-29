@@ -1,7 +1,7 @@
 """Utilities to facilitate dataframe schema management."""
 
 from logging import Logger
-from typing import Any, List, Optional
+from typing import Any
 
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
@@ -12,7 +12,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
-class SchemaUtils(object):
+class SchemaUtils:
     """Schema utils that help retrieve and manage schemas of dataframes."""
 
     _logger: Logger = LoggingHandler(__name__).get_logger()
@@ -73,7 +73,7 @@ class SchemaUtils(object):
         return ExecEnv.SESSION.read.table(table).schema
 
     @classmethod
-    def from_input_spec(cls, input_spec: InputSpec) -> Optional[StructType]:
+    def from_input_spec(cls, input_spec: InputSpec) -> StructType | None:
         """Get a spark schema from an input specification.
 
         This covers scenarios where the schema is provided as part of the input
@@ -110,9 +110,7 @@ class SchemaUtils(object):
     def _get_prefix_alias(num_chars: int, prefix: str, shorten_names: bool) -> str:
         """Get prefix alias for a field."""
         return (
-            f"""{'_'.join(
-                [item[:num_chars] for item in prefix.split('.')]
-            )}_"""
+            f"""{"_".join([item[:num_chars] for item in prefix.split(".")])}_"""
             if shorten_names
             else f"{prefix}_".replace(".", "_")
         )
@@ -120,14 +118,14 @@ class SchemaUtils(object):
     @staticmethod
     def schema_flattener(
         schema: StructType,
-        prefix: str = None,
+        prefix: str | None = None,
         level: int = 1,
-        max_level: int = None,
+        max_level: int | None = None,
         shorten_names: bool = False,
         alias: bool = True,
         num_chars: int = 7,
-        ignore_cols: List = None,
-    ) -> List:
+        ignore_cols: list | None = None,
+    ) -> list:
         """Recursive method to flatten the schema of the dataframe.
 
         Args:

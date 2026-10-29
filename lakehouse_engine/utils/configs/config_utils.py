@@ -1,7 +1,7 @@
 """Module to read configurations."""
 
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from importlib_resources import as_file, files
@@ -10,7 +10,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
-class ConfigUtils(object):
+class ConfigUtils:
     """Config utilities class."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -28,8 +28,8 @@ class ConfigUtils(object):
     @classmethod
     def get_acon(
         cls,
-        acon_path: Optional[str] = None,
-        acon: Optional[dict] = None,
+        acon_path: str | None = None,
+        acon: dict | None = None,
         disable_dbfs_retry: bool = False,
     ) -> dict:
         """Get acon based on a filesystem path or on a dict.
@@ -44,7 +44,13 @@ class ConfigUtils(object):
             Dict representation of an acon.
         """
         acon = (
-            acon if acon else ConfigUtils.read_json_acon(acon_path, disable_dbfs_retry)
+            acon
+            if acon
+            else (
+                ConfigUtils.read_json_acon(acon_path, disable_dbfs_retry)
+                if acon_path
+                else {}
+            )
         )
         return acon
 
@@ -68,7 +74,7 @@ class ConfigUtils(object):
     def get_config_from_file(config_file_path: str) -> Any:
         """Get the lakehouse engine configurations using a file path.
 
-         Args:
+        Args:
             config_file_path: a string with a path for a yaml file
             with custom configurations.
 

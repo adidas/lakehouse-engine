@@ -1,7 +1,5 @@
 """Module with the factory pattern to return terminators."""
 
-from typing import Optional
-
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import TerminatorSpec
@@ -10,15 +8,13 @@ from lakehouse_engine.terminators.notifier_factory import NotifierFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class TerminatorFactory(object):
+class TerminatorFactory:
     """TerminatorFactory class following the factory pattern."""
 
     _logger = LoggingHandler(__name__).get_logger()
 
     @staticmethod
-    def execute_terminator(
-        spec: TerminatorSpec, df: Optional[DataFrame] = None
-    ) -> None:
+    def execute_terminator(spec: TerminatorSpec, df: DataFrame | None = None) -> None:
         """Execute a terminator following the factory pattern.
 
         Args:
@@ -32,7 +28,7 @@ class TerminatorFactory(object):
         if spec.function == "optimize_dataset":
             from lakehouse_engine.terminators.dataset_optimizer import DatasetOptimizer
 
-            DatasetOptimizer.optimize_dataset(**spec.args)
+            DatasetOptimizer.optimize_dataset(**(spec.args or {}))
         elif spec.function == "terminate_spark":
             from lakehouse_engine.terminators.spark_terminator import SparkTerminator
 

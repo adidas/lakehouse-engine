@@ -1,7 +1,7 @@
 """Test extractions from SAP BW."""
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -306,7 +306,7 @@ def _execute_load(
     scenario: dict,
     extra_params: dict,
     extraction_type: str,
-    iteration: int = None,
+    iteration: int | None = None,
 ) -> None:
     """Helper function to reuse for loading the data for the scenario tests.
 
@@ -331,7 +331,7 @@ def _execute_load(
         extraction_timestamp=(
             "20211004151010"
             if extraction_type == "init"
-            else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+            else datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         ),
         extraction_type=extraction_type,
         write_type=write_type,
@@ -347,7 +347,7 @@ def _get_test_acon(
     write_type: str,
     scenario: dict,
     extra_params: dict,
-    extraction_timestamp: str = None,
+    extraction_timestamp: str | None = None,
 ) -> dict:
     """Creates a test ACON with the desired logic for the algorithm.
 
@@ -379,11 +379,7 @@ def _get_test_acon(
                     "url": f"jdbc:sqlite:{TEST_LAKEHOUSE_IN}/"
                     f"{scenario['scenario_name']}/{extra_params['test_name']}/tests.db",
                     "dbtable": DB_TABLE,
-                    "changelog_table": (
-                        extra_params["changelog_table"]
-                        if "changelog_table" in extra_params.keys()
-                        else None
-                    ),
+                    "changelog_table": extra_params.get("changelog_table", None),
                     "customSchema": "actrequest_timestamp DECIMAL(15,0), "
                     "datapakid STRING, request STRING, "
                     "partno INTEGER, record INTEGER, "
@@ -437,7 +433,7 @@ def _get_test_acon(
         ],
         "exec_env": {
             "spark.databricks.delta.schema.autoMerge.enabled": (
-                True if scenario["extra_cols_act_request"] else False
+                bool(scenario["extra_cols_act_request"])
             )
         },
     }
@@ -489,7 +485,7 @@ def _prepare_files(scenario: str, extra_params: dict) -> None:
 
 
 def _load_test_table(
-    db_table: str, scenario: str, extra_params: dict, iteration: int = None
+    db_table: str, scenario: str, extra_params: dict, iteration: int | None = None
 ) -> DataFrame:
     """Load the JDBC tables for the tests and return a Dataframe with the content.
 
@@ -615,7 +611,7 @@ def test_changelog_table_name_derivation(scenario: dict) -> None:
             dbtable="dummy_table",
             driver="org.sqlite.JDBC",
             user="dummy_user",
-            password="dummy_pwd",
+            password="dummy_pwd",  # noqa: S106
             url=f"""jdbc:sqlite:{TEST_LAKEHOUSE_IN}/{scenario["name"]}/tests.db""",
             **(
                 {"logsys": scenario["logsys"]}

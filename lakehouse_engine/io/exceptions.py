@@ -9,49 +9,33 @@ class IncrementalFilterInputNotFoundException(Exception):
     because probably it was not loaded for the first time yet.
     """
 
-    pass
-
 
 class WrongIOFormatException(Exception):
     """Exception for when a user provides a wrong I/O format."""
-
-    pass
 
 
 class NotSupportedException(RuntimeError):
     """Exception for when a user provides a not supported operation."""
 
-    pass
-
 
 class InputNotFoundException(Exception):
     """Exception for when a user does not provide a mandatory input."""
-
-    pass
 
 
 class EndpointNotFoundException(Exception):
     """Exception for when the endpoint is not found by the Graph API."""
 
-    pass
-
 
 class LocalPathNotFoundException(Exception):
     """Exception for when a local path is not found."""
-
-    pass
 
 
 class WriteToLocalException(Exception):
     """Exception for when an error occurs when trying to write to the local path."""
 
-    pass
-
 
 class SharePointAPIError(Exception):
     """Custom exception class to handle errors Sharepoint API requests."""
-
-    pass
 
 
 class InvalidSharepointPathException(Exception):
@@ -60,5 +44,3 @@ class InvalidSharepointPathException(Exception):
     Happens if both `folder_relative_path` and `file_name` are set, but the folder path
     looks like a file path (last segment has a dot).
     """
-
-    pass

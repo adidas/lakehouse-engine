@@ -6,13 +6,13 @@ Unit tests for delimiter detection and Spark CSV option resolution in
 
 from __future__ import annotations
 
-from typing import Any, Dict, cast
+from typing import Any, cast
 
-from lakehouse_engine.core.definitions import SharepointFile
+from lakehouse_engine.core.definitions import SharepointFile, SharepointOptions
 from lakehouse_engine.io.readers.sharepoint_reader import SharepointCsvReader
 
 
-class DummySharepointOptions:
+class DummySharepointOptions(SharepointOptions):
     """Minimal Sharepoint options stub used to build a `SharepointCsvReader`.
 
     Args:
@@ -23,7 +23,7 @@ class DummySharepointOptions:
     """
 
     def __init__(
-        self, local_options: Dict[str, Any], skip_rename: bool = False
+        self, local_options: dict[str, Any], skip_rename: bool = False
     ) -> None:
         """Initialize the dummy options with the provided local options."""
         self.local_options = local_options
@@ -43,7 +43,7 @@ class DummyInputSpec:
 
 
 def create_csv_reader(
-    local_options: Dict[str, Any], skip_rename: bool = False
+    local_options: dict[str, Any], skip_rename: bool = False
 ) -> SharepointCsvReader:
     """Create a `SharepointCsvReader` instance without calling its constructor.
 
@@ -56,9 +56,9 @@ def create_csv_reader(
         SharepointCsvReader: A partially-initialized reader instance.
     """
     csv_reader: SharepointCsvReader = SharepointCsvReader.__new__(SharepointCsvReader)
-    csv_reader._input_spec = cast(
-        Any, DummyInputSpec(DummySharepointOptions(local_options, skip_rename))
-    )
+    dummy_opts = DummySharepointOptions(local_options, skip_rename)
+    csv_reader._input_spec = cast(Any, DummyInputSpec(dummy_opts))
+    csv_reader.opts = dummy_opts
     return csv_reader
 
 
@@ -121,7 +121,7 @@ def test_resolve_csv_options_prefers_sep_over_delimiter() -> None:
     csv_reader: SharepointCsvReader = create_csv_reader(
         {"sep": "|", "delimiter": ",", "header": True}
     )
-    spark_options: Dict[str, Any] = csv_reader.resolve_spark_csv_options(
+    spark_options: dict[str, Any] = csv_reader.resolve_spark_csv_options(
         b"column_a,column_b\n1,2\n"
     )
     assert spark_options["sep"] == "|"
@@ -133,7 +133,7 @@ def test_resolve_spark_csv_options_uses_delimiter_when_sep_missing() -> None:
     csv_reader: SharepointCsvReader = create_csv_reader(
         {"delimiter": ";", "header": True}
     )
-    spark_options: Dict[str, Any] = csv_reader.resolve_spark_csv_options(
+    spark_options: dict[str, Any] = csv_reader.resolve_spark_csv_options(
         b"column_a,column_b\n1,2\n"
     )
     assert spark_options["sep"] == ";"
@@ -149,7 +149,7 @@ def test_resolve_spark_csv_options_autodetects_when_no_delimiter_provided() -> N
         None
     """
     csv_reader: SharepointCsvReader = create_csv_reader({"header": True})
-    spark_options: Dict[str, Any] = csv_reader.resolve_spark_csv_options(
+    spark_options: dict[str, Any] = csv_reader.resolve_spark_csv_options(
         b"column_a|column_b\n1|2\n"
     )
     assert spark_options["sep"] == "|"

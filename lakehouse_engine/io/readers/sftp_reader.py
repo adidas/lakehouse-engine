@@ -4,12 +4,12 @@ import gzip
 from datetime import datetime
 from io import TextIOWrapper
 from logging import Logger
-from typing import List
 from zipfile import ZipFile
 
 import pandas as pd
 from pandas import DataFrame as PandasDataFrame
 from pandas.errors import EmptyDataError
+from paramiko.sftp_client import SFTPClient
 from paramiko.sftp_file import SFTPFile
 from pyspark.sql import DataFrame
 
@@ -25,7 +25,7 @@ class SFTPReader(Reader):
 
     _logger: Logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct SFTPReader instances.
 
         Args:
@@ -42,6 +42,11 @@ class SFTPReader(Reader):
         if self._input_spec.read_type == ReadType.BATCH.value:
             options_args = self._input_spec.options if self._input_spec.options else {}
 
+            if not self._input_spec.sftp_files_format:
+                raise ValueError("sftp_files_format must be provided for SFTP reader.")
+            if not self._input_spec.location:
+                raise ValueError("location must be provided for SFTP reader.")
+
             sftp_files_format = SFTPExtractionUtils.validate_format(
                 self._input_spec.sftp_files_format.lower()
             )
@@ -54,25 +59,8 @@ class SFTPReader(Reader):
                 sftp, location, options_args
             )
 
-            dfs: List[PandasDataFrame] = []
             try:
-                for filename in files_list:
-                    with sftp.open(filename, "r") as sftp_file:
-                        try:
-                            pdf = self._read_files(
-                                filename,
-                                sftp_file,
-                                options_args.get("args", {}),
-                                sftp_files_format,
-                            )
-                            if options_args.get("file_metadata", None):
-                                pdf["filename"] = filename
-                                pdf["modification_time"] = datetime.fromtimestamp(
-                                    sftp.stat(filename).st_mtime
-                                )
-                            self._append_files(pdf, dfs)
-                        except EmptyDataError:
-                            self._logger.info(f"{filename} - Empty or malformed file.")
+                dfs = self._read(files_list, sftp, options_args, sftp_files_format)
                 if dfs:
                     df = ExecEnv.SESSION.createDataFrame(pd.concat(dfs))
                 else:
@@ -81,7 +69,8 @@ class SFTPReader(Reader):
                     )
             finally:
                 sftp.close()
-                transport.close()
+                if transport:
+                    transport.close()
         else:
             raise NotImplementedError(
                 "The requested read type supports only BATCH mode."
@@ -89,7 +78,49 @@ class SFTPReader(Reader):
         return df
 
     @classmethod
-    def _append_files(cls, pdf: PandasDataFrame, dfs: List) -> List:
+    def _read(
+        cls,
+        files_list: set[str],
+        sftp: SFTPClient,
+        options_args: dict,
+        sftp_files_format: str,
+    ) -> list[PandasDataFrame]:
+        """Read files from SFTP.
+
+        Args:
+            files_list: a set of file names to be read.
+            sftp: SFTPClient object representing the SFTP connection.
+            options_args: options from the acon.
+            sftp_files_format: a string containing the file extension.
+
+        Returns:
+            A list of Pandas dataframes with data from the files.
+        """
+        dfs: list[PandasDataFrame] = []
+        for filename in files_list:
+            with sftp.open(filename, "r") as sftp_file:
+                try:
+                    pdf = cls._read_files(
+                        filename,
+                        sftp_file,
+                        options_args.get("args", {}),
+                        sftp_files_format,
+                    )
+                    if options_args.get("file_metadata", None):
+                        pdf["filename"] = filename
+                        modified_time = sftp.stat(filename).st_mtime
+                        if modified_time is None:
+                            raise ValueError(
+                                f"Could not retrieve mtime for file '{filename}'."
+                            )
+                        pdf["modification_time"] = datetime.fromtimestamp(modified_time)
+                    cls._append_files(pdf, dfs)
+                except EmptyDataError:
+                    cls._logger.info(f"{filename} - Empty or malformed file.")
+        return dfs
+
+    @classmethod
+    def _append_files(cls, pdf: PandasDataFrame, dfs: list) -> list:
         """Append to the list dataframes with data.
 
         Args:
@@ -128,7 +159,7 @@ class SFTPReader(Reader):
         if filename.endswith(".gz"):
             with gzip.GzipFile(fileobj=sftp_file, mode="rb") as gz_file:
                 pdf = reader(
-                    TextIOWrapper(gz_file),  # type: ignore
+                    TextIOWrapper(gz_file),
                     **option_args,
                 )
         elif filename.endswith(".zip"):

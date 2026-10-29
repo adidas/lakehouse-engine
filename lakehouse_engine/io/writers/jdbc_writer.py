@@ -1,6 +1,7 @@
 """Module that defines the behaviour to write to JDBC targets."""
 
-from typing import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -12,7 +13,9 @@ from lakehouse_engine.io.writer import Writer
 class JDBCWriter(Writer):
     """Class to write to JDBC targets."""
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None = None
+    ) -> None:
         """Construct JDBCWriter instances.
 
         Args:
@@ -65,9 +68,9 @@ class JDBCWriter(Writer):
         df_writer.save(output_spec.location)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
+    def _write_transformed_micro_batch(
         output_spec: OutputSpec,
-        data: OrderedDict,
+        data: OrderedDict | None,
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

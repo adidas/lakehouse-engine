@@ -29,7 +29,7 @@ class DQValidator(Algorithm):
 
     _LOGGER = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct DQValidator algorithm instances.
 
         A data quality validator needs the following specifications to work properly:
@@ -158,6 +158,10 @@ class DQValidator(Algorithm):
                 ExecEnv.SESSION, self.spec.input_spec.db_table
             )
         else:
+            if not self.spec.input_spec.location:
+                raise ValueError(
+                    "input_spec.location must be defined when db_table is not provided."
+                )
             delta_table = DeltaTable.forPath(
                 ExecEnv.SESSION, self.spec.input_spec.location
             )

@@ -7,10 +7,10 @@ from datetime import datetime
 from enum import Enum
 from logging import Logger
 from stat import S_ISREG
-from typing import Any, List, Set, Tuple
+from typing import Any
 
 import paramiko as p
-from paramiko import Ed25519Key, PKey, RSAKey, Transport
+from paramiko import PKey, Transport
 from paramiko.sftp_client import SFTPAttributes, SFTPClient  # type: ignore
 
 from lakehouse_engine.transformers.exceptions import WrongArgumentsException
@@ -36,7 +36,7 @@ class SFTPExtractionFilter(Enum):
     LOWER_THAN = "date_time_lt"
 
 
-class SFTPExtractionUtils(object):
+class SFTPExtractionUtils:
     """Utils for managing data extraction from particularly relevant SFTP sources."""
 
     _logger: Logger = LoggingHandler(__name__).get_logger()
@@ -44,7 +44,7 @@ class SFTPExtractionUtils(object):
     @classmethod
     def get_files_list(
         cls, sftp: SFTPClient, remote_path: str, options_args: dict
-    ) -> Set[str]:
+    ) -> set[str]:
         """Get a list of files to be extracted from SFTP.
 
         The arguments (options_args) to list files are:
@@ -79,7 +79,7 @@ class SFTPExtractionUtils(object):
         """
         all_items, folder_path = cls._get_folder_items(remote_path, sftp, options_args)
 
-        filtered_files: Set[str] = set()
+        filtered_files: set[str] = set()
 
         try:
             for item, folder in zip(all_items, folder_path):
@@ -89,14 +89,14 @@ class SFTPExtractionUtils(object):
                     filtered_files.add(folder + item.filename)
 
             if (
-                SFTPExtractionFilter.EARLIEST_FILE.value in options_args.keys()
-                or SFTPExtractionFilter.LATEST_FILE.value in options_args.keys()
+                SFTPExtractionFilter.EARLIEST_FILE.value in options_args
+                or SFTPExtractionFilter.LATEST_FILE.value in options_args
             ):
                 filtered_files = cls._get_earliest_latest_file(
                     sftp, options_args, filtered_files, folder_path
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             cls._logger.error(f"SFTP list_files EXCEPTION: - {e}")
         return filtered_files
 
@@ -104,7 +104,7 @@ class SFTPExtractionUtils(object):
     def get_sftp_client(
         cls,
         options_args: dict,
-    ) -> Tuple[SFTPClient, Transport]:
+    ) -> tuple[SFTPClient, Transport | None]:
         """Get the SFTP client.
 
         The SFTP client is used to open an SFTP session across an open
@@ -180,7 +180,8 @@ class SFTPExtractionUtils(object):
 
             if options_args.get("pkey", None) and options_args.get("key_type", None):
                 key = cls._get_host_keys(
-                    options_args.get("pkey", None), options_args.get("key_type", None)
+                    str(options_args.get("pkey", "")),
+                    str(options_args.get("key_type", "")),
                 )
                 ssh_client.get_host_keys().add(
                     hostname=f"[{options_args.get('hostname')}]:"
@@ -190,7 +191,7 @@ class SFTPExtractionUtils(object):
                 )
             elif options_args.get("add_auto_policy", None):
                 ssh_client.load_system_host_keys()
-                ssh_client.set_missing_host_key_policy(p.WarningPolicy())  # nosec: B507
+                ssh_client.set_missing_host_key_policy(p.WarningPolicy())  # noqa: S507
             else:
                 ssh_client.load_system_host_keys()
                 ssh_client.set_missing_host_key_policy(p.RejectPolicy())
@@ -204,7 +205,7 @@ class SFTPExtractionUtils(object):
                 "timeout": options_args.get("timeout", None),
                 "allow_agent": options_args.get("allow_agent", True),
                 "look_for_keys": options_args.get("look_for_keys", True),
-                "compress": options_args.get("compress", False),
+                "compress": bool(options_args.get("compress", False)),
                 "sock": options_args.get("sock", None),
                 "banner_timeout": options_args.get("banner_timeout", None),
                 "auth_timeout": options_args.get("auth_timeout", None),
@@ -214,10 +215,10 @@ class SFTPExtractionUtils(object):
             }
             supported_params = inspect.signature(ssh_client.connect).parameters
             gss_kwargs = {
-                "gss_auth": options_args.get("gss_auth", False),
-                "gss_kex": options_args.get("gss_kex", False),
-                "gss_deleg_creds": options_args.get("gss_deleg_creds", False),
-                "gss_host": options_args.get("gss_host", False),
+                "gss_auth": bool(options_args.get("gss_auth", False)),
+                "gss_kex": bool(options_args.get("gss_kex", False)),
+                "gss_deleg_creds": bool(options_args.get("gss_deleg_creds", False)),
+                "gss_host": options_args.get("gss_host", None),
                 "gss_trust_dns": options_args.get("gss_trust_dns", None),
             }
 
@@ -225,7 +226,7 @@ class SFTPExtractionUtils(object):
                 if param_name in supported_params:
                     connect_kwargs[param_name] = value
 
-            ssh_client.connect(**connect_kwargs)
+            ssh_client.connect(**connect_kwargs)  # ty: ignore
 
             sftp = ssh_client.open_sftp()
             transport = ssh_client.get_transport()
@@ -259,7 +260,7 @@ class SFTPExtractionUtils(object):
         return files_format
 
     @classmethod
-    def validate_location(cls, location: str) -> str:
+    def validate_location(cls, location: str | None) -> str:
         """Validate the location. Add "/" in the case it does not exist.
 
         Args:
@@ -268,6 +269,8 @@ class SFTPExtractionUtils(object):
         Returns:
             The location validated.
         """
+        if not location:
+            raise WrongArgumentsException("location must be provided.")
         return location if location.rfind("/") == len(location) - 1 else location + "/"
 
     @classmethod
@@ -283,13 +286,12 @@ class SFTPExtractionUtils(object):
         """
         file_to_consider = True
 
-        if SFTPExtractionFilter.file_name_contains.value in options_args.keys():
-            if not (
-                options_args.get(SFTPExtractionFilter.file_name_contains.value)
-                in item.filename
-                and (S_ISREG(item.st_mode) or cls._is_compressed(item.filename))
-            ):
-                file_to_consider = False
+        if SFTPExtractionFilter.file_name_contains.value in options_args and not (
+            options_args.get(SFTPExtractionFilter.file_name_contains.value)
+            in item.filename
+            and (S_ISREG(item.st_mode) or cls._is_compressed(item.filename))
+        ):
+            file_to_consider = False
 
         return file_to_consider
 
@@ -321,8 +323,8 @@ class SFTPExtractionUtils(object):
         file_to_consider = True
 
         if (
-            SFTPExtractionFilter.LOWER_THAN.value in options_args.keys()
-            or SFTPExtractionFilter.GREATER_THAN.value in options_args.keys()
+            SFTPExtractionFilter.LOWER_THAN.value in options_args
+            or SFTPExtractionFilter.GREATER_THAN.value in options_args
             and (S_ISREG(item.st_mode) or cls._is_compressed(item.filename))
         ):
             lower_than = options_args.get(
@@ -356,9 +358,9 @@ class SFTPExtractionUtils(object):
         cls,
         sftp: SFTPClient,
         options_args: dict,
-        list_filter_files: Set[str],
-        folder_path: List,
-    ) -> Set[str]:
+        list_filter_files: set[str],
+        folder_path: list,
+    ) -> set[str]:
         """Get the earliest or latest file of a directory.
 
         Args:
@@ -370,7 +372,7 @@ class SFTPExtractionUtils(object):
         Returns:
             A set containing the earliest/latest file name.
         """
-        list_earl_lat_files: Set[str] = set()
+        list_earl_lat_files: set[str] = set()
 
         for folder in folder_path:
             file_date = 0
@@ -398,7 +400,7 @@ class SFTPExtractionUtils(object):
     @classmethod
     def _get_folder_items(
         cls, remote_path: str, sftp: SFTPClient, options_args: dict
-    ) -> Tuple:
+    ) -> tuple:
         """Get the files and the directory to be processed.
 
         Args:
@@ -410,9 +412,9 @@ class SFTPExtractionUtils(object):
             A tuple with a list of items (file object) and a list of directories.
         """
         sub_dir = options_args.get("sub_dir", False)
-        all_items: List[SFTPAttributes] = sftp.listdir_attr(remote_path)
-        items: List[SFTPAttributes] = []
-        folders: List = []
+        all_items: list[SFTPAttributes] = sftp.listdir_attr(remote_path)
+        items: list[SFTPAttributes] = []
+        folders: list = []
 
         for item in all_items:
             is_dir = stat.S_ISDIR(item.st_mode)
@@ -438,13 +440,16 @@ class SFTPExtractionUtils(object):
         Returns:
             A PKey that will be used to authenticate the connection.
         """
-        key: RSAKey | Ed25519Key = None
+        key: PKey | None = None
         if pkey and key_type.lower() == "rsa":
             b_pkey = bytes(pkey, "UTF-8")
             key = p.RSAKey(data=decodebytes(b_pkey))
         elif pkey and key_type.lower() == "ed25519":
             b_pkey = bytes(pkey, "UTF-8")
             key = p.Ed25519Key(data=decodebytes(b_pkey))
+
+        if not key:
+            raise WrongArgumentsException("Unsupported or missing host key type.")
 
         return key
 

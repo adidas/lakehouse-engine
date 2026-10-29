@@ -1,6 +1,6 @@
 """Optimizers module."""
 
-from typing import Callable
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 from pyspark.storagelevel import StorageLevel
@@ -8,7 +8,7 @@ from pyspark.storagelevel import StorageLevel
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Optimizers(object):
+class Optimizers:
     """Class containing all the functions that can provide optimizations."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -31,7 +31,7 @@ class Optimizers(object):
         return inner
 
     @classmethod
-    def persist(cls, storage_level: str = None) -> Callable:
+    def persist(cls, storage_level: str | None = None) -> Callable:
         """Caches the current dataframe with a specific StorageLevel.
 
         Args:
@@ -46,8 +46,10 @@ class Optimizers(object):
         """
 
         def inner(df: DataFrame) -> DataFrame:
-            level = getattr(
-                StorageLevel, storage_level, StorageLevel.MEMORY_AND_DISK_DESER
+            level = (
+                getattr(StorageLevel, storage_level, StorageLevel.MEMORY_AND_DISK_DESER)
+                if storage_level is not None
+                else StorageLevel.MEMORY_AND_DISK_DESER
             )
 
             return df.persist(level)

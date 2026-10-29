@@ -1,7 +1,5 @@
 """Test delta loads with different merge options."""
 
-from typing import List
-
 import pytest
 
 from lakehouse_engine.core.definitions import InputFormat
@@ -30,7 +28,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
     "scenario",
     ["update_column_set", "insert_column_set", "update_all"],
 )
-def test_delta_load_merge_options(scenario: List[str]) -> None:
+def test_delta_load_merge_options(scenario: list[str]) -> None:
     """Test upsert for specific columns in batch mode.
 
     Args:
@@ -71,7 +69,7 @@ def test_delta_load_merge_options(scenario: List[str]) -> None:
     assert not DataframeHelpers.has_diff(result_df, control_df)
 
 
-def execute_loads(scenario: List[str]) -> None:
+def execute_loads(scenario: list[str]) -> None:
     """Execute the data loads.
 
     Args:

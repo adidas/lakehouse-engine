@@ -1,6 +1,7 @@
 """Module containing the filters transformers."""
 
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col
@@ -9,7 +10,7 @@ from lakehouse_engine.transformers.watermarker import Watermarker
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Filters(object):
+class Filters:
     """Class containing the filters transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -18,8 +19,8 @@ class Filters(object):
     def incremental_filter(
         cls,
         input_col: str,
-        increment_value: Optional[Any] = None,
-        increment_df: Optional[DataFrame] = None,
+        increment_value: Any | None = None,
+        increment_df: DataFrame | None = None,
         increment_col: str = "latest",
         greater_or_equal: bool = False,
     ) -> Callable:
@@ -70,18 +71,18 @@ class Filters(object):
         def inner(df: DataFrame) -> DataFrame:
             if increment_df:
                 if greater_or_equal:
-                    return df.filter(  # type: ignore
+                    return df.filter(
                         col(input_col) >= increment_df.collect()[0][increment_col]
                     )
                 else:
-                    return df.filter(  # type: ignore
+                    return df.filter(
                         col(input_col) > increment_df.collect()[0][increment_col]
                     )
             else:
                 if greater_or_equal:
-                    return df.filter(col(input_col) >= increment_value)  # type: ignore
+                    return df.filter(col(input_col) >= increment_value)  # ty: ignore
                 else:
-                    return df.filter(col(input_col) > increment_value)  # type: ignore
+                    return df.filter(col(input_col) > increment_value)  # ty: ignore
 
         return inner
 
@@ -99,12 +100,12 @@ class Filters(object):
         """
 
         def inner(df: DataFrame) -> DataFrame:
-            return df.filter(exp)  # type: ignore
+            return df.filter(exp)
 
         return inner
 
     @staticmethod
-    def column_filter_exp(exp: List[str]) -> Callable:
+    def column_filter_exp(exp: list[str]) -> Callable:
         """Filter a dataframe's columns based on a list of SQL expressions.
 
         Args:
@@ -117,13 +118,13 @@ class Filters(object):
         """
 
         def inner(df: DataFrame) -> DataFrame:
-            return df.selectExpr(*exp)  # type: ignore
+            return df.selectExpr(*exp)
 
         return inner
 
     @staticmethod
     def drop_duplicate_rows(
-        cols: List[str] = None, watermarker: dict = None
+        cols: list[str] | None = None, watermarker: dict | None = None
     ) -> Callable:
         """Drop duplicate rows using spark function dropDuplicates().
 

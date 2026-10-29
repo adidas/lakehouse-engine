@@ -1,6 +1,7 @@
 """Module to define behaviour to write to files."""
 
-from typing import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -13,7 +14,9 @@ from lakehouse_engine.utils.paimon_utils import PaimonUtils
 class FileWriter(Writer):
     """Class to write data to files."""
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct FileWriter instances.
 
         Args:
@@ -46,17 +49,16 @@ class FileWriter(Writer):
                 ExecEnv.SESSION, df, output_spec
             )
 
-        df.write.format(output_spec.data_format).partitionBy(
-            output_spec.partitions
-        ).options(**output_spec.options if output_spec.options else {}).mode(
+        writer = df.write.format(output_spec.data_format)
+        if output_spec.partitions:
+            writer = writer.partitionBy(*output_spec.partitions)
+        writer.options(**output_spec.options if output_spec.options else {}).mode(
             output_spec.write_type
-        ).save(
-            output_spec.location
-        )
+        ).save(output_spec.location)
 
     @staticmethod
     def _write_to_files_in_streaming_mode(
-        df: DataFrame, output_spec: OutputSpec, data: OrderedDict
+        df: DataFrame, output_spec: OutputSpec, data: OrderedDict | None
     ) -> None:
         """Write to files in streaming mode.
 
@@ -85,10 +87,13 @@ class FileWriter(Writer):
                 .start()
             )
         else:
+            stream_writer = df_writer.format(output_spec.data_format)
+            if output_spec.partitions:
+                stream_writer = stream_writer.partitionBy(*output_spec.partitions)
             stream_df = (
-                df_writer.format(output_spec.data_format)
-                .partitionBy(output_spec.partitions)
-                .options(**output_spec.options if output_spec.options else {})
+                stream_writer.options(
+                    **output_spec.options if output_spec.options else {}
+                )
                 .outputMode(output_spec.write_type)
                 .start(output_spec.location)
             )
@@ -97,8 +102,8 @@ class FileWriter(Writer):
             stream_df.awaitTermination(output_spec.streaming_await_termination_timeout)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+    def _write_transformed_micro_batch(
+        output_spec: OutputSpec, data: OrderedDict | None
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

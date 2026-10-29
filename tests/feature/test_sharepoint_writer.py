@@ -1,7 +1,7 @@
 """Test Sharepoint utils."""
 
 import json
-from typing import Any, List
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -60,30 +60,36 @@ TEST_SCENARIOS_EXCEPTIONS = [
     ],
     [
         "drive_exception",
-        "Please provide all mandatory Sharepoint options. \n"
-        "Expected: site_name, drive_name and local_path. "
-        "Value should not be None.\n"
-        "Provided: site_name=mock_site, \n"
-        "drive_name=, \n"
-        "local_path=mock_path",
+        (
+            "Please provide all mandatory Sharepoint options. \n"
+            "Expected: site_name, drive_name and local_path. "
+            "Value should not be None.\n"
+            "Provided: site_name=mock_site, \n"
+            "drive_name=, \n"
+            "local_path=mock_path"
+        ),
     ],
     [
         "site_exception",
-        "Please provide all mandatory Sharepoint options. \n"
-        "Expected: site_name, drive_name and local_path. "
-        "Value should not be None.\n"
-        "Provided: site_name=, \n"
-        "drive_name=mock_drive, \n"
-        "local_path=mock_path",
+        (
+            "Please provide all mandatory Sharepoint options. \n"
+            "Expected: site_name, drive_name and local_path. "
+            "Value should not be None.\n"
+            "Provided: site_name=, \n"
+            "drive_name=mock_drive, \n"
+            "local_path=mock_path"
+        ),
     ],
     [
         "local_path_exception",
-        "Please provide all mandatory Sharepoint options. \n"
-        "Expected: site_name, drive_name and local_path. "
-        "Value should not be None.\n"
-        "Provided: site_name=mock_site, \n"
-        "drive_name=mock_drive, \n"
-        "local_path=",
+        (
+            "Please provide all mandatory Sharepoint options. \n"
+            "Expected: site_name, drive_name and local_path. "
+            "Value should not be None.\n"
+            "Provided: site_name=mock_site, \n"
+            "drive_name=mock_drive, \n"
+            "local_path="
+        ),
     ],
     ["endpoint_exception", "The provided endpoint does not exist!"],
 ]
@@ -99,10 +105,10 @@ TEST_SCENARIOS_WRITER = [
 
 @pytest.mark.parametrize("scenario", TEST_SCENARIOS_EXCEPTIONS)
 @patch(
-    "lakehouse_engine.io.writers.sharepoint_writer.SharepointWriter._get_sharepoint_utils"  # noqa
+    "lakehouse_engine.io.writers.sharepoint_writer.SharepointWriter._get_sharepoint_utils"
 )
 def test_sharepoint_writer_exceptions(
-    mock_get_sharepoint_utils: MagicMock, scenario: List[str]
+    mock_get_sharepoint_utils: MagicMock, scenario: list[str]
 ) -> None:
     """Test writing to Sharepoint from csv source.
 
@@ -149,36 +155,36 @@ def test_sharepoint_writer_exceptions(
 @pytest.mark.parametrize("scenario", TEST_SCENARIOS_WRITER)
 @patch(
     "lakehouse_engine.utils.sharepoint_utils.SharepointUtils.check_if_endpoint_exists",
-    return_value=True,  # noqa
+    return_value=True,
 )
-@patch("lakehouse_engine.utils.sharepoint_utils.SharepointUtils._create_app")  # noqa
-@patch("lakehouse_engine.utils.sharepoint_utils.SharepointUtils._get_token")  # noqa
+@patch("lakehouse_engine.utils.sharepoint_utils.SharepointUtils._create_app")
+@patch("lakehouse_engine.utils.sharepoint_utils.SharepointUtils._get_token")
 @patch(
     "lakehouse_engine.utils.sharepoint_utils.SharepointUtils._make_request",
     side_effect=[
         MockRESTResponse(
             status_code=200,
             json_data=json.loads(
-                open(f"{TEST_RESOURCES}/writer/mocks/get_site_id.json").read()
+                open(f"{TEST_RESOURCES}/writer/mocks/get_site_id.json").read()  # noqa: SIM115
             ),
         ),
         MockRESTResponse(
             status_code=200,
             json_data=json.loads(
-                open(f"{TEST_RESOURCES}/writer/mocks/get_drive_id.json").read()
+                open(f"{TEST_RESOURCES}/writer/mocks/get_drive_id.json").read()  # noqa: SIM115
             ),
         ),
         MockRESTResponse(
             status_code=200,
             json_data=json.loads(
-                open(f"{TEST_RESOURCES}/writer/mocks/create_upload_session.json").read()
+                open(f"{TEST_RESOURCES}/writer/mocks/create_upload_session.json").read()  # noqa: SIM115
             ),
         ),
         MockRESTResponse(status_code=200),  # final upload to sharepoint
     ],
-)  # noqa
+)
 def test_sharepoint_writer(
-    _: Any, __: Any, ___: Any, _make_requests: Any, scenario: List[str], caplog: Any
+    _: Any, __: Any, ___: Any, _make_requests: Any, scenario: list[str], caplog: Any
 ) -> None:
     """Test writing to Sharepoint from csv source.
 

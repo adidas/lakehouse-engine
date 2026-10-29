@@ -1,7 +1,7 @@
 """Module with join transformers."""
 
 import uuid
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -11,7 +11,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.spark_utils import SparkUtils
 
 
-class Joiners(object):
+class Joiners:
     """Class containing join transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -25,8 +25,8 @@ class Joiners(object):
         right_df_alias: str = "b",
         join_type: str = "inner",
         broadcast_join: bool = True,
-        select_cols: Optional[List[str]] = None,
-        watermarker: Optional[dict] = None,
+        select_cols: list[str] | None = None,
+        watermarker: dict | None = None,
     ) -> Callable:
         """Join two dataframes based on specified type and columns.
 
@@ -78,15 +78,16 @@ class Joiners(object):
             r_prefix = SparkUtils.create_temp_view(
                 df_join_with, right, return_prefix=True
             )
+            projected_columns = list(select_cols or [])
 
             query = f"""
                 SELECT {f"/*+ BROADCAST({right_df_alias}) */" if broadcast_join else ""}
-                {", ".join(select_cols)}
+                {", ".join(projected_columns)}
                 FROM {l_prefix}{left} AS {left_df_alias}
                 {join_type.upper()}
                 JOIN {r_prefix}{right} AS {right_df_alias}
                 ON {join_condition}
-            """  # nosec: B608
+            """  # noqa: S608
 
             cls._logger.info(f"Execution query: {query}")
 

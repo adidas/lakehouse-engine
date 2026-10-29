@@ -1,13 +1,13 @@
 """Module with null handlers transformers."""
 
-from typing import Callable, List
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class NullHandlers(object):
+class NullHandlers:
     """Class containing null handler transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -19,7 +19,7 @@ class NullHandlers(object):
         default_num_value: int = -999,
         replace_on_strings: bool = True,
         default_string_value: str = "UNKNOWN",
-        subset_cols: List[str] = None,
+        subset_cols: list[str] | None = None,
     ) -> Callable:
         """Replace nulls in a dataframe.
 

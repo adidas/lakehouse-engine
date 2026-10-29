@@ -1,6 +1,7 @@
 """Module to define the behaviour of delta merges."""
 
-from typing import Callable, Optional, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from delta.tables import DeltaMergeBuilder, DeltaTable
 from pyspark.sql import DataFrame
@@ -14,7 +15,9 @@ from lakehouse_engine.io.writer import Writer
 class DeltaMergeWriter(Writer):
     """Class to merge data using delta lake."""
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct DeltaMergeWriter instances.
 
         Args:
@@ -64,11 +67,12 @@ class DeltaMergeWriter(Writer):
         if output_spec.db_table:
             delta_table = DeltaTable.forName(ExecEnv.SESSION, output_spec.db_table)
         elif output_spec.data_format == OutputFormat.DELTAFILES.value:
+            if not output_spec.location:
+                raise ValueError("location must be provided for delta file merges.")
             delta_table = DeltaTable.forPath(ExecEnv.SESSION, output_spec.location)
         else:
             raise WrongIOFormatException(
-                f"{output_spec.data_format} is not compatible with Delta Merge "
-                f"Writer."
+                f"{output_spec.data_format} is not compatible with Delta Merge Writer."
             )
 
         return delta_table
@@ -76,8 +80,8 @@ class DeltaMergeWriter(Writer):
     @staticmethod
     def _insert(
         delta_merge: DeltaMergeBuilder,
-        insert_predicate: Optional[str],
-        insert_column_set: Optional[dict],
+        insert_predicate: str | None,
+        insert_column_set: dict | None,
     ) -> DeltaMergeBuilder:
         """Get the builder of merge data with insert predicate and column set.
 
@@ -117,28 +121,30 @@ class DeltaMergeWriter(Writer):
             output_spec: output specification containing the merge options.
             df: dataframe with the new data to be merged into the delta table.
         """
+        if not output_spec.merge_opts:
+            raise ValueError("merge_opts must be provided for delta merge writer.")
+
+        merge_opts = output_spec.merge_opts
         delta_merge = delta_table.alias("current").merge(
-            df.alias("new"), output_spec.merge_opts.merge_predicate
+            df.alias("new"), merge_opts.merge_predicate
         )
 
-        if output_spec.merge_opts.merge_schema:
+        if merge_opts.merge_schema:
             delta_merge = delta_merge.withSchemaEvolution()
 
-        if not output_spec.merge_opts.insert_only:
-            if output_spec.merge_opts.delete_predicate:
-                delta_merge = delta_merge.whenMatchedDelete(
-                    output_spec.merge_opts.delete_predicate
-                )
+        if not merge_opts.insert_only:
+            if merge_opts.delete_predicate:
+                delta_merge = delta_merge.whenMatchedDelete(merge_opts.delete_predicate)
             delta_merge = DeltaMergeWriter._update(
                 delta_merge,
-                output_spec.merge_opts.update_predicate,
-                output_spec.merge_opts.update_column_set,
+                merge_opts.update_predicate,
+                merge_opts.update_column_set,
             )
 
         delta_merge = DeltaMergeWriter._insert(
             delta_merge,
-            output_spec.merge_opts.insert_predicate,
-            output_spec.merge_opts.insert_column_set,
+            merge_opts.insert_predicate,
+            merge_opts.insert_column_set,
         )
 
         delta_merge.execute()
@@ -146,8 +152,8 @@ class DeltaMergeWriter(Writer):
     @staticmethod
     def _update(
         delta_merge: DeltaMergeBuilder,
-        update_predicate: Optional[str],
-        update_column_set: Optional[dict],
+        update_predicate: str | None,
+        update_column_set: dict | None,
     ) -> DeltaMergeBuilder:
         """Get the builder of merge data with update predicate and column set.
 
@@ -179,10 +185,10 @@ class DeltaMergeWriter(Writer):
         return delta_merge
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
+    def _write_transformed_micro_batch(
         output_spec: OutputSpec,
-        data: OrderedDict,
-        delta_table: Optional[DeltaTable] = None,
+        data: OrderedDict | None,
+        delta_table: DeltaTable | None = None,
     ) -> Callable:
         """Perform the merge in streaming mode by specifying a transform function.
 
@@ -210,6 +216,10 @@ class DeltaMergeWriter(Writer):
                     transformed_df, output_spec.streaming_micro_batch_dq_processors
                 )
 
+            if not delta_table:
+                raise ValueError(
+                    "delta_table must be provided for streaming delta merge."
+                )
             DeltaMergeWriter._merge(delta_table, output_spec, transformed_df)
 
         return inner

@@ -1,6 +1,6 @@
 """Test extractions from SAP B4."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pyspark.sql import DataFrame
@@ -245,7 +245,7 @@ def _execute_load(
     scenario: dict,
     extra_params: dict,
     extraction_type: str,
-    iteration: int = None,
+    iteration: int | None = None,
 ) -> None:
     """Helper function to reuse for loading the data for the scenario tests.
 
@@ -270,7 +270,7 @@ def _execute_load(
         extraction_timestamp=(
             "20210713151010"
             if extraction_type == "init"
-            else datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+            else datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         ),
         extraction_type=extraction_type,
         write_type=write_type,
@@ -286,7 +286,7 @@ def _get_test_acon(
     write_type: str,
     scenario: dict,
     extra_params: dict,
-    extraction_timestamp: str = None,
+    extraction_timestamp: str | None = None,
 ) -> dict:
     """Creates a test ACON with the desired logic for the algorithm.
 
@@ -353,7 +353,7 @@ def _get_test_acon(
         ],
         "exec_env": {
             "spark.databricks.delta.schema.autoMerge.enabled": (
-                True if scenario["extra_cols_req_status_tbl"] else False
+                bool(scenario["extra_cols_req_status_tbl"])
             )
         },
     }
@@ -395,7 +395,7 @@ def _prepare_files(scenario: str, extra_params: dict) -> None:
 
 
 def _load_test_table(
-    db_table: str, scenario: str, extra_params: dict, iteration: int = None
+    db_table: str, scenario: str, extra_params: dict, iteration: int | None = None
 ) -> DataFrame:
     """Load the JDBC tables for the tests and return a Dataframe with the content.
 

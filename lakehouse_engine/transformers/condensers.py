@@ -1,6 +1,6 @@
 """Condensers module."""
 
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame, Window
 from pyspark.sql.functions import col, row_number
@@ -12,7 +12,7 @@ from lakehouse_engine.transformers.exceptions import (
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Condensers(object):
+class Condensers:
     """Class containing all the functions to condensate data for later merges."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -20,11 +20,11 @@ class Condensers(object):
     @classmethod
     def condense_record_mode_cdc(
         cls,
-        business_key: List[str],
+        business_key: list[str],
         record_mode_col: str,
-        valid_record_modes: List[str],
-        ranking_key_desc: Optional[List[str]] = None,
-        ranking_key_asc: Optional[List[str]] = None,
+        valid_record_modes: list[str],
+        ranking_key_desc: list[str] | None = None,
+        ranking_key_asc: list[str] | None = None,
     ) -> Callable:
         """Condense Change Data Capture (CDC) based on record_mode strategy.
 
@@ -63,11 +63,11 @@ class Condensers(object):
                     [
                         col(c).desc()
                         for c in (ranking_key_desc if ranking_key_desc else [])
-                    ]  # type: ignore
+                    ]
                     + [
                         col(c).asc()
                         for c in (ranking_key_asc if ranking_key_asc else [])
-                    ]  # type: ignore
+                    ]
                 )
 
                 return (
@@ -90,8 +90,8 @@ class Condensers(object):
     @classmethod
     def group_and_rank(
         cls,
-        group_key: List[str],
-        ranking_key: List[str],
+        group_key: list[str],
+        ranking_key: list[str],
         descending: bool = True,
     ) -> Callable:
         """Condense data based on a simple group by + take latest mechanism.
@@ -117,7 +117,7 @@ class Condensers(object):
                     [
                         col(c).desc() if descending else col(c).asc()
                         for c in (ranking_key if ranking_key else [])
-                    ]  # type: ignore
+                    ]
                 )
 
                 return (

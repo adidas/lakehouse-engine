@@ -4,6 +4,7 @@ import time
 from enum import Enum
 
 import requests
+import requests.auth
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -57,8 +58,8 @@ def get_configured_session(
     sleep_seconds: float = 0.2,
     total_retries: int = 5,
     backoff_factor: int = 2,
-    retry_status_codes: list = None,
-    allowed_methods: list = None,
+    retry_status_codes: list | None = None,
+    allowed_methods: list | None = None,
     protocol: str = "https://",
 ) -> requests.Session:
     """Get a configured requests Session with exponential backoff.
@@ -71,7 +72,7 @@ def get_configured_session(
         allowed_methods: http methods that are allowed for retry.
         protocol: http:// or https://.
 
-    Returns
+    Returns:
         requests.Session: the configured session.
     """
     retry_status_codes = (
@@ -97,10 +98,10 @@ def get_configured_session(
 def execute_api_request(
     method: str,
     url: str,
-    headers: dict = None,
-    basic_auth_dict: dict = None,
-    json: dict = None,
-    files: dict = None,
+    headers: dict | None = None,
+    basic_auth_dict: dict | None = None,
+    json: dict | None = None,
+    files: dict | None = None,
     sleep_seconds: float = 0.2,
 ) -> requests.Response:
     """Execute a REST API request.
@@ -118,7 +119,7 @@ def execute_api_request(
     Returns:
         response from the HTTP request.
     """
-    basic_auth: requests.auth.HTTPBasicAuth = None
+    basic_auth: requests.auth.HTTPBasicAuth | None = None
     if basic_auth_dict:
         basic_auth = get_basic_auth(
             basic_auth_dict["username"], basic_auth_dict["password"]

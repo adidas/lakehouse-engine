@@ -1,14 +1,14 @@
 """Module with union transformers."""
 
+from collections.abc import Callable
 from functools import reduce
-from typing import Callable, List
 
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Unions(object):
+class Unions:
     """Class containing union transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -16,7 +16,7 @@ class Unions(object):
     @classmethod
     def union(
         cls,
-        union_with: List[DataFrame],
+        union_with: list[DataFrame],
         deduplication: bool = True,
     ) -> Callable:
         """Union dataframes, resolving columns by position (not by name).
@@ -43,7 +43,7 @@ class Unions(object):
     @classmethod
     def union_by_name(
         cls,
-        union_with: List[DataFrame],
+        union_with: list[DataFrame],
         deduplication: bool = True,
         allow_missing_columns: bool = True,
     ) -> Callable:

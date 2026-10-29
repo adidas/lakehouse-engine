@@ -153,8 +153,7 @@ def test_load_with_dq_validator(scenario: dict) -> None:
     )
 
     LocalStorage.copy_file(
-        f"{TEST_RESOURCES}/{test_name}/{scenario['name']}/"
-        f"data/control/*_schema.json",
+        f"{TEST_RESOURCES}/{test_name}/{scenario['name']}/data/control/*_schema.json",
         f"{TEST_LAKEHOUSE_CONTROL}/{test_name}/{scenario['name']}/validator/",
     )
 
@@ -323,8 +322,7 @@ def test_load_with_dq_validator_table(scenario: dict) -> None:
     )
 
     LocalStorage.copy_file(
-        f"{TEST_RESOURCES}/{test_name}/{scenario['name']}/"
-        f"data/control/*_schema.json",
+        f"{TEST_RESOURCES}/{test_name}/{scenario['name']}/data/control/*_schema.json",
         f"{TEST_LAKEHOUSE_CONTROL}/{test_name}/{scenario['name']}/validator/",
     )
 
@@ -650,8 +648,7 @@ def test_validator_dq_spec(scenario: dict, caplog: Any) -> None:
         DQFactory.run_dq_process(dq_spec, input_data)
 
         result_df = DataframeHelpers.read_from_file(
-            f"{TEST_LAKEHOUSE_OUT}/{scenario['dq_type']}/"
-            f"{scenario['spec_id']}/data",
+            f"{TEST_LAKEHOUSE_OUT}/{scenario['dq_type']}/{scenario['spec_id']}/data",
             file_format="json",
         )
 
@@ -834,7 +831,7 @@ def test_chunked_result_sink(scenario: dict, caplog: Any) -> None:
     )
 
     data = []
-    for x in range(0, scenario["num_rows"]):
+    for x in range(scenario["num_rows"]):
         data.append((x, True))
 
     df = DataframeHelpers.create_dataframe(data=data, schema=schema)
@@ -873,7 +870,7 @@ def test_chunked_result_sink(scenario: dict, caplog: Any) -> None:
         ],
     }
 
-    result_df = load_data(acon=acon)["test_out"]
+    result_df = load_data(acon=acon)["test_out"]  # ty: ignore
 
     result_sink = DataframeHelpers.read_from_file(
         location=f"{LAKEHOUSE_FEATURE_OUT}/test_dp/result_sink/", file_format="json"

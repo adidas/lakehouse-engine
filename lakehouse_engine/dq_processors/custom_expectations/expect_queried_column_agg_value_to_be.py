@@ -1,6 +1,6 @@
 """Expectation to check if aggregated column satisfy the condition."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.expectations.expectation import (
@@ -51,7 +51,7 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
     )
 
     def validate_configuration(
-        self, configuration: Optional[ExpectationConfiguration] = None
+        self, configuration: ExpectationConfiguration | None = None
     ) -> None:
         """Validates that a configuration has been set.
 
@@ -157,7 +157,7 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         Returns:
             dict with the results after being validated.
         """
-        result: Dict[Any, Any] = {}
+        result: dict[Any, Any] = {}
         for x, y in query_result.items():
             condition_check = template_dict["condition"]
             if condition_check == "between":
@@ -210,8 +210,8 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
     def _validate(
         self,
         metrics: dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> ExpectationValidationResult | dict:
         """Implementation of the GE _validate method.
 
@@ -226,7 +226,7 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         Returns:
             Dictionary with the result of the validation.
         """
-        query_result = metrics.get("query.template_values")
+        query_result = metrics.get("query.template_values") or []
         query_result = [element.values() for element in query_result]
         query_result = self._generate_dict(query_result)
         template_dict = self._validate_template_dict(self)
@@ -235,13 +235,13 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
         return output
 
     @staticmethod
-    def _validate_template_dict(self: Any) -> dict:
+    def _validate_template_dict(expectation: Any) -> dict:
         """Validate the template dict.
 
         Returns:
             Dict. Raises TypeError and KeyError
         """
-        template_dict = self.template_dict
+        template_dict = expectation.template_dict
 
         if not isinstance(template_dict, dict):
             raise TypeError("template_dict must be supplied as a dict")
@@ -254,8 +254,10 @@ class ExpectQueriedColumnAggValueToBe(QueryExpectation):
                 "condition" in template_dict,
             ]
         ):
-            raise KeyError("The following keys have to be in the \
-                    template dict: column, group_column_list, condition, agg_type")
+            raise KeyError(
+                "The following keys have to be in the \
+                    template dict: column, group_column_list, condition, agg_type"
+            )
 
         return template_dict
 

@@ -1,6 +1,6 @@
 """Expectation to check if column 'a' is not equal to column 'b'."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnPairMapExpectation
@@ -47,7 +47,7 @@ class ColumnPairCustom(ColumnPairMapMetricProvider):
         """
         return ((column_A.isNotNull()) | (column_B.isNotNull())) & (
             column_A != column_B
-        )  # noqa: E501
+        )
 
 
 class ExpectColumnPairAToBeNotEqualToB(ColumnPairMapExpectation):
@@ -156,9 +156,9 @@ class ExpectColumnPairAToBeNotEqualToB(ColumnPairMapExpectation):
 
     def _validate(
         self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> Any:
         """Custom implementation of the GE _validate method.
 

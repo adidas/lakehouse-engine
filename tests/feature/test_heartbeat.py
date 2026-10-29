@@ -40,7 +40,7 @@ def _create_heartbeat_table(scenario_name: str, tables: dict) -> None:
         scenario_name (str): The name of the scenario.
         tables (dict): Table names.
     """
-    for _, table_name in tables.items():
+    for table_name in tables.values():
         DataframeHelpers.create_delta_table(
             cols=SchemaUtils.from_file_to_dict(
                 f"file:///{FEATURE_TEST_RESOURCES}/setup/"
@@ -456,9 +456,9 @@ def test_heartbeat(scenario: dict) -> None:
     records_to_insert = scenario["trigger_heartbeat_sensor_jobs_records"]
 
     ExecEnv.SESSION.sql(f"""INSERT INTO {heartbeat_control_table_name}
-            VALUES {records_to_insert["heartbeat"]}""")  # nosec
+            VALUES {records_to_insert["heartbeat"]}""")  # noqa: S608
     ExecEnv.SESSION.sql(f"""INSERT INTO {sensor_table_name}
-        VALUES {records_to_insert["sensors"]}""")  # nosec
+        VALUES {records_to_insert["sensors"]}""")  # noqa: S608
 
     ctrl_heart_tbl_trig_job_fname = control_files["ctrl_heart_tbl_trigger_job_fname"]
     ctrl_heart_tbl_trig_job_path = (
@@ -477,6 +477,6 @@ def test_heartbeat(scenario: dict) -> None:
         heartbeat_control_table_updated=ctrl_heartbeat_update_df,
     )
 
-    for _, table_name in tables.items():
+    for table_name in tables.values():
         LocalStorage.clean_folder(f"{LAKEHOUSE}{table_name}")
         ExecEnv.SESSION.sql(f"""DROP TABLE IF EXISTS test_db.{table_name}""")  # nosec

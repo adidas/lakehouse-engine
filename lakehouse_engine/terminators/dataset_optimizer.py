@@ -1,7 +1,5 @@
 """Module with dataset optimizer terminator."""
 
-from typing import List, Optional
-
 from pyspark.sql.utils import AnalysisException, ParseException
 
 from lakehouse_engine.core.table_manager import TableManager
@@ -9,7 +7,7 @@ from lakehouse_engine.transformers.exceptions import WrongArgumentsException
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class DatasetOptimizer(object):
+class DatasetOptimizer:
     """Class with dataset optimizer terminator."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -17,14 +15,14 @@ class DatasetOptimizer(object):
     @classmethod
     def optimize_dataset(
         cls,
-        db_table: Optional[str] = None,
-        location: Optional[str] = None,
+        db_table: str | None = None,
+        location: str | None = None,
         compute_table_stats: bool = True,
         vacuum: bool = True,
         vacuum_hours: int = 720,
         optimize: bool = True,
-        optimize_where: Optional[str] = None,
-        optimize_zorder_col_list: Optional[List[str]] = None,
+        optimize_where: str | None = None,
+        optimize_zorder_col_list: list[str] | None = None,
         debug: bool = False,
     ) -> None:
         """Optimize a dataset based on a set of pre-conceived optimizations.
@@ -76,7 +74,7 @@ class DatasetOptimizer(object):
                 cls._compute_table_stats(db_table)
 
     @classmethod
-    def _compute_table_stats(cls, db_table: str) -> None:
+    def _compute_table_stats(cls, db_table: str | None) -> None:
         """Compute table statistics.
 
         Args:
@@ -90,7 +88,7 @@ class DatasetOptimizer(object):
         TableManager(config).compute_table_statistics()
 
     @classmethod
-    def _vacuum(cls, db_table: str, location: str, hours: int) -> None:
+    def _vacuum(cls, db_table: str | None, location: str | None, hours: int) -> None:
         """Vacuum a delta table.
 
         Args:
@@ -113,7 +111,11 @@ class DatasetOptimizer(object):
 
     @classmethod
     def _optimize(
-        cls, db_table: str, location: str, where: str, zorder_cols: List[str]
+        cls,
+        db_table: str | None,
+        location: str | None,
+        where: str | None,
+        zorder_cols: list[str] | None,
     ) -> None:
         """Optimize a delta table.
 

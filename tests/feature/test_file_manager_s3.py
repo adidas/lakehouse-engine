@@ -5,7 +5,7 @@ from typing import Any
 
 import boto3
 import pytest
-from moto import mock_s3, mock_sts  # type: ignore
+from moto import mock_s3, mock_sts
 
 from lakehouse_engine.engine import manage_files
 from tests.conftest import FEATURE_RESOURCES
@@ -39,14 +39,14 @@ def test_file_manager_s3(caplog: Any) -> None:
         # 2000 files are created to test the pagination is being correctly performed
         s3_cli.put_object(Bucket="test_bucket", Key="test_single_file.json", Body="")
         s3_cli.put_object(Bucket="test_bucket", Key="test_directory/", Body="")
-        for x in range(0, 2000):
+        for x in range(2000):
             s3_cli.put_object(
                 Bucket="test_bucket",
                 Key=f"test_directory/test_recursive_file{x}.json",
                 Body="",
             )
         s3_cli.put_object(Bucket="test_bucket", Key="test_directory_test/", Body="")
-        for x in range(0, 2000):
+        for x in range(2000):
             s3_cli.put_object(
                 Bucket="test_bucket",
                 Key=f"test_directory_test/test_recursive_file{x}.json",
@@ -74,7 +74,7 @@ def _test_file_manager_s3_copy(caplog: Any, s3_cli: Any) -> None:
         acon_path=f"file://{TEST_RESOURCES}/copy_objects/"
         f"acon_copy_directory_dry_run.json"
     )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert f"test_directory/test_recursive_file{x}.json" in caplog.text
 
     manage_files(
@@ -105,7 +105,7 @@ def _test_file_manager_s3_delete(caplog: Any, s3_cli: Any) -> None:
         "{'test_single_file.json': ['test_single_file.json'], "
         "'test_directory/': ['test_directory/'" in caplog.text
     )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert f"test_directory/test_recursive_file{x}.json" in caplog.text
 
     manage_files(
@@ -147,7 +147,7 @@ def test_file_manager_s3_restore_archive(scenario: dict, caplog: Any) -> None:
             StorageClass=scenario.get("storage_class"),
         )
         s3_cli.put_object(Bucket="test_bucket", Key="test_directory", Body="")
-        for x in range(0, 3):
+        for x in range(3):
             s3_cli.put_object(
                 Bucket="test_bucket",
                 Key=f"test_directory/test_recursive_file{x}.json",
@@ -175,7 +175,7 @@ def _test_file_manager_s3_restore_check(caplog: Any, s3_cli: Any, s3_res: Any) -
         acon_path=f"file://{TEST_RESOURCES}/check_restore_status/"
         f"acon_check_restore_status_directory.json"
     )
-    for x in range(0, 3):
+    for x in range(3):
         assert (
             f"Checking restore status for: test_directory/test_recursive_file{x}.json"
             in caplog.text
@@ -257,7 +257,7 @@ def test_file_manager_s3_restore_sync(scenario: dict, caplog: Any) -> None:
             StorageClass=scenario.get("storage_class"),
         )
         s3_cli.put_object(Bucket="test_bucket", Key="test_directory/", Body="")
-        for x in range(0, 3):
+        for x in range(3):
             s3_cli.put_object(
                 Bucket="test_bucket",
                 Key=f"test_directory/test_recursive_file{x}.json",

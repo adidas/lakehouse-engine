@@ -3,7 +3,8 @@
 import ast
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, cast
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, lit, struct, to_json
@@ -13,7 +14,7 @@ from lakehouse_engine.utils.gab_utils import GABUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-def _execute_sql(func) -> Callable:  # type: ignore
+def _execute_sql(func: Callable) -> Callable:
     """Execute the SQL resulting from the function.
 
     This function is protected to be used just in this module.
@@ -35,12 +36,11 @@ class GABSQLGenerator(ABC):
     """Abstract class defining the behaviour of a GAB SQL Generator."""
 
     @abstractmethod
-    def generate_sql(self) -> Optional[str]:
+    def generate_sql(self) -> str | None:
         """Define the generate sql command.
 
         E.g., the behaviour of gab generate sql inheriting from this.
         """
-        pass
 
 
 class GABInsertGenerator(GABSQLGenerator):
@@ -60,7 +60,7 @@ class GABInsertGenerator(GABSQLGenerator):
         lookup_query_builder: DataFrame,
         target_database: str,
         target_table: str,
-    ):
+    ) -> None:
         """Construct GABInsertGenerator instances.
 
         Args:
@@ -78,7 +78,7 @@ class GABInsertGenerator(GABSQLGenerator):
         self.target_database = target_database
         self.target_table = target_table
 
-    def generate_sql(self) -> Optional[str]:
+    def generate_sql(self) -> str | None:
         """Generate insert sql statement to the insights table."""
         insert_sql_statement = self._insert_statement_generator()
 
@@ -94,7 +94,7 @@ class GABInsertGenerator(GABSQLGenerator):
             self.lookup_query_builder, self.query_id, "mappings"
         )
 
-        for result_key in result.keys():
+        for result_key in result:
             joined_dimensions, joined_metrics = self._get_mapping_columns(
                 mapping=result[result_key]
             )
@@ -107,7 +107,7 @@ class GABInsertGenerator(GABSQLGenerator):
                     {joined_metrics},
                     current_timestamp() as lh_created_on
                 FROM {self.final_stage_table}
-                """  # nosec: B608
+                """  # noqa: S608
 
         return gen_ins
 
@@ -140,14 +140,15 @@ class GABInsertGenerator(GABSQLGenerator):
             columns: use case columns and values.
             is_dimension: flag identifying if is a dimension or a metric.
         """
-        extracted_columns_with_alias = (
-            GABUtils.extract_columns_from_mapping(  # type: ignore
+        extracted_columns_with_alias = cast(
+            list[str],
+            GABUtils.extract_columns_from_mapping(
                 columns=columns, is_dimension=is_dimension
-            )
+            ),
         )
 
         filled_columns = cls._fill_empty_columns(
-            extracted_columns=extracted_columns_with_alias,  # type: ignore
+            extracted_columns=extracted_columns_with_alias,
             is_dimension=is_dimension,
         )
 
@@ -208,7 +209,7 @@ class GABViewGenerator(GABSQLGenerator):
         final_calculated_script_snapshot: str,
         without_snapshot_cadences: list[str],
         with_snapshot_cadences: list[str],
-    ):
+    ) -> None:
         """Construct GABViewGenerator instances.
 
         Args:
@@ -245,7 +246,7 @@ class GABViewGenerator(GABSQLGenerator):
         self.with_snapshot_cadences = with_snapshot_cadences
 
     @_execute_sql
-    def generate_sql(self) -> Optional[str]:
+    def generate_sql(self) -> str | None:
         """Generate use case view sql statement."""
         consumption_view_sql = self._create_consumption_view()
 
@@ -273,13 +274,9 @@ class GABViewGenerator(GABSQLGenerator):
             ),
         )
 
-        rendered_query = """
-            CREATE OR REPLACE VIEW {database}.{view_name} AS {final_view_query}
-            """.format(
-            database=self.target_database,
-            view_name=self.result_key,
-            final_view_query=final_view_query,
-        )
+        rendered_query = f"""
+            CREATE OR REPLACE VIEW {self.target_database}.{self.result_key} AS {final_view_query}
+            """
         self._LOGGER.info(f"Consumption view statement: {rendered_query}")
         return rendered_query
 
@@ -378,7 +375,7 @@ class GABViewGenerator(GABSQLGenerator):
                 ),
                 TEMP3 AS (SELECT * FROM TEMP1 UNION SELECT * from TEMP2)
                 SELECT {final_cols} FROM TEMP3
-            """  # nosec: B608
+            """  # noqa: S608
         elif "N" in cadence_snapshot_status.values():
             consumption_view_query = f"""
                 WITH TEMP1 AS (
@@ -390,7 +387,7 @@ class GABViewGenerator(GABSQLGenerator):
                     AND cadence IN ({without_snapshot_cadences})  {view_filter}
                 )
                 SELECT {final_cols} FROM TEMP1
-            """  # nosec: B608
+            """  # noqa: S608
         else:
             consumption_view_query = f"""
                 WITH TEMP_RN AS (
@@ -419,7 +416,7 @@ class GABViewGenerator(GABSQLGenerator):
                     FROM TEMP_RN a
                 )
                 SELECT {final_cols} FROM TEMP2
-            """  # nosec: B608
+            """  # noqa: S608
 
         return consumption_view_query
 
@@ -440,7 +437,7 @@ class GABDeleteGenerator(GABSQLGenerator):
         lookup_query_builder: DataFrame,
         target_database: str,
         target_table: str,
-    ):
+    ) -> None:
         """Construct GABViewGenerator instances.
 
         Args:
@@ -459,7 +456,7 @@ class GABDeleteGenerator(GABSQLGenerator):
         self.target_table = target_table
 
     @_execute_sql
-    def generate_sql(self) -> Optional[str]:
+    def generate_sql(self) -> str | None:
         """Generate delete sql statement.
 
         This statement is to clean the insights table for the corresponding use case.
@@ -482,7 +479,7 @@ class GABDeleteGenerator(GABSQLGenerator):
         for line_v in line.values():
             result = ast.literal_eval(line_v)
 
-        for result_key in result.keys():
+        for result_key in result:
             result_new = result[result_key]
             dim_from_date = result_new["dimensions"]["from_date"]
             dim_to_date = result_new["dimensions"]["to_date"]
@@ -490,54 +487,37 @@ class GABDeleteGenerator(GABSQLGenerator):
         self._LOGGER.info(f"temp stage view name: {self.temp_stage_view_name}")
 
         min_from_date = ExecEnv.SESSION.sql(
-            """
+            f"""
             SELECT
-                MIN({from_date}) as min_from_date
-            FROM {iter_stages}""".format(  # nosec: B608
-                iter_stages=self.temp_stage_view_name, from_date=dim_from_date
-            )
+                MIN({dim_from_date}) as min_from_date
+            FROM {self.temp_stage_view_name}"""  # noqa: S608
         ).collect()[0][0]
         max_from_date = ExecEnv.SESSION.sql(
-            """
+            f"""
             SELECT
-                MAX({from_date}) as max_from_date
-            FROM {iter_stages}""".format(  # nosec: B608
-                iter_stages=self.temp_stage_view_name, from_date=dim_from_date
-            )
+                MAX({dim_from_date}) as max_from_date
+            FROM {self.temp_stage_view_name}"""  # noqa: S608
         ).collect()[0][0]
 
         min_to_date = ExecEnv.SESSION.sql(
-            """
+            f"""
             SELECT
-                MIN({to_date}) as min_to_date
-            FROM {iter_stages}""".format(  # nosec: B608
-                iter_stages=self.temp_stage_view_name, to_date=dim_to_date
-            )
+                MIN({dim_to_date}) as min_to_date
+            FROM {self.temp_stage_view_name}"""  # noqa: S608
         ).collect()[0][0]
         max_to_date = ExecEnv.SESSION.sql(
-            """
+            f"""
             SELECT
-                MAX({to_date}) as max_to_date
-            FROM {iter_stages}""".format(  # nosec: B608
-                iter_stages=self.temp_stage_view_name, to_date=dim_to_date
-            )
+                MAX({dim_to_date}) as max_to_date
+            FROM {self.temp_stage_view_name}"""  # noqa: S608
         ).collect()[0][0]
 
-        gen_del = """
-        DELETE FROM {target_database}.{target_table} a
-            WHERE query_id = {query_id}
-            AND cadence = '{cadence}'
+        gen_del = f"""
+        DELETE FROM {self.target_database}.{self.target_table} a
+            WHERE query_id = {self.query_id}
+            AND cadence = '{self.cadence}'
             AND from_date BETWEEN '{min_from_date}' AND '{max_from_date}'
             AND to_date BETWEEN '{min_to_date}' AND '{max_to_date}'
-        """.format(  # nosec: B608
-            target_database=self.target_database,
-            target_table=self.target_table,
-            query_id=self.query_id,
-            cadence=self.cadence,
-            min_from_date=min_from_date,
-            max_from_date=max_from_date,
-            min_to_date=min_to_date,
-            max_to_date=max_to_date,
-        )
+        """  # noqa: S608
 
         return gen_del

@@ -39,7 +39,7 @@ def _select_all(table: str) -> DataFrame:
     Args:
         table (str): The name of the table.
     """
-    return ExecEnv.SESSION.sql(f"SELECT * FROM  {table} ORDER BY sensor_id")  # nosec
+    return ExecEnv.SESSION.sql(f"SELECT * FROM  {table} ORDER BY sensor_id")  # noqa: S608
 
 
 def _check_acon(heartbeat_table: str, acon: dict, acon_result_list: dict) -> None:
@@ -55,7 +55,6 @@ def _check_acon(heartbeat_table: str, acon: dict, acon_result_list: dict) -> Non
         result = Heartbeat._get_sensor_acon_from_heartbeat(
             HeartbeatConfigSpec.create_from_acon(acon), control_table_row
         )
-        print(result)
 
         assert result == acon_result_list[control_table_row["sensor_id"]]
 
@@ -251,7 +250,7 @@ def test_get_sensor_acon(mock_get_db_utils: Mock, scenario: dict) -> None:
 
     _LOGGER.info("Inserting records in heartbeat table.")
     ExecEnv.SESSION.sql(f"""INSERT INTO {heartbeat_table}
-            VALUES {records}""")  # nosec
+            VALUES {records}""")  # noqa: S608
 
     if scenario_name == "sap_b4":
         _LOGGER.info("Inserting records in sensors table.")
@@ -270,6 +269,7 @@ def test_get_sensor_acon(mock_get_db_utils: Mock, scenario: dict) -> None:
         acon.update(
             {
                 "data_format": "kafka",
+                "kafka_secret_scope": "kafka_secret_scope",
                 "kafka_configs": {
                     "sales": {
                         "kafka_bootstrap_servers_list": ["server1", "server2"],

@@ -2,7 +2,7 @@
 
 import calendar
 from datetime import datetime, timedelta
-from typing import Tuple, cast
+from typing import cast
 
 import pendulum
 from pendulum import DateTime
@@ -14,7 +14,7 @@ from lakehouse_engine.utils.gab_utils import GABUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class GABCadenceManager(object):
+class GABCadenceManager:
     """Class to control the GAB Cadence Window."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -152,41 +152,50 @@ class GABCadenceManager(object):
             derived_cadence=derived_cadence, base_date=end_date, is_start=False
         )
 
+        if not isinstance(new_start_date, datetime) or not isinstance(
+            new_end_date, datetime
+        ):
+            raise ValueError("Cadence date calculation must return datetime values.")
+
+        new_start_date_dt = new_start_date
+        new_end_date_dt = new_end_date
+
         if cadence.upper() == "WEEK":
-            new_start_date = (
+            new_start_date_dt = cast(
+                datetime,
                 pendulum.datetime(
-                    int(new_start_date.strftime("%Y")),
-                    int(new_start_date.strftime("%m")),
-                    int(new_start_date.strftime("%d")),
+                    new_start_date_dt.year,
+                    new_start_date_dt.month,
+                    new_start_date_dt.day,
                 )
                 .start_of("week")
-                .replace(tzinfo=None)
+                .replace(tzinfo=None),
             )
-            new_end_date = (
+            new_end_date_dt = cast(
+                datetime,
                 pendulum.datetime(
-                    int(new_end_date.strftime("%Y")),
-                    int(new_end_date.strftime("%m")),
-                    int(new_end_date.strftime("%d")),
+                    new_end_date_dt.year,
+                    new_end_date_dt.month,
+                    new_end_date_dt.day,
                 )
                 .end_of("week")
                 .replace(hour=0, minute=0, second=0, microsecond=0)
-                .replace(tzinfo=None)
+                .replace(tzinfo=None),
             )
 
-        new_end_date = new_end_date + timedelta(days=1)
+        new_end_date_dt = new_end_date_dt + timedelta(days=1)
 
-        if new_end_date >= current_date:
-            new_end_date = current_date
+        new_end_date_dt = min(current_date, new_end_date_dt)
 
         if query_type == "NAM":
-            new_end_date = new_end_date + timedelta(days=1)
+            new_end_date_dt = new_end_date_dt + timedelta(days=1)
 
-        return new_start_date, new_end_date
+        return new_start_date_dt, new_end_date_dt
 
     @classmethod
     def _get_cadence_calculated_date(
         cls, derived_cadence: str, base_date: datetime, is_start: bool
-    ) -> datetime | DateTime:  # type: ignore
+    ) -> datetime | DateTime:
         cadence_base_date = cls._get_cadence_base_date(derived_cadence, base_date)
         cadence_date_calculated: DateTime | datetime
 
@@ -196,21 +205,21 @@ class GABCadenceManager(object):
             )
         elif derived_cadence.upper() == "MONTH":
             cadence_date_calculated = cls._get_calculated_month_date(
-                cast(datetime, cadence_base_date), is_start
+                cadence_base_date, is_start
             )
         elif derived_cadence.upper() in ["QUARTER", "YEAR"]:
             cadence_date_calculated = cls._get_calculated_quarter_or_year_date(
                 cast(DateTime, cadence_base_date), is_start, derived_cadence
             )
         else:
-            cadence_date_calculated = cadence_base_date  # type: ignore
+            cadence_date_calculated = cadence_base_date
 
-        return cadence_date_calculated  # type: ignore
+        return cadence_date_calculated
 
     @classmethod
     def _get_cadence_base_date(
         cls, derived_cadence: str, base_date: datetime
-    ) -> datetime | DateTime | str:  # type: ignore
+    ) -> datetime | DateTime:
         """Get start date for the selected cadence.
 
         Args:
@@ -226,7 +235,7 @@ class GABCadenceManager(object):
                 int(base_date.strftime("%d")),
             )
         else:
-            cadence_date_calculated = "0"  # type: ignore
+            raise ValueError(f"Unsupported cadence '{derived_cadence}'.")
 
         return cadence_date_calculated
 
@@ -302,7 +311,7 @@ class GABCadenceManager(object):
         return cadence_date_calculated
 
 
-class GABViewManager(object):
+class GABViewManager:
     """Class to control the GAB View creation."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -313,7 +322,7 @@ class GABViewManager(object):
         lookup_query_builder: DataFrame,
         target_database: str,
         target_table: str,
-    ):
+    ) -> None:
         """Construct GABViewManager instances.
 
         Args:
@@ -350,7 +359,7 @@ class GABViewManager(object):
             self.lookup_query_builder, self.query_id, "mappings"
         )
 
-        for view_name in mappings.keys():
+        for view_name in mappings:
             self._generate_use_case_view(
                 mappings,
                 view_name,
@@ -433,7 +442,7 @@ class GABViewManager(object):
     @classmethod
     def _get_dimensions_and_metrics_from_use_case_view(
         cls, view_dimensions: dict, view_metrics: dict
-    ) -> Tuple[str, str, str]:
+    ) -> tuple[str, str, str]:
         """Get dimensions and metrics from use case.
 
         Args:
@@ -483,7 +492,7 @@ class GABViewManager(object):
     @classmethod
     def _get_calculated_and_derived_metrics_from_use_case_view(
         cls, view_metrics: dict, view_dimensions: dict, cadence_snapshot_status: dict
-    ) -> Tuple[str, str, str]:
+    ) -> tuple[str, str, str]:
         """Get calculated and derived metrics from use case.
 
         Args:
@@ -601,7 +610,7 @@ class GABViewManager(object):
             cadence_snapshot_status: cadences to execute with the information if it has
                 snapshot.
         """
-        dim_partition = ",".join([str(i) for i in view_dimensions.keys()][2:])
+        dim_partition = ",".join([str(i) for i in view_dimensions][2:])
         dim_partition = "cadence," + dim_partition
         calculated_metrics = metric_value["calculated_metric"]
         derived_metrics = metric_value["derived_metric"]
@@ -635,7 +644,7 @@ class GABViewManager(object):
         """
         derived_metric_script = []
 
-        for i in range(0, len(derived_metric)):
+        for i in range(len(derived_metric)):
             derived_formula = str(derived_metric[i]["formula"])
             derived_label = derived_metric[i]["label"]
             derived_metric_script.append(derived_formula + " AS " + derived_label)
@@ -729,7 +738,7 @@ class GABViewManager(object):
         calculated_script = []
         calculated_script_snapshot = []
 
-        for i in range(0, len(calculated_metric["window_function"])):
+        for i in range(len(calculated_metric["window_function"])):
             window_function = calculated_metric["window_function"][i]["agg_func"]
             window_function_start = calculated_metric["window_function"][i]["window"][0]
             window_function_end = calculated_metric["window_function"][i]["window"][1]
@@ -741,8 +750,8 @@ class GABViewManager(object):
                     (
                         PARTITION BY {dimension_partition}
                         order by from_date ROWS BETWEEN
-                            {str(window_function_start)} PRECEDING
-                            AND {str(window_function_end)} PRECEDING
+                            {window_function_start!s} PRECEDING
+                            AND {window_function_end!s} PRECEDING
                     ),
                     0
                 ) AS
@@ -756,8 +765,8 @@ class GABViewManager(object):
                         (
                             PARTITION BY {dimension_partition} ,rn
                             order by from_date ROWS BETWEEN
-                                {str(window_function_start)} PRECEDING
-                                AND {str(window_function_end)} PRECEDING
+                                {window_function_start!s} PRECEDING
+                                AND {window_function_end!s} PRECEDING
                         ),
                         0
                     ) AS
@@ -788,7 +797,7 @@ class GABViewManager(object):
         calculated_script = []
         calculated_script_snapshot = []
 
-        for i in range(0, len(calculated_metric[cadence])):
+        for i in range(len(calculated_metric[cadence])):
             cadence_lag = cls._get_cadence_item_lag(calculated_metric, cadence, i)
             cadence_label = calculated_metric[cadence][i]["label"]
 

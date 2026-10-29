@@ -4,9 +4,8 @@ import importlib
 import json
 import random
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from json import dumps, loads
-from typing import Optional, Tuple
 
 import great_expectations as gx
 from great_expectations import ExpectationSuite
@@ -55,11 +54,11 @@ from lakehouse_engine.io.writer_factory import WriterFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class DQFactory(object):
+class DQFactory:
     """Class for the Data Quality Factory."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
-    _TIMESTAMP = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    _TIMESTAMP = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
 
     @classmethod
     def _add_critical_function_tag(cls, args: dict) -> dict:
@@ -78,7 +77,7 @@ class DQFactory(object):
         Returns:
             A dictionary with the args with the critical function tag.
         """
-        if "meta" in args.keys():
+        if "meta" in args:
             meta = args["meta"]
 
             if isinstance(meta["notes"], str):
@@ -109,7 +108,7 @@ class DQFactory(object):
         dq_spec: DQSpec,
         data: DataFrame,
         checkpoint_run_time: str,
-    ) -> Tuple[CheckpointResult, Optional[list]]:
+    ) -> tuple[CheckpointResult, list | None]:
         """Create and configure the validation checkpoint.
 
         Creates and configures a validation definition based on the suite
@@ -154,7 +153,7 @@ class DQFactory(object):
             gx.Checkpoint(
                 name=f"{dq_spec.spec_id}-{dq_spec.input_id}"
                 f"-checkpoint-{checkpoint_run_time}"
-                f"-{str(random.randint(1, 100))}",  # nosec B311
+                f"-{str(random.randint(1, 100))}",  # noqa S311
                 validation_definitions=[validation_definition],
                 actions=[],
                 result_format=result_format,
@@ -166,7 +165,7 @@ class DQFactory(object):
             run_id=RunIdentifier(
                 run_name=f"{checkpoint_run_time}"
                 f"-{dq_spec.spec_id}-{dq_spec.input_id}"
-                f"-{str(random.randint(1, 100))}-checkpoint",  # nosec B311
+                f"-{str(random.randint(1, 100))}-checkpoint",  # noqa S311
                 run_time=datetime.strptime(checkpoint_run_time, "%Y%m%d-%H%M%S%f"),
             ),
         )
@@ -192,11 +191,9 @@ class DQFactory(object):
         Returns:
             The definition of a dq_function with or without the row_condition key.
         """
-        if (
-            not dq_spec.enable_row_condition
-            and "row_condition" in dq_function.args.keys()
-        ):
-            del dq_function.args["row_condition"]
+        if not dq_spec.enable_row_condition and dq_function.args:
+            if "row_condition" in dq_function.args:
+                del dq_function.args["row_condition"]
             cls._LOGGER.info(
                 f"Disabling row_condition for function: {dq_function.function}"
             )
@@ -228,7 +225,7 @@ class DQFactory(object):
         )
         suite = context.suites.add(gx.ExpectationSuite(name=expectation_suite_name))
 
-        for dq_function in dq_spec.dq_functions:
+        for dq_function in dq_spec.dq_functions or []:
             dq_function = cls._check_row_condition(dq_spec, dq_function)
             suite.add_expectation_configuration(
                 ExpectationConfiguration(
@@ -239,7 +236,7 @@ class DQFactory(object):
             )
         if dq_spec.critical_functions:
             for critical_function in dq_spec.critical_functions:
-                meta_args = cls._add_critical_function_tag(critical_function.args)
+                meta_args = cls._add_critical_function_tag(critical_function.args or {})
                 suite.add_expectation_configuration(
                     ExpectationConfiguration(
                         type=critical_function.function,
@@ -270,9 +267,11 @@ class DQFactory(object):
             The configured result_dict
         """
         for expectation_result in result_dict["results"]:
-            if "unexpected_index_list" in expectation_result["result"].keys():
-                if len(expectation_result["result"]["unexpected_index_list"]) < 1:
-                    expectation_result["result"] = {}
+            if (
+                "unexpected_index_list" in expectation_result["result"]
+                and len(expectation_result["result"]["unexpected_index_list"]) < 1
+            ):
+                expectation_result["result"] = {}
         return result_dict
 
     @classmethod
@@ -315,7 +314,6 @@ class DQFactory(object):
         """
         # Creating the context
         if dq_spec.dq_type == "validator" or dq_spec.dq_type == "prisma":
-
             for expectation in DQDefaults.CUSTOM_EXPECTATION_LIST.value:
                 importlib.__import__(
                     "lakehouse_engine.dq_processors.custom_expectations." + expectation
@@ -345,11 +343,13 @@ class DQFactory(object):
                 context, dataframe_bd, suite, dq_spec, data, checkpoint_run_time
             )
 
-            expectation_result_key = list(result.run_results.keys())[0]
+            expectation_result_key = next(iter(result.run_results.keys()))
 
             result_dict = result.run_results[expectation_result_key].to_json_dict()
 
             result_dict = cls._check_expectation_result(result_dict)
+
+            source_pk = source_pk or []
 
             data = cls._transform_checkpoint_results(
                 data, source_pk, result_dict, dq_spec
@@ -359,7 +359,6 @@ class DQFactory(object):
             # because they are being used to calculate the good
             # records that were processed in a run.
             if dq_spec.dq_type == DQType.PRISMA.value:
-
                 keys = data.select(
                     [col(c).cast(StringType()).alias(c) for c in source_pk]
                 )
@@ -383,9 +382,9 @@ class DQFactory(object):
         for expectation in failed_expectations.values():
             meta = expectation["meta"]
             if meta and (
-                ("notes" in meta.keys() and "Critical function" in meta["notes"])
+                ("notes" in meta and "Critical function" in meta["notes"])
                 or (
-                    "content" in meta["notes"].keys()
+                    "content" in meta["notes"]
                     and "Critical function" in meta["notes"]["content"]
                 )
             ):
@@ -410,7 +409,7 @@ class DQFactory(object):
         """
         for ele in results_dict["results"]:
             if (
-                "unexpected_index_list" in ele["result"].keys()
+                "unexpected_index_list" in ele["result"]
                 and len(ele["result"]["unexpected_index_list"])
                 > dq_spec.result_sink_chunk_size
             ):
@@ -478,7 +477,7 @@ class DQFactory(object):
             "validation_results.success as expectation_success",
             "validation_results.exception_info",
             "statistics.*",
-        ] + dq_spec.result_sink_extra_columns
+        ] + (dq_spec.result_sink_extra_columns or [])
 
         df_exploded = df.selectExpr(*df.columns, *new_columns).drop(
             *[c.replace(".*", "").split(" as")[0] for c in new_columns]
@@ -498,8 +497,9 @@ class DQFactory(object):
 
         schema = df_exploded.schema.simpleString()
 
+        gx_result_format = (dq_spec.gx_result_format or "").upper()
         if (
-            dq_spec.gx_result_format.upper() == DQResultFormat.COMPLETE.value
+            gx_result_format == DQResultFormat.COMPLETE.value
             and "unexpected_index_list" in schema
         ):
             df_exploded = df_exploded.withColumn(
@@ -619,7 +619,7 @@ class DQFactory(object):
         failed_expectations: dict,
         evaluated_expectations: dict,
         is_final_chunk: bool,
-    ) -> Tuple[dict, dict]:
+    ) -> tuple[dict, dict]:
         """Get the failed expectations of a Checkpoint result.
 
         Args:
@@ -643,7 +643,7 @@ class DQFactory(object):
                 ]
                 if result["exception_info"]["raised_exception"]:
                     cls._LOGGER.error(
-                        f"""The expectation {str(result["expectation_config"])}
+                        f"""The expectation {result["expectation_config"]!s}
                         raised the following exception:
                         {result["exception_info"]["exception_message"]}"""
                     )
@@ -669,7 +669,7 @@ class DQFactory(object):
         return failed_expectations, evaluated_expectations
 
     @classmethod
-    def _get_unexpected_rows_pk(cls, dq_spec: DQSpec) -> Optional[list]:
+    def _get_unexpected_rows_pk(cls, dq_spec: DQSpec) -> list | None:
         """Get primary key for using on rows failing DQ validations.
 
         Args:
@@ -699,7 +699,7 @@ class DQFactory(object):
         failed_expectations: dict,
         evaluated_expectations: dict,
         is_final_chunk: bool,
-    ) -> Tuple[dict, dict]:
+    ) -> tuple[dict, dict]:
         """Log the execution of the Data Quality process.
 
         Args:
@@ -800,7 +800,7 @@ class DQFactory(object):
         failed_expectations: dict,
         evaluated_expectations: dict,
         is_final_chunk: bool,
-    ) -> Tuple[DataFrame, dict, dict]:
+    ) -> tuple[DataFrame, dict, dict]:
         """Process a chunk of the results.
 
         Args:
@@ -905,7 +905,7 @@ class DQFactory(object):
         The size of the chunks is defined by the dq_spec.result_sink_chunk_size.
 
         Args:
-            results: The results to be split.
+            results_dict: The results to be split.
             dq_spec: data quality specification.
 
         Returns:
@@ -917,8 +917,8 @@ class DQFactory(object):
         for ele in results_dict["results"]:
             base_result = deepcopy(results_dict)
 
-            if "unexpected_index_list" in ele["result"].keys():
-                for key in ExecEnv.ENGINE_CONFIG.dq_result_sink_columns_to_delete:
+            if "unexpected_index_list" in ele["result"]:
+                for key in ExecEnv.ENGINE_CONFIG.dq_result_sink_columns_to_delete or []:
                     del ele["result"][key]
 
                 unexpected_index_list = ele["result"]["unexpected_index_list"]

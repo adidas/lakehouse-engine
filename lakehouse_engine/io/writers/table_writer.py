@@ -1,6 +1,8 @@
 """Module that defines the behaviour to write to tables."""
 
-from typing import Any, Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
+from typing import Any
 
 from pyspark.sql import DataFrame
 
@@ -12,7 +14,9 @@ from lakehouse_engine.io.writer import Writer
 class TableWriter(Writer):
     """Class to write to a table."""
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct TableWriter instances.
 
         Args:
@@ -94,6 +98,8 @@ class TableWriter(Writer):
                 **output_spec.options if output_spec.options else {}
             )
 
+        if not output_spec.db_table:
+            raise ValueError("db_table must be provided for table writer.")
         df_writer.mode(output_spec.write_type).saveAsTable(output_spec.db_table)
 
     @staticmethod
@@ -131,8 +137,8 @@ class TableWriter(Writer):
             df_writer.toTable(output_spec.db_table)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+    def _write_transformed_micro_batch(
+        output_spec: OutputSpec, data: OrderedDict | None
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

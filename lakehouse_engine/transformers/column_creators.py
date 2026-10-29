@@ -1,6 +1,7 @@
 """Column creators transformers module."""
 
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from pyspark.sql import DataFrame, Window
 from pyspark.sql.functions import col, lit, monotonically_increasing_id, row_number
@@ -12,7 +13,7 @@ from lakehouse_engine.transformers.exceptions import (
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class ColumnCreators(object):
+class ColumnCreators:
     """Class containing all functions that can create columns to add value."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -62,8 +63,11 @@ class ColumnCreators(object):
                     # if df is empty we have to prevent the algorithm from failing
                     return df.withColumn(output_col, lit(None).cast(IntegerType()))
                 elif rdd:
+                    # Ty ignore is being used because the type checker sees a call to a dataframe as either a
+                    # function call or access to a column. This creates a column is not callable error
+                    # in the type checker.
                     return (
-                        df.rdd.zipWithIndex()
+                        df.rdd.zipWithIndex()  # ty: ignore
                         .toDF()
                         .select(col("_1.*"), col("_2").alias(output_col))
                     )
@@ -80,11 +84,11 @@ class ColumnCreators(object):
         return inner
 
     @classmethod
-    def with_literals(cls, literals: Dict[str, Any]) -> Callable:
+    def with_literals(cls, literals: dict[str, Any]) -> Callable:
         """Create columns given a map of column names and literal values (constants).
 
         Args:
-            Dict[str, Any] literals: map of column names and literal values (constants).
+            literals: map of column names and literal values (constants).
 
         Returns:
             Callable: A function to be executed in the .transform() spark function.

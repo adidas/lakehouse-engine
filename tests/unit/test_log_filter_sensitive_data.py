@@ -26,7 +26,7 @@ STR_MSGS_TO_LOG = [
     },
     {  # no single neither double quotes
         "original_log": "prop1: prop2, password: pwd, secret: secret",
-        "masked_log": "prop1: prop2, masked_cred: ******, " "masked_cred: ******, ",
+        "masked_log": "prop1: prop2, masked_cred: ******, masked_cred: ******, ",
     },
     {  # double quotes, password has single quotes and comma, ends with secret and space
         # and additional log
@@ -50,15 +50,15 @@ STR_MSGS_TO_LOG = [
         "'location': 'file:////path'}]}",
     },
 ]
+# fmt: off
 DICT_MSGS_TO_LOG = [
-    # fmt: off
     {  # test with dict, because we rely on space after comma for the replace
         # and python might change the dict structure in the future
-        "original_log": {"secret":"dummy_pwd","prop":"prop_val"},  # noqa: E231
+        "original_log": {"secret": "dummy_pwd", "prop": "prop_val"},
         "masked_log": "{'masked_cred': '******', 'prop': 'prop_val'}",
     },
-    # fmt: on
 ]
+# fmt: on
 LOGGER = LoggingHandler(__name__).get_logger()
 
 

@@ -21,14 +21,14 @@ class Notifier(ABC):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, notification_spec: TerminatorSpec):
+    def __init__(self, notification_spec: TerminatorSpec) -> None:
         """Construct Notification instances.
 
         Args:
             notification_spec: notification specification.
         """
-        self.type = notification_spec.args.get("type")
-        self.notification = notification_spec.args
+        self.notification = notification_spec.args or {}
+        self.type = self.notification.get("type")
 
     @abstractmethod
     def create_notification(self) -> None:
@@ -78,10 +78,10 @@ class Notifier(ABC):
         Returns:
             A boolean telling if the notification is a failure notification
         """
-        notification = spec.args
+        notification = spec.args or {}
         is_notification_failure_notification: bool = False
 
-        if "template" in notification.keys():
+        if "template" in notification:
             template: dict = NotificationsTemplates.EMAIL_NOTIFICATIONS_TEMPLATES.get(
                 notification["template"], {}
             )

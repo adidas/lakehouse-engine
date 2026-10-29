@@ -1,7 +1,5 @@
 """Test Join Transformers."""
 
-from typing import List
-
 import pytest
 
 from lakehouse_engine.core.definitions import OutputFormat
@@ -34,7 +32,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
         ["batch", "control_scenario_1_and_2"],
     ],
 )
-def test_joiners(scenario: List[str]) -> None:
+def test_joiners(scenario: list[str]) -> None:
     """Test join transformers.
 
     Args:

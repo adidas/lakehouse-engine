@@ -26,7 +26,8 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
     ["batch"],
 )
 def test_multiple_transformations(scenario: str) -> None:
-    """Tests multiple transformations available in the ACON transform_specs.\
+    """Tests multiple transformations available in the ACON transform_specs.
+
     Transformations are saved in different locations, according to the output_specs.
 
     Args:

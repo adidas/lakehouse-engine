@@ -1,6 +1,7 @@
 """Module to configure the test environment."""
 
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -53,7 +54,7 @@ def pytest_addoption(parser: Any) -> Any:
         action="store",
         default="local",
         choices=["local", "connect"],
-        help="spark mode: 'local' for local spark, 'connect' for spark connect (default: local)",  # noqa: E501
+        help="spark mode: 'local' for local spark, 'connect' for spark connect (default: local)",
     )
 
 

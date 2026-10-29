@@ -1,7 +1,5 @@
 """Test delta loads with group and rank."""
 
-from typing import List
-
 import pytest
 
 from lakehouse_engine.core.definitions import InputFormat
@@ -36,7 +34,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
         ["fail_with_duplicates_in_same_file", "streaming"],
     ],
 )
-def test_delta_load_group_and_rank(scenario: List[str]) -> None:
+def test_delta_load_group_and_rank(scenario: list[str]) -> None:
     """Test delta loads in batch mode.
 
     Args:
@@ -80,7 +78,7 @@ def test_delta_load_group_and_rank(scenario: List[str]) -> None:
         assert not DataframeHelpers.has_diff(result_df, control_df)
 
 
-def execute_loads(scenario: List[str], iteration: int) -> None:
+def execute_loads(scenario: list[str], iteration: int) -> None:
     """Execute the data loads.
 
     Args:
@@ -121,7 +119,7 @@ def execute_loads(scenario: List[str], iteration: int) -> None:
     load_data(acon=acon)
 
 
-def _create_table(scenario: List[str]) -> None:
+def _create_table(scenario: list[str]) -> None:
     """Create test table.
 
     Args:
@@ -137,11 +135,13 @@ def _create_table(scenario: List[str]) -> None:
             customer string,
             article string,
             amount int,
-            {"extraction_date string,"
-             if scenario[1] == "streaming" else "lhe_row_id int,"}
+            {
+        "extraction_date string," if scenario[1] == "streaming" else "lhe_row_id int,"
+    }
             {"lhe_batch_id int," if scenario[1] == "streaming" else ""}
-            {"lhe_row_id int"
-             if scenario[1] == "streaming" else "extraction_date string"}
+            {
+        "lhe_row_id int" if scenario[1] == "streaming" else "extraction_date string"
+    }
         )
         USING delta
         LOCATION '{TEST_LAKEHOUSE_OUT}/{scenario[0]}/{scenario[1]}/data'

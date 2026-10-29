@@ -26,7 +26,7 @@ class EmailNotifier(Notifier):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, notification_spec: TerminatorSpec):
+    def __init__(self, notification_spec: TerminatorSpec) -> None:
         """Construct Email Notification instance.
 
         Args:
@@ -36,7 +36,7 @@ class EmailNotifier(Notifier):
 
     def create_notification(self) -> None:
         """Creates the notification to be sent."""
-        if "template" in self.notification.keys():
+        if "template" in self.notification:
             template: dict = NotificationsTemplates.EMAIL_NOTIFICATIONS_TEMPLATES.get(
                 self.notification["template"], {}
             )
@@ -55,7 +55,7 @@ class EmailNotifier(Notifier):
                     f"""Template {self.notification["template"]} does not exist"""
                 )
 
-        elif "message" in self.notification.keys():
+        elif "message" in self.notification:
             self.notification["message"] = self._render_notification_field(
                 self.notification["message"]
             )
@@ -79,7 +79,7 @@ class EmailNotifier(Notifier):
             raise NotifierConfigException(
                 f"Trying to use disallowed smtp server: '{server}'.\n"
                 f"Disallowed smtp servers: "
-                f"{str(ExecEnv.ENGINE_CONFIG.notif_disallowed_email_servers)}"
+                f"{ExecEnv.ENGINE_CONFIG.notif_disallowed_email_servers!s}"
             )
         elif server in notification_office_email_servers:
             self._authenticate_and_send_office365()
@@ -127,9 +127,7 @@ class EmailNotifier(Notifier):
                     self.notification.get("password", ""),
                 )
             except smtplib.SMTPException as e:
-                self._logger.exception(
-                    f"Exception while authenticating to smtp: {str(e)}"
-                )
+                self._logger.exception(f"Exception while authenticating to smtp: {e!s}")
                 self._logger.exception(
                     "Attempting to send the notification without authentication"
                 )
@@ -167,7 +165,7 @@ class EmailNotifier(Notifier):
             for f in self.notification.get("attachments", []):
                 with open(f, "rb") as fil:
                     part = MIMEApplication(fil.read(), Name=basename(f))
-                part["Content-Disposition"] = 'attachment; filename="%s"' % basename(f)
+                part["Content-Disposition"] = f'attachment; filename="{basename(f)}"'
                 mesg.attach(part)
 
             try:
@@ -176,7 +174,7 @@ class EmailNotifier(Notifier):
                 )
                 self._logger.info("Email sent successfully.")
             except smtplib.SMTPException as e:
-                self._logger.exception(f"Exception while sending email: {str(e)}")
+                self._logger.exception(f"Exception while sending email: {e!s}")
 
     def _validate_email_notification(self) -> None:
         """Validates the email notification."""

@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from logging import Logger
-from typing import Optional, Tuple
+
+from pyspark.sql import DataFrame
 
 from lakehouse_engine.core.definitions import InputFormat, InputSpec, ReadType
 from lakehouse_engine.transformers.aggregators import Aggregators
@@ -60,10 +61,10 @@ class SAPBWExtraction(JDBCExtraction):
 
     latest_timestamp_input_col: str = "actrequest_timestamp"
     request_col_name: str = "actrequest"
-    act_req_join_condition: Optional[str] = None
-    odsobject: Optional[str] = None
+    act_req_join_condition: str | None = None
+    odsobject: str | None = None
     include_changelog_tech_cols: bool = True
-    extra_cols_act_request: Optional[str] = None
+    extra_cols_act_request: str | None = None
     get_timestamp_from_act_request: bool = False
     sap_bw_schema: str = "SAPPHA"
     act_request_table: str = f"{sap_bw_schema}.RSODSACTREQ"
@@ -71,14 +72,14 @@ class SAPBWExtraction(JDBCExtraction):
     default_max_timestamp: str = "197000000000000"
     default_min_timestamp: str = "197000000000000"
     ods_prefix: str = "8"
-    logsys: Optional[str] = None
-    custom_schema: Optional[str] = "REQUEST VARCHAR(30), DATAPAKID VARCHAR(6)"
+    logsys: str | None = None
+    custom_schema: str | None = "REQUEST VARCHAR(30), DATAPAKID VARCHAR(6)"
 
 
 class SAPBWExtractionUtils(JDBCExtractionUtils):
     """Utils for managing data extraction from particularly relevant JDBC sources."""
 
-    def __init__(self, sap_bw_extraction: SAPBWExtraction):
+    def __init__(self, sap_bw_extraction: SAPBWExtraction) -> None:
         """Construct SAPBWExtractionUtils.
 
         Args:
@@ -93,7 +94,7 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                 FROM {self._BW_EXTRACTION.act_request_table}
                 WHERE odsobject = '{self._BW_EXTRACTION.odsobject}'
                  AND operation = 'A' AND status = '0')
-            """  # nosec: B608
+            """  # noqa: S608
         super().__init__(sap_bw_extraction)
 
     def get_changelog_table(self) -> str:
@@ -124,7 +125,7 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                     JOIN {pref_table} p ON {logsys_cond}
                     AND o.ODSNAME = '{prefix}{odsobject}_' || p.tsprefix
                     AND USERAPP = 'CHANGELOG' AND VERSION = '000')
-                """  # nosec: B608
+                """  # noqa: S608
             self._LOGGER.info(
                 f"Deriving changelog_table using the following query: {query}"
             )
@@ -147,19 +148,15 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                     jdbc_args=jdbc_args,
                 )
             )
-            changelog_tbl_nbr = changelog_df.count()
-            if changelog_tbl_nbr > 1:
-                raise ValueError(
-                    f"More than one changelog table found for {odsobject}."
-                    f"Aborting. {changelog_df.show()}"
-                )
-            if changelog_tbl_nbr == 0:
-                raise ValueError(f"No changelog table found for {odsobject}. Aborting.")
+
+            changelog_row = SAPBWExtractionUtils._get_changelog_table(
+                odsobject, changelog_df
+            )
 
             changelog_table = (
-                f'{self._BW_EXTRACTION.sap_bw_schema}."{changelog_df.first()[0]}"'
+                f'{self._BW_EXTRACTION.sap_bw_schema}."{changelog_row}"'
                 if self._BW_EXTRACTION.sap_bw_schema
-                else str(changelog_df.first()[0])
+                else str(changelog_row)
             )
         else:
             changelog_table = (
@@ -170,6 +167,32 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
         self._LOGGER.info(f"The changelog table derived is: '{changelog_table}'")
 
         return changelog_table
+
+    @staticmethod
+    def _get_changelog_table(odsobject: str, changelog_df: DataFrame) -> str:
+        """Get the changelog table from the changelog_df.
+
+        Args:
+            odsobject: the name of the ODS object.
+            changelog_df: a DataFrame containing the changelog tables.
+
+        Returns:
+            A string with the changelog table name.
+        """
+        changelog_tbl_nbr = changelog_df.count()
+        if changelog_tbl_nbr > 1:
+            raise ValueError(
+                f"More than one changelog table found for {odsobject}."
+                f"Aborting. {changelog_df.show()}"
+            )
+        if changelog_tbl_nbr == 0:
+            raise ValueError(f"No changelog table found for {odsobject}. Aborting.")
+
+        changelog_row = changelog_df.first()
+        if not changelog_row:
+            raise ValueError(f"No changelog table found for {odsobject}. Aborting.")
+
+        return changelog_row[0]
 
     @staticmethod
     def get_odsobject(input_spec_opt: dict) -> str:
@@ -205,7 +228,7 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
         else:
             return "p.slogsys = p.rlogsys"
 
-    def _get_init_query(self) -> Tuple[str, str]:
+    def _get_init_query(self) -> tuple[str, str]:
         """Get a query to do an init load based on a DSO on a SAP BW system.
 
         Returns:
@@ -229,7 +252,7 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
         predicates_query = f"""
         (SELECT DISTINCT({self._BW_EXTRACTION.partition_column})
         FROM {self._BW_EXTRACTION.dbtable} t)
-        """  # nosec: B608
+        """  # noqa: S608
 
         return extraction_query, predicates_query
 
@@ -258,7 +281,7 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                     CAST({self._BW_EXTRACTION.extraction_timestamp}
                         AS DECIMAL(15, 0)) AS extraction_start_timestamp
                 FROM {self._BW_EXTRACTION.dbtable} t
-                )"""  # nosec: B608
+                )"""  # noqa: S608
 
         return extraction_query
 
@@ -280,11 +303,11 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                 t.request = act_req.{self._BW_EXTRACTION.request_col_name}
             WHERE act_req.odsobject = '{self._BW_EXTRACTION.odsobject}'
                 AND operation = 'A' AND status = '0'
-            )"""  # nosec: B608
+            )"""  # noqa: S608
 
         return extraction_query
 
-    def _get_delta_query(self) -> Tuple[str, str]:
+    def _get_delta_query(self) -> tuple[str, str]:
         """Get a delta query for an SAP BW DSO.
 
         An SAP BW DSO requires a join with a special type of table often called
@@ -322,7 +345,12 @@ class SAPBWExtractionUtils(JDBCExtractionUtils):
                 Aggregators.get_max_value(
                     self._BW_EXTRACTION.latest_timestamp_input_col
                 )
-            ).first()[0]
+            ).first()
+            if not min_timestamp:
+                raise ValueError(
+                    "Could not derive min timestamp for SAP BW extraction."
+                )
+            min_timestamp = min_timestamp[0]
         else:
             min_timestamp = self._BW_EXTRACTION.min_timestamp
 

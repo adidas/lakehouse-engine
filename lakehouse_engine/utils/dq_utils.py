@@ -57,7 +57,7 @@ class DQUtils:
             FROM {dq_db_table}
             WHERE
             execution_point='{execution_point}' and table = '{dq_table_table_filter}'
-            {extra_filters_query}"""  # nosec: B608
+            {extra_filters_query}"""  # noqa: S608
 
         raw_dq_functions = ExecEnv.SESSION.sql(dq_functions_query)
 
@@ -115,7 +115,7 @@ class DQUtils:
 
     @staticmethod
     def validate_dq_functions(
-        spec: dict, execution_point: str = "", extra_meta_arguments: list = None
+        spec: dict, execution_point: str = "", extra_meta_arguments: list | None = None
     ) -> None:
         """Function to validate the dq functions defined in the dq_spec.
 
@@ -139,14 +139,14 @@ class DQUtils:
             return
 
         for dq_function in dq_functions:
-            if not dq_function.get("args").get("meta", None):
+            dq_args = dq_function.get("args") or {}
+            if not dq_args.get("meta", None):
                 raise DQSpecMalformedException(
                     "The dq function must have a meta field containing all "
                     f"the fields defined: {extra_meta_arguments}."
                 )
             else:
-
-                meta = dq_function["args"]["meta"]
+                meta = dq_args["meta"]
                 given_keys = meta.keys()
                 missing_keys = sorted(set(extra_meta_arguments) - set(given_keys))
                 if missing_keys:
@@ -182,7 +182,7 @@ class PrismaUtils:
                 spec,
                 execution_point,
                 DQTableBaseParameters.PRISMA_BASE_PARAMETERS.value,
-                ExecEnv.ENGINE_CONFIG.dq_functions_column_list,
+                ExecEnv.ENGINE_CONFIG.dq_functions_column_list or [],
             )
         elif spec.get("dq_functions"):
             DQUtils.validate_dq_functions(
@@ -257,28 +257,73 @@ class PrismaUtils:
             spec_id = spec.spec_id
 
             if spec.dq_type == DQType.PRISMA.value and dq_db_table:
-                dq_rule_id_query = f"""
+                error_dict.update(
+                    PrismaUtils._validate_table_rule_id_duplication(
+                        spec_id, dq_db_table
+                    )
+                )
+
+            elif spec.dq_type == DQType.PRISMA.value and dq_functions:
+                error_dict.update(
+                    PrismaUtils._validate_function_rule_id_duplication(
+                        spec_id, dq_functions
+                    )
+                )
+
+        return error_dict
+
+    @staticmethod
+    def _validate_table_rule_id_duplication(
+        spec_id: str, dq_db_table: str
+    ) -> dict[str, str]:
+        """Validate rule_id duplication in the dq_db_table.
+
+        Args:
+            spec_id: the specification ID.
+            dq_db_table: the name of the DQ database table.
+
+        Returns:
+            A dictionary with the spec_id as key and rule_id as value for any duplicates.
+        """
+        error_dict = {}
+        dq_rule_id_query = f"""
                     SELECT dq_rule_id, COUNT(*) AS count
                     FROM {dq_db_table}
                     GROUP BY dq_rule_id
                     HAVING COUNT(*) > 1;
-                    """  # nosec: B608
+                    """  # noqa: S608
 
-                duplicate_rule_id_table = ExecEnv.SESSION.sql(dq_rule_id_query)
+        duplicate_rule_id_table = ExecEnv.SESSION.sql(dq_rule_id_query)
 
-                if not duplicate_rule_id_table.isEmpty():
-                    rows = duplicate_rule_id_table.collect()
-                    df_str = "; ".join([str(row) for row in rows])
-                    error_dict[f"dq_spec_id: {spec_id}"] = df_str
+        if not duplicate_rule_id_table.isEmpty():
+            rows = duplicate_rule_id_table.collect()
+            df_str = "; ".join([str(row) for row in rows])
+            error_dict[f"dq_spec_id: {spec_id}"] = df_str
 
-            elif spec.dq_type == DQType.PRISMA.value and dq_functions:
-                dq_rules_id_list = []
-                for dq_function in dq_functions:
-                    dq_rules_id_list.append(dq_function.args["meta"]["dq_rule_id"])
+        return error_dict
 
-                if len(dq_rules_id_list) != len(set(dq_rules_id_list)):
-                    error_dict[f"dq_spec_id: {spec_id}"] = "; ".join(
-                        [str(dq_rule_id) for dq_rule_id in dq_rules_id_list]
-                    )
+    @staticmethod
+    def _validate_function_rule_id_duplication(
+        spec_id: str, dq_functions: list
+    ) -> dict[str, str]:
+        """Validate rule_id duplication in the dq_functions.
+
+        Args:
+            spec_id: the specification ID.
+            dq_functions: a list of DQ functions.
+
+        Returns:
+            A dictionary with the spec_id as key and rule_id as value for any duplicates.
+        """
+        error_dict = {}
+        dq_rules_id_list = []
+        for dq_function in dq_functions:
+            if dq_function.args and dq_function.args.get("meta"):
+                dq_rules_id_list.append(dq_function.args["meta"]["dq_rule_id"])
+
+        if len(dq_rules_id_list) != len(set(dq_rules_id_list)):
+            error_dict[f"dq_spec_id: {spec_id}"] = "; ".join(
+                [str(dq_rule_id) for dq_rule_id in dq_rules_id_list]
+            )
 
         return error_dict

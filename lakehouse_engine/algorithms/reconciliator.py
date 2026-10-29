@@ -1,11 +1,10 @@
 """Module containing the Reconciliator class."""
 
 from enum import Enum
-from typing import List
 
 import pyspark.sql.functions as spark_fns
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import (  # noqa: A004
+from pyspark.sql.functions import (
     abs,
     coalesce,
     col,
@@ -81,7 +80,7 @@ class Reconciliator(Executable):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct Algorithm instances.
 
         Args:
@@ -183,7 +182,7 @@ class Reconciliator(Executable):
 
     @staticmethod
     def _apply_preprocess_query_args(
-        df: DataFrame, preprocess_query_args: List[dict]
+        df: DataFrame, preprocess_query_args: list[dict] | None
     ) -> DataFrame:
         """Apply transformers on top of the preprocessed query.
 
@@ -199,7 +198,7 @@ class Reconciliator(Executable):
         if preprocess_query_args is None:
             try:
                 transformed_df = df.transform(Optimizers.cache())
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 Reconciliator._logger.warning(
                     f"Could not apply default caching to the dataframe."
                     f"Continuing without caching. Exception: {e}"
@@ -208,9 +207,7 @@ class Reconciliator(Executable):
             for transformation in preprocess_query_args:
                 rec_func = ReconciliationTransformers.AVAILABLE_TRANSFORMERS.value[
                     transformation["function"]
-                ](
-                    **transformation.get("args", {})
-                )  # type: ignore
+                ](**transformation.get("args", {}))
 
                 transformed_df = df.transform(rec_func)
         else:
@@ -219,7 +216,7 @@ class Reconciliator(Executable):
         return transformed_df
 
     def _get_recon_results(
-        self, truth_df: DataFrame, current_results_df: DataFrame, metrics: List[dict]
+        self, truth_df: DataFrame, current_results_df: DataFrame, metrics: list[dict]
     ) -> dict:
         """Get the reconciliation results by comparing truth_df with current_results_df.
 

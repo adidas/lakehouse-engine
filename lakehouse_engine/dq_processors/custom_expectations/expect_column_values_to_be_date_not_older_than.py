@@ -2,7 +2,7 @@
 
 import datetime
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnMapExpectation
@@ -23,7 +23,7 @@ class ColumnValuesDateNotOlderThan(ColumnMapMetricProvider):
         "table",
         "column",
         "ignore_row_if",
-    )  # type: ignore
+    )
     condition_value_keys = ("timeframe",)
 
     @column_condition_partial(engine=SparkDFExecutionEngine)
@@ -44,7 +44,9 @@ class ColumnValuesDateNotOlderThan(ColumnMapMetricProvider):
         Returns:
             If the condition is met.
         """
-        timeframe = kwargs.get("timeframe") or None
+        timeframe = kwargs.get("timeframe")
+        if not timeframe:
+            timeframe = {}
         weeks = (
             timeframe.get("weeks", 0)
             + (timeframe.get("months", 0) * 4)
@@ -177,9 +179,9 @@ class ExpectColumnValuesToBeDateNotOlderThan(ColumnMapExpectation):
 
     def _validate(
         self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> Any:
         """Custom implementation of the GE _validate method.
 

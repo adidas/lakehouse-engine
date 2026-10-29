@@ -1,7 +1,7 @@
 """Module containing date transformers."""
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, List, Optional
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, date_format, lit, to_date, to_timestamp
@@ -9,7 +9,7 @@ from pyspark.sql.functions import col, date_format, lit, to_date, to_timestamp
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class DateTransformers(object):
+class DateTransformers:
     """Class with set of transformers to transform dates in several forms."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -35,9 +35,7 @@ class DateTransformers(object):
         return inner
 
     @staticmethod
-    def convert_to_date(
-        cols: List[str], source_format: Optional[str] = None
-    ) -> Callable:
+    def convert_to_date(cols: list[str], source_format: str | None = None) -> Callable:
         """Convert multiple string columns with a source format into dates.
 
         Args:
@@ -64,7 +62,7 @@ class DateTransformers(object):
 
     @staticmethod
     def convert_to_timestamp(
-        cols: List[str], source_format: Optional[str] = None
+        cols: list[str], source_format: str | None = None
     ) -> Callable:
         """Convert multiple string columns with a source format into timestamps.
 
@@ -83,8 +81,10 @@ class DateTransformers(object):
         def inner(df: DataFrame) -> DataFrame:
             converted_df = df
             for c in cols:
-                converted_df = converted_df.withColumn(
-                    c, to_timestamp(col(c), source_format)
+                converted_df = (
+                    converted_df.withColumn(c, to_timestamp(col(c), source_format))
+                    if source_format is not None
+                    else converted_df.withColumn(c, to_timestamp(col(c)))
                 )
 
             return converted_df
@@ -92,7 +92,7 @@ class DateTransformers(object):
         return inner
 
     @staticmethod
-    def format_date(cols: List[str], target_format: Optional[str] = None) -> Callable:
+    def format_date(cols: list[str], target_format: str | None = None) -> Callable:
         """Convert multiple date/timestamp columns into strings with the target format.
 
         Args:
@@ -109,8 +109,10 @@ class DateTransformers(object):
         def inner(df: DataFrame) -> DataFrame:
             converted_df = df
             for c in cols:
-                converted_df = converted_df.withColumn(
-                    c, date_format(col(c), target_format)
+                converted_df = (
+                    converted_df.withColumn(c, date_format(col(c), target_format))
+                    if target_format is not None
+                    else converted_df.withColumn(c, col(c).cast("string"))
                 )
 
             return converted_df
@@ -118,7 +120,7 @@ class DateTransformers(object):
         return inner
 
     @staticmethod
-    def get_date_hierarchy(cols: List[str], formats: Optional[dict] = None) -> Callable:
+    def get_date_hierarchy(cols: list[str], formats: dict | None = None) -> Callable:
         """Create day/month/week/quarter/year hierarchy for the provided date columns.
 
         Uses Spark's extract function.

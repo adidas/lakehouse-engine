@@ -7,13 +7,13 @@ from lakehouse_engine.algorithms.exceptions import RestoreTypeNotFoundException
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
-class FileManager(ABC):  # noqa: B024
+class FileManager(ABC):
     """Abstract file manager class.
 
     {{ get_file_manager_operations() }}
     """
 
-    def __init__(self, configs: dict):
+    def __init__(self, configs: dict) -> None:
         """Construct FileManager algorithm instances.
 
         Args:
@@ -29,7 +29,6 @@ class FileManager(ABC):  # noqa: B024
         If dry_run is set to True the function will print a dict with all the
         paths that would be deleted based on the given keys.
         """
-        pass
 
     @abstractmethod
     def copy_objects(self) -> None:
@@ -38,7 +37,6 @@ class FileManager(ABC):  # noqa: B024
         If dry_run is set to True the function will print a dict with all the
         paths that would be copied based on the given keys.
         """
-        pass
 
     @abstractmethod
     def move_objects(self) -> None:
@@ -47,10 +45,9 @@ class FileManager(ABC):  # noqa: B024
         If dry_run is set to True the function will print a dict with all the
         paths that would be moved based on the given keys.
         """
-        pass
 
 
-class FileManagerFactory(ABC):  # noqa: B024
+class FileManagerFactory(ABC):
     """Class for file manager factory."""
 
     @staticmethod
@@ -59,11 +56,7 @@ class FileManagerFactory(ABC):  # noqa: B024
         from lakehouse_engine.core.dbfs_file_manager import DBFSFileManager
         from lakehouse_engine.core.s3_file_manager import S3FileManager
 
-        disable_dbfs_retry = (
-            configs["disable_dbfs_retry"]
-            if "disable_dbfs_retry" in configs.keys()
-            else False
-        )
+        disable_dbfs_retry = configs.get("disable_dbfs_retry", False)
 
         if disable_dbfs_retry:
             S3FileManager(configs).get_function()
@@ -72,7 +65,7 @@ class FileManagerFactory(ABC):  # noqa: B024
                 S3FileManager(configs).get_function()
             except (ValueError, NotImplementedError, RestoreTypeNotFoundException):
                 raise
-            except Exception:
+            except Exception:  # noqa: BLE001
                 DBFSFileManager(configs).get_function()
         else:
             DBFSFileManager(configs).get_function()

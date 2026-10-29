@@ -1,6 +1,6 @@
 """Test schema evolution on delta loads."""
 
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 from pyspark.sql.utils import AnalysisException

@@ -10,7 +10,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 _LOGGER = LoggingHandler(__name__).get_logger()
 
 
-class LocalStorage(object):
+class LocalStorage:
     """Helper class to support local storage operations in tests."""
 
     @staticmethod

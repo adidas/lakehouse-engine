@@ -1,7 +1,5 @@
 """Test jdbc reader."""
 
-from typing import List
-
 import pytest
 from pyspark.sql.utils import IllegalArgumentException
 
@@ -53,7 +51,7 @@ TEST_SCENARIOS = [
 
 
 @pytest.mark.parametrize("scenario", TEST_SCENARIOS)
-def test_jdbc_reader(scenario: List[str]) -> None:
+def test_jdbc_reader(scenario: list[str]) -> None:
     """Test loads from jdbc source.
 
     Args:

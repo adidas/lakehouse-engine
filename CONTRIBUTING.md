@@ -13,7 +13,7 @@
 ## Prerequisites
 
 1. Git.
-2. Your IDE of choice with a Python 3 environment (e.g., virtualenv created from the requirements_cicd.txt file).
+2. Your IDE of choice with a Python 3 environment (e.g., a uv-managed environment synced from `pyproject.toml` and `uv.lock`).
 3. Docker. **Warning:** The default spark driver memory limit for the tests is set at 2g. This limit is configurable but your
    testing docker setup **MUST** always have **at least** 2 * spark driver memory limit + 1 gb configured.
 4. GNU make.
@@ -28,7 +28,6 @@
     make style
     make lint
     make test
-    make test-security
     ```
 ---
 > ***Note:*** To use the make targets with another docker-compatible cli other than docker you can pass the parameter "container_cli". 
@@ -43,8 +42,8 @@ Example: `make test container_cli=nerdctl`
 
 6. (optional) You can build the wheel locally with `make build`.
 7. (optional) Install the wheel you have just generated and test it.
-8. If you have changed or added new requirements, you should run `make build-lock-files`, to rebuild the lock files. 
-9. If the transitive dependencies have not been updated for a while, and you want to upgrade them, you can use `make upgrade-lock-files` to update them. This will update the transitive dependencies even if you have not changed the requirements.
+8. If you have changed or added dependencies in `pyproject.toml`, you should run `make build-lock-file`, to rebuild `uv.lock`.
+9. If the transitive dependencies have not been updated for a while, and you want to upgrade them, you can use `make upgrade-lock-files` to refresh `uv.lock`.
 10. When you're ready with your changes, open a Pull Request (PR) to develop.
 11. Ping the team through the preferred communication channel.
 12. The team will come together to review it and approve it (2 approvals required).

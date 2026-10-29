@@ -1,7 +1,6 @@
 """Mail notifications tests."""
 
 import re
-import typing
 
 import pytest
 
@@ -139,14 +138,15 @@ def test_email_notification(scenario: dict) -> None:
     spec: TerminatorSpec = scenario["spec"]
     name = scenario["name"]
     expected_output = scenario["expected"]
+    spec_args = spec.args or {}
 
-    notification_type = spec.args["type"]
+    notification_type = spec_args["type"]
 
     LOGGER.info(f"Executing notification test: {name}")
 
     if notification_type == "email":
-        port = spec.args["port"]
-        server = spec.args["server"]
+        port = spec_args["port"]
+        server = spec_args["server"]
 
         email_notifier = EmailNotifier(spec)
 
@@ -178,15 +178,15 @@ def test_email_notification(scenario: dict) -> None:
                 attachments,
             ) = _parse_email_output(smtp_server.get_last_message().as_string())
 
-            assert email_from == spec.args["from"]
-            if "to" in spec.args:
-                assert email_to == spec.args["to"]
-            if "cc" in spec.args:
-                assert email_cc == spec.args["cc"]
-            if "bcc" in spec.args:
-                assert email_bcc == spec.args["bcc"]
-            assert mimetype == spec.args["mimetype"]
-            assert subject == spec.args["subject"]
+            assert email_from == spec_args["from"]
+            if "to" in spec_args:
+                assert email_to == spec_args["to"]
+            if "cc" in spec_args:
+                assert email_cc == spec_args["cc"]
+            if "bcc" in spec_args:
+                assert email_bcc == spec_args["bcc"]
+            assert mimetype == spec_args["mimetype"]
+            assert subject == spec_args["subject"]
             assert message == expected_output
             assert attachments == scenario.get("expected_attachments", [])
 
@@ -331,7 +331,7 @@ def test_email_notification_facade(scenario: dict) -> None:
 
 def _parse_email_output(
     mail_content: str,
-) -> typing.Tuple[str, list, list, list, str, str, str, list]:
+) -> tuple[str, list, list, list, str, str, str, list]:
     """Parse the mail that was received in the debug smtp server.
 
     Args:
@@ -340,13 +340,32 @@ def _parse_email_output(
     Returns:
         A tuple with the email from, email to, cc, bcc, subject and message.
     """
-    email_from = re.search("(?<=From: ).*", mail_content).group()
-    email_to = re.search("(?<=To: ).*", mail_content).group().split(", ")
-    email_cc = re.search("(?<=CC: ).*", mail_content).group().split(", ")
-    email_bcc = re.search("(?<=BCC: ).*", mail_content).group().split(", ")
-    mimetype = re.search("(?<=Content-Type: ).*(?=; charset)", mail_content).group()
-    subject = re.search("(?<=Subject: ).*", mail_content).group()
-    message = re.search("(?<=bit\n).*?(?=--=)", mail_content, re.S).group()[1:-1]
+    email_from_match = re.search("(?<=From: ).*", mail_content)
+    email_to_match = re.search("(?<=To: ).*", mail_content)
+    email_cc_match = re.search("(?<=CC: ).*", mail_content)
+    email_bcc_match = re.search("(?<=BCC: ).*", mail_content)
+    mimetype_match = re.search("(?<=Content-Type: ).*(?=; charset)", mail_content)
+    subject_match = re.search("(?<=Subject: ).*", mail_content)
+    message_match = re.search("(?<=bit\n).*?(?=--=)", mail_content, re.DOTALL)
+
+    if (
+        not email_from_match
+        or not email_to_match
+        or not email_cc_match
+        or not email_bcc_match
+        or not mimetype_match
+        or not subject_match
+        or not message_match
+    ):
+        raise ValueError("Unable to parse email output.")
+
+    email_from = email_from_match.group()
+    email_to = email_to_match.group().split(", ")
+    email_cc = email_cc_match.group().split(", ")
+    email_bcc = email_bcc_match.group().split(", ")
+    mimetype = mimetype_match.group()
+    subject = subject_match.group()
+    message = message_match.group()[1:-1]
     attachments = re.findall("""(?<=filename=").*(?=")""", mail_content)
 
     return (

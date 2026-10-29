@@ -11,8 +11,8 @@ import logging
 import os
 import random
 import string
-from collections import namedtuple
-from typing import Any, Optional, OrderedDict
+from collections import OrderedDict, namedtuple
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -40,6 +40,8 @@ TEST_RESOURCES = f"{FEATURE_RESOURCES}/{TEST_NAME}"
 TEST_LAKEHOUSE_IN = f"{LAKEHOUSE_FEATURE_IN}/{TEST_NAME}"
 TEST_LAKEHOUSE_CONTROL = f"{LAKEHOUSE_FEATURE_CONTROL}/{TEST_NAME}"
 TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
@@ -204,7 +206,7 @@ def test_write_to_console(scenario: dict, capsys: Any) -> None:
 
     captured = capsys.readouterr()
 
-    logging.info(captured.out)
+    LOGGER.info(captured.out)
 
     assert "20140601|customer1|article3|" in captured.out
 
@@ -244,13 +246,16 @@ def test_write_to_dataframe(scenario: dict, capsys: Any) -> None:
     result = load_data(
         f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
     )
+    assert result
 
     control_df = DataframeHelpers.read_from_file(
         f"{TEST_LAKEHOUSE_CONTROL}/data/writers_control.csv"
     )
     expected_keys = ["sales"]
 
-    assert not DataframeHelpers.has_diff(result.get("sales"), control_df)
+    sales_df = result.get("sales")
+    assert sales_df is not None
+    assert not DataframeHelpers.has_diff(sales_df, control_df)
     assert len(result.keys()) == len(expected_keys)
     assert all(
         subject == expected for subject, expected in zip(result.keys(), expected_keys)
@@ -310,6 +315,7 @@ def test_write_to_dataframe_checkpoints(scenario: dict, capsys: Any) -> None:
         result = load_data(
             f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
         )
+        assert result
 
         control_df = DataframeHelpers.read_from_file(
             f"{TEST_LAKEHOUSE_CONTROL}/data/"
@@ -317,7 +323,9 @@ def test_write_to_dataframe_checkpoints(scenario: dict, capsys: Any) -> None:
         )
         expected_keys = ["sales"]
 
-        assert not DataframeHelpers.has_diff(result.get("sales"), control_df)
+        sales_df = result.get("sales")
+        assert sales_df
+        assert not DataframeHelpers.has_diff(sales_df, control_df)
         assert len(result.keys()) == len(expected_keys)
         assert all(
             subject == expected
@@ -347,10 +355,12 @@ def test_multiple_write_to_dataframe(scenario: dict, capsys: Any) -> None:
     multiple_df_result = load_data(
         f"file://{TEST_RESOURCES}/acons/{scenario['scenario_name']}.json"
     )
+    assert multiple_df_result
 
     generated_acon = _generate_acon_from_source(multiple_df_result)
 
     result = load_data(acon=generated_acon)
+    assert result
     result_keys = list(multiple_df_result.keys()) + list(result.keys())
 
     control_df = DataframeHelpers.read_from_file(
@@ -358,7 +368,9 @@ def test_multiple_write_to_dataframe(scenario: dict, capsys: Any) -> None:
     )
     expected_keys = ["sales_historical", "sales_new", "sales"]
 
-    assert not DataframeHelpers.has_diff(result.get("sales"), control_df)
+    sales_df = result.get("sales")
+    assert sales_df
+    assert not DataframeHelpers.has_diff(sales_df, control_df)
     assert len(result_keys) == len(expected_keys)
     assert all(
         subject == expected for subject, expected in zip(result_keys, expected_keys)
@@ -387,10 +399,10 @@ def test_write_to_dataframe_exception(scenario: dict, capsys: Any) -> None:
     """
 
     def dataframe_writer(
-        df: DataFrame = None,
-        data: OrderedDict = None,
-        streaming_processing_time: Optional[str] = None,
-        streaming_continuous: Optional[str] = None,
+        df: DataFrame | None = None,
+        data: OrderedDict | None = None,
+        streaming_processing_time: str | None = None,
+        streaming_continuous: str | None = None,
     ) -> DataFrameWriter:
         """Create DataFrame Writer.
 
@@ -407,9 +419,9 @@ def test_write_to_dataframe_exception(scenario: dict, capsys: Any) -> None:
             df = DataframeHelpers.create_empty_dataframe(StructType([]))
 
         spec = OutputSpec(
-            spec_id=random.choice(string.ascii_letters),  # nosec
-            input_id=random.choice(string.ascii_letters),  # nosec
-            write_type=None,
+            spec_id=random.choice(string.ascii_letters),  # noqa: S311
+            input_id=random.choice(string.ascii_letters),  # noqa: S311
+            write_type="append",
             data_format=OutputFormat.DATAFRAME.value,
             streaming_processing_time=streaming_processing_time,
             streaming_continuous=streaming_continuous,

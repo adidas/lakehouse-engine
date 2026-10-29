@@ -15,8 +15,10 @@ DIAGNOSTICS_VALIDATIONS = [
     " ✔ Has at least one positive and negative example case, and all test cases pass",
     " ✔ Has core logic and passes tests on at least one Execution Engine",
     "    ✔ All [0-9]+ tests for spark are passing",
-    " ✔ Has core logic that passes tests for all applicable Execution Engines and SQL"
-    " dialects",
+    (
+        " ✔ Has core logic that passes tests for all applicable Execution Engines and SQL"
+        " dialects"
+    ),
     "    ✔ All [0-9]+ tests for spark are passing",
 ]
 
@@ -53,9 +55,9 @@ def test_expectation_validity(expectation: str) -> None:
 
         MAP_METRICS.append(metric_name)
 
-        assert len(MAP_METRICS) == len(
-            set(MAP_METRICS)
-        ), f"Metric names repeated: {MAP_METRICS}"
+        assert len(MAP_METRICS) == len(set(MAP_METRICS)), (
+            f"Metric names repeated: {MAP_METRICS}"
+        )
 
 
 def _run_diagnostics(expectation_name: str) -> tuple:
@@ -121,7 +123,4 @@ def _validate_metric_name_structure(metric_name: str) -> int:
     if len(parts) != 2:
         return False
 
-    if parts[0] not in METRIC_NAME_TYPES:
-        return False
-
-    return True
+    return parts[0] in METRIC_NAME_TYPES

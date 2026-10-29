@@ -10,7 +10,7 @@ from lakehouse_engine.io.reader import Reader
 class KafkaReader(Reader):
     """Class to read from Kafka."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct KafkaReader instances.
 
         Args:

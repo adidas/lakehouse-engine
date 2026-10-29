@@ -75,12 +75,6 @@ pipeline {
                             }
                         }
 
-                        stage('Test Security') {
-                            steps {
-                                sh 'make test-security version=' + "${env.DEPLOY_VERSION}"
-                            }
-                        }
-
                         stage('Audit Dependency Safety'){
                             steps{
                                 catchError(message: "${STAGE_NAME} is unstable", buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -114,7 +108,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh 'make deploy version=' + "${env.DEPLOY_VERSION}" + ' artifactory_credentials_file=$ARTIFACTORY_CREDENTIALS'
+                     sh 'make deploy version=' + "${env.DEPLOY_VERSION}" + ' artifactory_credentials_file=$ARTIFACTORY_CREDENTIALS'
                 }
             }
         }

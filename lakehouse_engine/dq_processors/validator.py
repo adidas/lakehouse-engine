@@ -1,6 +1,6 @@
 """Module containing the definition of a data quality validator."""
 
-from typing import Any, List
+from typing import Any
 
 from great_expectations.core.batch import RuntimeBatchRequest
 from great_expectations.data_context import EphemeralDataContext
@@ -21,7 +21,7 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Validator(object):
+class Validator:
     """Class containing the data quality validator."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -32,8 +32,8 @@ class Validator(object):
         context: EphemeralDataContext,
         batch_request: RuntimeBatchRequest,
         expectation_suite_name: str,
-        dq_functions: List[DQFunctionSpec],
-        critical_functions: List[DQFunctionSpec],
+        dq_functions: list[DQFunctionSpec],
+        critical_functions: list[DQFunctionSpec],
     ) -> Any:
         """Get a validator according to the specification.
 
@@ -63,7 +63,7 @@ class Validator(object):
 
         if critical_functions:
             for critical_function in critical_functions:
-                meta_args = cls._add_critical_function_tag(critical_function.args)
+                meta_args = cls._add_critical_function_tag(critical_function.args or {})
 
                 getattr(validator, critical_function.function)(**meta_args)
 
@@ -71,7 +71,7 @@ class Validator(object):
 
     @classmethod
     def tag_source_with_dq(
-        cls, source_pk: List[str], source_df: DataFrame, results_df: DataFrame
+        cls, source_pk: list[str], source_df: DataFrame, results_df: DataFrame
     ) -> DataFrame:
         """Tags the source dataframe with a new column having the DQ results.
 
@@ -82,12 +82,14 @@ class Validator(object):
 
         Returns: a dataframe tagged with the DQ results.
         """
-        run_success = results_df.select("success").first()[0]
-        run_name = results_df.select("run_name").first()[0]
+        run_success_row = results_df.select("success").first()
+        run_name_row = results_df.select("run_name").first()
+        if run_success_row is None or run_name_row is None:
+            raise ValueError("Expected DQ results to contain run metadata rows.")
+        run_success = run_success_row[0]
+        run_name = run_name_row[0]
         raised_exceptions = (
-            True
-            if results_df.filter("exception_info.raised_exception == True").count() > 0
-            else False
+            results_df.filter("exception_info.raised_exception == True").count() > 0
         )
 
         failures_df = (
@@ -99,7 +101,6 @@ class Validator(object):
         )
 
         if failures_df.isEmpty() is not True:
-
             source_df = cls._get_row_tagged_fail_df(
                 failures_df, raised_exceptions, source_df, source_pk
             )
@@ -110,7 +111,7 @@ class Validator(object):
 
     @classmethod
     def _add_critical_function_tag(cls, args: dict) -> dict:
-        if "meta" in args.keys():
+        if "meta" in args:
             meta = args["meta"]
 
             if isinstance(meta["notes"], str):
@@ -137,7 +138,7 @@ class Validator(object):
         failures_df: DataFrame,
         raised_exceptions: bool,
         source_df: DataFrame,
-        source_pk: List[str],
+        source_pk: list[str],
     ) -> DataFrame:
         """Get the source_df DataFrame tagged with the row level failures.
 
@@ -151,7 +152,6 @@ class Validator(object):
         Returns: the source_df tagged with the row level failures.
         """
         if "unexpected_index_list" in failures_df.schema.simpleString():
-
             row_failures_df = (
                 failures_df.alias("a")
                 .withColumn("exploded_list", explode(col("unexpected_index_list")))

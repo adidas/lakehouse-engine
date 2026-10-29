@@ -133,22 +133,24 @@ def test_office365_notification_creation(scenario: TerminatorSpec) -> None:
     """Testing Office 365 notification creation."""
     notifier = EmailNotifier(scenario)
     body = notifier._create_graph_api_email_body()
+    args = scenario.args or {}
     for recipient, test_recipient in zip(
-        body.message.to_recipients, scenario.args.get("to", [])
+        body.message.to_recipients, args.get("to", [])
     ):
         assert recipient.email_address.address == test_recipient
     for recipient, test_recipient in zip(
-        body.message.cc_recipients, scenario.args.get("cc", [])
+        body.message.cc_recipients, args.get("cc", [])
     ):
         assert recipient.email_address.address == test_recipient
     for recipient, test_recipient in zip(
-        body.message.bcc_recipients, scenario.args.get("bcc", [])
+        body.message.bcc_recipients, args.get("bcc", [])
     ):
         assert recipient.email_address.address == test_recipient
 
     if body.message.attachments:
+        expected_attachments = args.get("attachments", [])
         for attachment, test_attachment in zip(
-            body.message.attachments, scenario.args.get("attachments")
+            body.message.attachments, expected_attachments
         ):
             assert attachment.name == test_attachment.split("/")[-1]
             with open(test_attachment, "rb") as file:

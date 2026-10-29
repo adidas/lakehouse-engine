@@ -9,20 +9,20 @@ due to the date filters.
 import gzip
 import io
 import os
+from collections.abc import Generator
 from copy import deepcopy
 from io import TextIOWrapper
-from typing import Generator
 from zipfile import ZipFile
 
 import pandas as pd
 import pytest
 from paramiko import Transport
 from paramiko.sftp_client import SFTPClient
-from pytest_sftpserver.consts import (  # type: ignore
+from pytest_sftpserver.consts import (
     SERVER_KEY_PRIVATE,
     SERVER_KEY_PUBLIC,
 )
-from pytest_sftpserver.sftp.server import SFTPServer  # type: ignore
+from pytest_sftpserver.sftp.server import SFTPServer
 
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
@@ -48,7 +48,7 @@ def sftp_client(sftpserver: SFTPServer) -> Generator:
     """
     transport = Transport((sftpserver.host, sftpserver.port))
     username = "a"
-    password = "b"  # nosec B105 - test-only dummy credential for pytest_sftpserver
+    password = "b"  # noqa S105 - test-only dummy credential for pytest_sftpserver
     transport.connect(
         hostkey=None,
         username=username,
@@ -57,7 +57,8 @@ def sftp_client(sftpserver: SFTPServer) -> Generator:
     )
     client = SFTPClient.from_transport(transport)
     yield client
-    client.close()
+    if client:
+        client.close()
     transport.close()
 
 
@@ -496,8 +497,7 @@ def _execute_and_validate(
         control = ExecEnv.SESSION.createDataFrame(file)
     else:
         control = DataframeHelpers.read_from_file(
-            f"{TEST_RESOURCES}/data/{scenario['file_name']}"
-            f"{scenario['file_extension']}"
+            f"{TEST_RESOURCES}/data/{scenario['file_name']}{scenario['file_extension']}"
         )
 
     assert not DataframeHelpers.has_diff(result, control)
@@ -592,12 +592,12 @@ def rename_remote_files(sftp_client: SFTPClient) -> None:
                 f"/remote_location/{file_name}",
                 f"/remote_location/{file}",
             )
-        except IOError:
+        except OSError:
             pass
         try:
             sftp_client.rename(
                 f"/remote_location/sub_dir/{file_name}",
                 f"/remote_location/sub_dir/{file}",
             )
-        except IOError:
+        except OSError:
             pass

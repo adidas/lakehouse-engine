@@ -1,9 +1,10 @@
 """Test data quality validator."""
 
 from json import loads
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import py4j
+import py4j.protocol
 import pytest
 from pyspark.sql import DataFrame
 from pyspark.sql.utils import StreamingQueryException
@@ -442,7 +443,7 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
                 "location": f"{TEST_LAKEHOUSE_OUT}/data/",
             }
 
-    if "dq_db_table" in scenario.keys():
+    if "dq_db_table" in scenario:
         _create_dq_functions_source_table(
             test_resources_path=TEST_RESOURCES,
             lakehouse_in_path=TEST_LAKEHOUSE_IN,
@@ -486,7 +487,7 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
 
     dq_result_df, dq_control_df = _get_result_and_control_dfs(
         result=f"{LAKEHOUSE_FEATURE_OUT}/{scenario['name']}/result_sink/",
-        control=f'dq_control_{scenario["dq_validator_result"]}',
+        control=f"dq_control_{scenario['dq_validator_result']}",
         infer_schema=True,
         result_is_table=False,
     )
@@ -518,8 +519,8 @@ def test_dq_validator(scenario: dict, caplog: Any) -> None:
             "read_type": "streaming",
             "input_type": "dataframe_reader",
             "dq_validator_result": "success_explode",
-            "dq_db_table_first_run": "test_db.dq_functions_streaming_dataframe_two_runs_first_run",  # noqa: E501
-            "dq_db_table_second_run": "test_db.dq_functions_streaming_dataframe_two_runs_second_run",  # noqa: E501
+            "dq_db_table_first_run": "test_db.dq_functions_streaming_dataframe_two_runs_first_run",
+            "dq_db_table_second_run": "test_db.dq_functions_streaming_dataframe_two_runs_second_run",
             "fail_on_error": False,
             "critical_functions": None,
             "max_percentage_failure": None,
@@ -596,13 +597,15 @@ def test_dq_validator_two_runs(scenario: dict, caplog: Any) -> None:
 
     result_sink_path = f"{LAKEHOUSE_FEATURE_OUT}/{scenario['name']}/result_sink/"
     df = ExecEnv.SESSION.sql(
-        f"""select * from delta.`{result_sink_path}`"""  # nosec B608
+        f"""select * from delta.`{result_sink_path}`"""  # noqa: S608
     )
 
     try:
         df.show()
     except py4j.protocol.Py4JJavaError:
-        pytest.fail("Failed to write to result sink due to void type in the dataframe.")
+        raise AssertionError(
+            "Failed to write to result sink due to void type in the dataframe."
+        )
 
 
 def _clean_folders() -> None:
@@ -678,7 +681,7 @@ def _generate_acon(
         A dict corresponding to the generated acon.
     """
     if "dataframe" in scenario["input_type"]:
-        unexpected_rows_pk: Dict[str, Union[str, List[str]]] = {
+        unexpected_rows_pk: dict[str, str | list[str]] = {
             "unexpected_rows_pk": ["salesorder", "item", "date", "customer"]
         }
     else:
@@ -754,7 +757,7 @@ def _generate_dataframe(load_type: str) -> DataFrame:
 
 def _get_result_and_control_dfs(
     result: str, control: str, infer_schema: bool, result_is_table: bool = True
-) -> Tuple[DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame]:
     """Helper to get the result and control dataframes.
 
     Args:

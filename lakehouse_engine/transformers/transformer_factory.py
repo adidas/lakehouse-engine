@@ -1,6 +1,7 @@
 """Module with the factory pattern to return transformers."""
 
-from typing import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from lakehouse_engine.core.definitions import TransformerSpec
 from lakehouse_engine.transformers.aggregators import Aggregators
@@ -21,7 +22,7 @@ from lakehouse_engine.transformers.watermarker import Watermarker
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class TransformerFactory(object):
+class TransformerFactory:
     """TransformerFactory class following the factory pattern."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -77,7 +78,9 @@ class TransformerFactory(object):
     }
 
     @staticmethod
-    def get_transformer(spec: TransformerSpec, data: OrderedDict = None) -> Callable:
+    def get_transformer(
+        spec: TransformerSpec, data: OrderedDict | None = None
+    ) -> Callable:
         """Get a transformer following the factory pattern.
 
         Args:
@@ -91,42 +94,90 @@ class TransformerFactory(object):
 
         {{get_example(method_name='get_transformer')}}
         """
-        if spec.function == "incremental_filter":
-            # incremental_filter optionally expects a DataFrame as input, so find it.
-            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
-            if "increment_df" in args_copy:
-                args_copy["increment_df"] = data[args_copy["increment_df"]]
-            return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
-                spec.function
-            ](**args_copy)
-        elif spec.function == "join":
-            # get the dataframe given the input_id in the input specs of the acon.
-            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
-            args_copy["join_with"] = data[args_copy["join_with"]]
-            return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
-                spec.function
-            ](**args_copy)
-        elif spec.function == "union" or spec.function == "union_by_name":
-            # get the list of dataframes given the input_id in the input specs
-            # of the acon.
-            args_copy = TransformerFactory._get_spec_args_copy(spec.args)
-            args_copy["union_with"] = []
-            for union_with_spec_id in spec.args["union_with"]:
-                args_copy["union_with"].append(data[union_with_spec_id])
-            return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
-                spec.function
-            ](**args_copy)
-        elif spec.function in TransformerFactory.AVAILABLE_TRANSFORMERS:
-            return TransformerFactory.AVAILABLE_TRANSFORMERS[  # type: ignore
-                spec.function
-            ](**spec.args)
-        else:
-            raise NotImplementedError(
-                f"The requested transformer {spec.function} is not implemented."
-            )
+        special_handler = TransformerFactory._get_special_transformers().get(
+            spec.function
+        )
+        if special_handler:
+            return special_handler(spec, data)
+
+        transformer = TransformerFactory.AVAILABLE_TRANSFORMERS.get(spec.function)
+        if transformer:
+            return transformer(**(spec.args or {}))
+
+        raise NotImplementedError(
+            f"The requested transformer {spec.function} is not implemented."
+        )
 
     @staticmethod
-    def _get_spec_args_copy(spec_args: dict) -> dict:
+    def _get_special_transformers() -> dict[str, Callable]:
+        """Get handlers for transformers requiring data pre-processing."""
+        return {
+            "incremental_filter": TransformerFactory._build_incremental_filter,
+            "join": TransformerFactory._build_join,
+            "union": TransformerFactory._build_union,
+            "union_by_name": TransformerFactory._build_union,
+        }
+
+    @staticmethod
+    def _build_incremental_filter(
+        spec: TransformerSpec, data: OrderedDict | None
+    ) -> Callable:
+        """Build incremental_filter transformer, resolving optional increment_df.
+
+        Args:
+            spec: transformer specification.
+            data: ordered dict of dataframes to be transformed.
+
+        Returns:
+            Transformer function to be executed in .transform() spark function.
+        """
+        args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+        if "increment_df" in args_copy:
+            if not data:
+                raise ValueError("data is required for incremental_filter transformer.")
+            args_copy["increment_df"] = data[args_copy["increment_df"]]
+        return TransformerFactory.AVAILABLE_TRANSFORMERS[spec.function](**args_copy)
+
+    @staticmethod
+    def _build_join(spec: TransformerSpec, data: OrderedDict | None) -> Callable:
+        """Build join transformer, resolving join_with dataframe from input ids.
+
+        Args:
+            spec: transformer specification.
+            data: ordered dict of dataframes to be transformed.
+
+        Returns:
+            Transformer function to be executed in .transform() spark function.
+        """
+        args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+        if not data:
+            raise ValueError("data is required for join transformer.")
+        args_copy["join_with"] = data[args_copy["join_with"]]
+        return TransformerFactory.AVAILABLE_TRANSFORMERS[spec.function](**args_copy)
+
+    @staticmethod
+    def _build_union(spec: TransformerSpec, data: OrderedDict | None) -> Callable:
+        """Build union transformer, resolving union_with input ids to dataframes.
+
+        Args:
+            spec: transformer specification.
+            data: ordered dict of dataframes to be transformed.
+
+        Returns:
+            Transformer function to be executed in .transform() spark function.
+        """
+        args_copy = TransformerFactory._get_spec_args_copy(spec.args)
+        if not data:
+            raise ValueError("data is required for union transformer.")
+        if not spec.args:
+            raise ValueError("args are required for union transformer.")
+        args_copy["union_with"] = [
+            data[union_with_spec_id] for union_with_spec_id in spec.args["union_with"]
+        ]
+        return TransformerFactory.AVAILABLE_TRANSFORMERS[spec.function](**args_copy)
+
+    @staticmethod
+    def _get_spec_args_copy(spec_args: dict | None) -> dict:
         """Returns a shallow copy of `spec_args` to ensure immutability.
 
         Args:
@@ -142,4 +193,4 @@ class TransformerFactory(object):
             depending on how Spark handles state, the `join_with` argument may no
             longer be a string but a DataFrame, leading to key error.
         """
-        return dict(spec_args)
+        return dict(spec_args or {})

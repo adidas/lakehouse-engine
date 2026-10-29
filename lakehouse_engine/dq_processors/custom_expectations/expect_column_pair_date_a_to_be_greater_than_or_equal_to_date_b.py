@@ -1,7 +1,7 @@
 """Expectation to check if date column 'a' is greater or equal to date column 'b'."""
 
 import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnPairMapExpectation
@@ -44,9 +44,7 @@ class ColumnPairDateAToBeGreaterOrEqualToDateB(ColumnPairMapMetricProvider):
         Returns:
             Boolean on the basis of condition.
         """
-        return (
-            (column_A.isNotNull()) & (column_B.isNotNull()) & (column_A >= column_B)
-        )  # type: ignore
+        return (column_A.isNotNull()) & (column_B.isNotNull()) & (column_A >= column_B)
 
 
 class ExpectColumnPairDateAToBeGreaterThanOrEqualToDateB(ColumnPairMapExpectation):
@@ -168,9 +166,9 @@ class ExpectColumnPairDateAToBeGreaterThanOrEqualToDateB(ColumnPairMapExpectatio
 
     def _validate(
         self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> Any:
         """Custom implementation of the GE _validate method.
 

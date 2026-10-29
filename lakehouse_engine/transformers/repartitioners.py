@@ -1,6 +1,6 @@
 """Module with repartitioners transformers."""
 
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -8,7 +8,7 @@ from lakehouse_engine.transformers.exceptions import WrongArgumentsException
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Repartitioners(object):
+class Repartitioners:
     """Class containing repartitioners transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -34,8 +34,8 @@ class Repartitioners(object):
     @classmethod
     def repartition(
         cls,
-        num_partitions: Optional[int] = None,
-        cols: Optional[List[str]] = None,
+        num_partitions: int | None = None,
+        cols: list[str] | None = None,
     ) -> Callable:
         """Repartition a dataframe into n partitions.
 
@@ -54,7 +54,9 @@ class Repartitioners(object):
 
         def inner(df: DataFrame) -> DataFrame:
             if cols:
-                return df.repartition(num_partitions, *cols)
+                if num_partitions:
+                    return df.repartition(num_partitions, *cols)
+                return df.repartition(*cols)
             elif num_partitions:
                 return df.repartition(num_partitions)
             else:

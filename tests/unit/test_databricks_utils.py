@@ -37,28 +37,27 @@ def test_get_usage_context_for_serverless() -> None:
     """Test for get_usage_context_for_serverless method in DatabricksUtils."""
     # Create a fake module and function
     fake_module = types.ModuleType("dbruntime.databricks_repl_context")
-    fake_module.get_context = MagicMock(  # type: ignore[attr-defined]
-        return_value=MagicMock()
-    )
+    context_attr = "get_context"
+    setattr(fake_module, context_attr, MagicMock(return_value=MagicMock()))
     sys.modules["dbruntime"] = types.ModuleType("dbruntime")
     sys.modules["dbruntime.databricks_repl_context"] = fake_module
 
-    mock_context = MagicMock(**CONTEXT_KEYS)
+    mock_context = MagicMock()
+    mock_context.configure_mock(**CONTEXT_KEYS)
 
     # Patch get_context to return our mock context
-    with patch(
-        "dbruntime.databricks_repl_context.get_context", return_value=mock_context
-    ):
-
-        with patch(
+    with (
+        patch.object(fake_module, context_attr, return_value=mock_context),
+        patch(
             "lakehouse_engine.core.exec_env.ExecEnv.get_environment", return_value="dev"
-        ):
-            usage_stats: dict = {}
-            DatabricksUtils.get_usage_context_for_serverless(usage_stats)
+        ),
+    ):
+        usage_stats: dict = {}
+        DatabricksUtils.get_usage_context_for_serverless(usage_stats)
 
-            assert (
-                usage_stats == CONTROL_DATA
-            ), f"Expected usage_stats to be {CONTROL_DATA}, but got {usage_stats}"
+        assert usage_stats == CONTROL_DATA, (
+            f"Expected usage_stats to be {CONTROL_DATA}, but got {usage_stats}"
+        )
 
     # Clean up after test
     del sys.modules["dbruntime.databricks_repl_context"]

@@ -1,7 +1,7 @@
 """File manager module using boto3."""
 
 import time
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import boto3
 
@@ -45,10 +45,11 @@ def _dry_run(bucket: str, object_paths: list) -> dict:
 
 def _list_objects(
     s3_client: Any, bucket: str, path: str, paginator: str = ""
-) -> Tuple[list, str]:
+) -> tuple[list, str]:
     """List 1000 objects in a bucket given a prefix and paginator in s3.
 
     Args:
+        s3_client: boto3 s3 client instance.
         bucket: name of bucket to perform the list.
         path: path to be used as a prefix.
         paginator: paginator token to be used.
@@ -138,8 +139,8 @@ class S3FileManager(FileManager):
             ),
         }
 
-        self._logger.info("Function being executed: {}".format(self.function))
-        if self.function in available_functions.keys():
+        self._logger.info(f"Function being executed: {self.function}")
+        if self.function in available_functions:
             func = available_functions[self.function]
             func()
         else:
@@ -227,7 +228,6 @@ class S3FileManager(FileManager):
         If dry_run is set to True the function will print a dict with all the
         paths that would be moved based on the given keys.
         """
-        pass
 
     def request_restore(self) -> None:
         """Request the restore of archived data."""
@@ -256,10 +256,10 @@ class S3FileManager(FileManager):
 
         self._logger.info(f"""
             Restore status:
-            - Not Started: {restore_status.get('not_started_objects')}
-            - Ongoing: {restore_status.get('ongoing_objects')}
-            - Restored: {restore_status.get('restored_objects')}
-            Total objects in this restore process: {restore_status.get('total_objects')}
+            - Not Started: {restore_status.get("not_started_objects")}
+            - Ongoing: {restore_status.get("ongoing_objects")}
+            - Restored: {restore_status.get("restored_objects")}
+            Total objects in this restore process: {restore_status.get("total_objects")}
             """)
 
     def request_restore_to_destination_and_wait(self) -> None:
@@ -365,13 +365,13 @@ class S3FileManager(FileManager):
                 S3FileManager._logger.info(response)
 
 
-class ArchiveFileManager(object):
+class ArchiveFileManager:
     """Set of actions to restore archives."""
 
     _logger = LoggingHandler(__name__).get_logger()
 
     @staticmethod
-    def _get_archived_object(bucket: str, object_key: str) -> Optional[Any]:
+    def _get_archived_object(bucket: str, object_key: str) -> Any | None:
         """Get the archived object if it's an object.
 
         Args:
@@ -395,7 +395,7 @@ class ArchiveFileManager(object):
     @staticmethod
     def _check_object_restore_status(
         bucket: str, object_key: str
-    ) -> Optional[RestoreStatus]:
+    ) -> RestoreStatus | None:
         """Check the restore status of the archive.
 
         Args:
@@ -595,8 +595,8 @@ class ArchiveFileManager(object):
         if not dry_run:
             ArchiveFileManager._logger.info("Checking the restore status in 5 minutes.")
             wait_time = 300
-            while restore_status.get("total_objects") > restore_status.get(
-                "restored_objects"
+            while int(restore_status.get("total_objects") or 0) > int(
+                restore_status.get("restored_objects") or 0
             ):
                 ArchiveFileManager._logger.info(
                     "Not all objects have been restored yet, checking the status again "

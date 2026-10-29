@@ -1,7 +1,6 @@
 """Module to define Heartbeat Sensor algorithm behavior."""
 
 import re
-from typing import Optional
 
 from delta import DeltaTable
 from pyspark import Row
@@ -44,7 +43,7 @@ class Heartbeat(Algorithm):
 
     _LOGGER = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct Heartbeat instances.
 
         Args:
@@ -68,7 +67,6 @@ class Heartbeat(Algorithm):
         for (
             control_table_df_row
         ) in active_jobs_from_heartbeat_control_table_df.collect():
-
             sensor_acon = self._get_sensor_acon_from_heartbeat(
                 self.spec, control_table_df_row
             )
@@ -78,7 +76,6 @@ class Heartbeat(Algorithm):
             )
 
             if sensors_with_new_data:
-
                 self._update_heartbeat_status_with_sensor_info(
                     active_jobs_from_heartbeat_control_table_df,
                     heartbeat_sensor_delta_table,
@@ -217,7 +214,6 @@ class Heartbeat(Algorithm):
             HeartbeatSensorSource.SAP_B4.value,
             HeartbeatSensorSource.SAP_BW.value,
         ]:
-
             sensors_to_execute["input_spec"]["options"]["prepareQuery"] = (
                 SensorUpstreamManager.generate_sensor_sap_logchain_query(
                     chain_id=control_table_df_row.sensor_id,
@@ -240,7 +236,6 @@ class Heartbeat(Algorithm):
             control_table_df_row.sensor_source.lower()
             == HeartbeatSensorSource.LMU_DELTA_TABLE.value
         ):
-
             sensors_to_execute["preprocess_query"] = (
                 SensorUpstreamManager.generate_filter_exp_query(
                     sensor_id=control_table_df_row.sensor_id,
@@ -257,7 +252,6 @@ class Heartbeat(Algorithm):
             control_table_df_row.sensor_source.lower()
             == HeartbeatSensorSource.KAFKA.value
         ):
-
             kafka_options = cls._get_all_kafka_options(
                 heartbeat_spec.kafka_configs,
                 control_table_df_row["sensor_id"],
@@ -271,9 +265,9 @@ class Heartbeat(Algorithm):
     @classmethod
     def _get_all_kafka_options(
         cls,
-        kafka_configs: dict,
+        kafka_configs: dict | None,
         kafka_sensor_id: str,
-        kafka_secret_scope: str,
+        kafka_secret_scope: str | None,
     ) -> dict:
         """Get all Kafka extra options for sensor ACON.
 
@@ -287,6 +281,15 @@ class Heartbeat(Algorithm):
         Returns:
             The sensor acon dict having enhanced options for kafka source.
         """
+        if not kafka_configs:
+            raise ValueError(
+                "kafka_configs must be provided for kafka heartbeat sensors."
+            )
+        if not kafka_secret_scope:
+            raise ValueError(
+                "kafka_secret_scope must be provided for kafka heartbeat sensors."
+            )
+
         sensor_id_desc = kafka_sensor_id.split(":")
         dp_name_filter = sensor_id_desc[0].strip()
         KAFKA_TOPIC = sensor_id_desc[1].strip()
@@ -365,7 +368,7 @@ class Heartbeat(Algorithm):
     def _get_heartbeat_sensor_condition(
         cls,
         sensors_with_new_data: dict,
-    ) -> Optional[str]:
+    ) -> str:
         """Get heartbeat sensor new event available condition.
 
         :param sensors_with_new_data: dict having NEW_EVENT_AVAILABLE sensor_id record.
@@ -607,7 +610,7 @@ class Heartbeat(Algorithm):
         )
 
         heartbeat_sensor_table_df = ExecEnv.SESSION.table(heartbeat_sensor_db_table)
-        final_df: Optional[DataFrame] = None
+        final_df: DataFrame | None = None
 
         for row in jobs_to_trigger:
             run_id = None
@@ -625,7 +628,7 @@ class Heartbeat(Algorithm):
                 if exception is None and run_id is not None:
                     status_df = (
                         heartbeat_sensor_table_df.filter(
-                            (col("trigger_job_id") == row["trigger_job_id"])
+                            col("trigger_job_id") == row["trigger_job_id"]
                         )
                         .withColumn("job_start_timestamp", current_timestamp())
                         .withColumn("status", lit(HeartbeatStatus.IN_PROGRESS.value))
@@ -681,8 +684,10 @@ class Heartbeat(Algorithm):
 
         delta_table.alias("trgt").merge(
             heartbeat_sensor_data_feed_csv_df.alias("source"),
-            ("""source.sensor_id = trgt.sensor_id and
-                trgt.trigger_job_id = source.trigger_job_id"""),
+            (
+                """source.sensor_id = trgt.sensor_id and
+                trgt.trigger_job_id = source.trigger_job_id"""
+            ),
         ).whenNotMatchedInsert(
             values={
                 "sensor_source": "source.sensor_source",
@@ -813,9 +818,11 @@ class Heartbeat(Algorithm):
             delta_table.alias("target")
             .merge(
                 job_id_filter_control_table_df.alias("source"),
-                (f"""target.sensor_source = source.sensor_source and
+                (
+                    f"""target.sensor_source = source.sensor_source and
                 target.sensor_id = source.sensor_id and
-                target.trigger_job_id = '{job_id}'"""),
+                target.trigger_job_id = '{job_id}'"""
+                ),
             )
             .whenMatchedUpdate(
                 set={

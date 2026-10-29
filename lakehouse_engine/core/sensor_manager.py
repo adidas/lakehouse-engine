@@ -2,7 +2,6 @@
 
 import json
 from datetime import datetime
-from typing import List, Optional, Tuple
 
 import requests
 from delta.tables import DeltaTable
@@ -21,7 +20,7 @@ from lakehouse_engine.io.reader_factory import ReaderFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class SensorControlTableManager(object):
+class SensorControlTableManager:
     """Class to control the Sensor execution."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -30,7 +29,7 @@ class SensorControlTableManager(object):
     def check_if_sensor_has_acquired_data(
         cls,
         sensor_id: str,
-        control_db_table_name: str,
+        control_db_table_name: str | None,
     ) -> bool:
         """Check if sensor has acquired new data.
 
@@ -56,8 +55,8 @@ class SensorControlTableManager(object):
         cls,
         sensor_spec: SensorSpec,
         status: str,
-        upstream_key: str = None,
-        upstream_value: str = None,
+        upstream_key: str | None = None,
+        upstream_value: str | None = None,
     ) -> None:
         """Control sensor execution storing the execution data in a delta table.
 
@@ -100,9 +99,9 @@ class SensorControlTableManager(object):
     @classmethod
     def _update_sensor_control(
         cls,
-        data: List[dict],
+        data: list[dict],
         sensor_update_set: dict,
-        sensor_control_table: str,
+        sensor_control_table: str | None,
         sensor_id: str,
     ) -> None:
         """Update sensor control delta table.
@@ -113,6 +112,8 @@ class SensorControlTableManager(object):
             sensor_control_table: control table name.
             sensor_id: sensor_id to be updated.
         """
+        if not sensor_control_table:
+            raise ValueError("sensor_control_table must be provided.")
         sensors_delta_table = DeltaTable.forName(
             ExecEnv.SESSION,
             sensor_control_table,
@@ -129,10 +130,10 @@ class SensorControlTableManager(object):
         cls,
         spec: SensorSpec,
         status: str,
-        upstream_key: str,
-        upstream_value: str,
-        status_change_timestamp: Optional[datetime] = None,
-    ) -> List[dict]:
+        upstream_key: str | None,
+        upstream_value: str | None,
+        status_change_timestamp: datetime | None = None,
+    ) -> list[dict]:
         """Convert sensor data to dataframe input data.
 
         Args:
@@ -166,7 +167,7 @@ class SensorControlTableManager(object):
         ]
 
     @classmethod
-    def _get_sensor_update_set(cls, **kwargs: Optional[str] | List[str]) -> dict:
+    def _get_sensor_update_set(cls, **kwargs: str | None | list[str]) -> dict:
         """Get the sensor update set.
 
         Args:
@@ -189,10 +190,10 @@ class SensorControlTableManager(object):
     @classmethod
     def read_sensor_table_data(
         cls,
-        control_db_table_name: str,
-        sensor_id: str = None,
-        assets: list = None,
-    ) -> Optional[Row]:
+        control_db_table_name: str | None,
+        sensor_id: str | None = None,
+        assets: list | None = None,
+    ) -> Row | None:
         """Read data from delta table containing sensor status info.
 
         Args:
@@ -206,6 +207,8 @@ class SensorControlTableManager(object):
         Returns:
             Row containing the data for the provided sensor_id.
         """
+        if not control_db_table_name:
+            raise ValueError("control_db_table_name must be provided.")
         df = DeltaTable.forName(
             ExecEnv.SESSION,
             control_db_table_name,
@@ -223,7 +226,7 @@ class SensorControlTableManager(object):
         return df.first()
 
 
-class SensorUpstreamManager(object):
+class SensorUpstreamManager:
     """Class to deal with Sensor Upstream data."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -233,10 +236,10 @@ class SensorUpstreamManager(object):
         cls,
         sensor_id: str,
         filter_exp: str,
-        control_db_table_name: str = None,
-        upstream_key: str = None,
-        upstream_value: str = None,
-        upstream_table_name: str = None,
+        control_db_table_name: str | None = None,
+        upstream_key: str | None = None,
+        upstream_value: str | None = None,
+        upstream_table_name: str | None = None,
     ) -> str:
         """Generates a sensor preprocess query based on timestamp logic.
 
@@ -295,10 +298,7 @@ class SensorUpstreamManager(object):
             )
 
         query = (
-            f"{select_exp} "
-            f"FROM {source_table} "
-            f"WHERE {filter_exp} "
-            f"HAVING COUNT(1) > 0"
+            f"{select_exp} FROM {source_table} WHERE {filter_exp} HAVING COUNT(1) > 0"
         )
 
         return query
@@ -317,7 +317,7 @@ class SensorUpstreamManager(object):
             The query string.
         """
         query = (
-            f"SELECT * "  # nosec
+            f"SELECT * "  # noqa: S608
             f"FROM sensor_new_data "
             f"WHERE"
             f" _change_type in ('insert', 'update_postimage')"
@@ -337,6 +337,8 @@ class SensorUpstreamManager(object):
         Returns:
             An empty dataframe if it doesn't have new data otherwise the new data
         """
+        if not sensor_spec.input_spec:
+            raise ValueError("sensor input_spec must be provided to read new data.")
         new_data_df = ReaderFactory.get_data(sensor_spec.input_spec)
 
         if sensor_spec.preprocess_query:
@@ -349,7 +351,7 @@ class SensorUpstreamManager(object):
     def get_new_data(
         cls,
         new_data_df: DataFrame,
-    ) -> Optional[Row]:
+    ) -> Row | None:
         """Get new data from upstream df if it's present.
 
         Args:
@@ -364,10 +366,10 @@ class SensorUpstreamManager(object):
     @classmethod
     def generate_sensor_sap_logchain_query(
         cls,
-        chain_id: str,
-        dbtable: str = SAPLogchain.DBTABLE.value,
-        status: str = SAPLogchain.GREEN_STATUS.value,
-        engine_table_name: str = SAPLogchain.ENGINE_TABLE.value,
+        chain_id: str | None,
+        dbtable: str | None = SAPLogchain.DBTABLE.value,
+        status: str | None = SAPLogchain.GREEN_STATUS.value,
+        engine_table_name: str | None = SAPLogchain.ENGINE_TABLE.value,
     ) -> str:
         """Generates a sensor query based in the SAP Logchain table.
 
@@ -388,6 +390,10 @@ class SensorUpstreamManager(object):
                 "To query on log chain SAP table the chain id should be defined!"
             )
 
+        dbtable = dbtable or SAPLogchain.DBTABLE.value
+        status = status or SAPLogchain.GREEN_STATUS.value
+        engine_table_name = engine_table_name or SAPLogchain.ENGINE_TABLE.value
+
         select_exp = (
             "SELECT CHAIN_ID, CONCAT(DATUM, ZEIT) AS LOAD_DATE, ANALYZED_STATUS"
         )
@@ -407,13 +413,15 @@ class SensorUpstreamManager(object):
         return query
 
 
-class SensorJobRunManager(object):
+class SensorJobRunManager:
     """Class to manage triggering of Jobs via Job Run API."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
 
     @classmethod
-    def run_job(cls, job_id: str, token: str, host: str) -> Tuple[int, Optional[str]]:
+    def run_job(
+        cls, job_id: str, token: str, host: str
+    ) -> tuple[int | None, str | None]:
         """Trigger the job based on its id.
 
         Args:
@@ -442,7 +450,7 @@ class SensorJobRunManager(object):
         if res.status_code == 200:
             run_id = (json.loads(res.text))["run_id"]
             cls._LOGGER.info(
-                f"Job : {str(job_id)} triggered successfully... RUN ID : {str(run_id)}"
+                f"Job : {job_id!s} triggered successfully... RUN ID : {run_id!s}"
             )
         else:
             ex = str(res.json()["error_code"]) + "  " + res.json()["message"]

@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import os
 import shutil
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Generator, List, cast
+from typing import Any, cast
 
 import requests
 from pyspark.sql import DataFrame
@@ -27,7 +28,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 _logger = LoggingHandler(__name__).get_logger()
 
 
-class SharepointUtils(object):
+class SharepointUtils:
     """Class with methods to connect and extract data from Sharepoint."""
 
     def __init__(
@@ -40,13 +41,13 @@ class SharepointUtils(object):
         drive_name: str,
         file_name: str,
         secret: str,
-        folder_relative_path: str = None,
+        folder_relative_path: str | None = None,
         chunk_size: int = 5 * 1024 * 1024,  # 5 MB
-        local_options: dict = None,
+        local_options: dict | None = None,
         conflict_behaviour: str = "replace",
-        file_pattern: str = None,
-        file_type: str = None,
-    ):
+        file_pattern: str | None = None,
+        file_type: str | None = None,
+    ) -> None:
         """Instantiate objects of the SharepointUtils class.
 
         Args:
@@ -101,7 +102,7 @@ class SharepointUtils(object):
             self.token = self.app.acquire_token_for_client(
                 scopes=[f"{ExecEnv.ENGINE_CONFIG.sharepoint_api_domain}/.default"]
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             _logger.error(f"Token acquisition error: {err}")
 
     def _create_app(self) -> None:
@@ -130,9 +131,9 @@ class SharepointUtils(object):
         self,
         endpoint: str,
         method: str = "GET",
-        headers: dict = None,
-        json_options: dict = None,
-        data: object = None,
+        headers: dict | None = None,
+        json_options: dict | None = None,
+        data: Any = None,
         stream: bool = False,
     ) -> requests.Response:
         """Execute API requests to Microsoft Graph API.
@@ -150,6 +151,7 @@ class SharepointUtils(object):
             json_options: Optional; JSON data to include in the request body.
             method: The HTTP method to use ('GET', 'POST', 'PUT', etc.).
             data: Optional; additional data (e.g., file content) on request body.
+            stream: If the response should be streamed (useful for large files).
 
         Returns:
             A Response object from the request library.
@@ -179,10 +181,11 @@ class SharepointUtils(object):
                     stream=stream,
                 )
                 return response
+            raise SharePointAPIError("Authentication token is missing or invalid.")
         except RequestException as error:
             raise SharePointAPIError(f"{error}")
 
-    def _parse_json(self, response: requests.Response, context: str) -> Dict[str, Any]:
+    def _parse_json(self, response: requests.Response, context: str) -> dict[str, Any]:
         """Parse JSON response and raise on errors.
 
         Args:
@@ -252,7 +255,7 @@ class SharepointUtils(object):
 
         except RequestException as error:
             raise SharePointAPIError(f"{error}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise RuntimeError(
                 f"Unexpected error while reading site ID for site '{self.site_name}':"
                 f"{e}"
@@ -300,7 +303,7 @@ class SharepointUtils(object):
             raise SharePointAPIError(f"Request error: {error}")
 
     def check_if_endpoint_exists(
-        self, folder_root_path: str = None, raise_error: bool = True
+        self, folder_root_path: str | None = None, raise_error: bool = True
     ) -> bool:
         """Check if a Sharepoint drive or folder exists.
 
@@ -352,7 +355,7 @@ class SharepointUtils(object):
         """
         try:
             os.listdir(local_path)
-        except IOError as error:
+        except OSError as error:
             raise SharePointAPIError(f"{error}")
 
     def save_to_staging_area(self, sp_file: SharepointFile) -> str:
@@ -384,7 +387,7 @@ class SharepointUtils(object):
             )
             return self.download_file_streaming(sp_file)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise SharePointAPIError(f"Failed to write '{sp_file.file_name}': {e}")
 
     def download_file_streaming(self, sp_file: SharepointFile) -> str:
@@ -449,7 +452,7 @@ class SharepointUtils(object):
             file_path = local_base_path / sp_file.file_name
             file_path.write_bytes(sp_file.content)
             return str(file_path)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise RuntimeError(
                 f"Failed to write file '{sp_file.file_name}' to Unity Volume: {e}"
             )
@@ -480,7 +483,7 @@ class SharepointUtils(object):
                 **self.local_options if self.local_options else {},
             )
             self._rename_local_file(self.local_path, self.file_name)
-        except IOError as error:
+        except OSError as error:
             raise SharePointAPIError(f"{error}")
 
     def _rename_local_file(self, local_path: str, file_name: str) -> None:
@@ -492,13 +495,13 @@ class SharepointUtils(object):
         """
         files_in_dir = os.listdir(local_path)
 
-        part_file = [f for f in files_in_dir if f.startswith("part-")][0]
+        part_file = next(f for f in files_in_dir if f.startswith("part-"))
 
         try:
             os.rename(
                 os.path.join(local_path, part_file), os.path.join(local_path, file_name)
             )
-        except IOError as error:
+        except OSError as error:
             raise SharePointAPIError(f"{error}")
 
     def write_to_sharepoint(self) -> None:
@@ -574,7 +577,7 @@ class SharepointUtils(object):
             if local_path.exists():
                 shutil.rmtree(local_path)
             local_path.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise SharePointAPIError(f"Failed to clear or recreate local path: {e}")
 
     @contextmanager
@@ -592,7 +595,7 @@ class SharepointUtils(object):
         finally:
             try:
                 self.delete_local_path()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 _logger.warning(f"Failed to clean up local path: {e}")
 
     def list_items_in_path(self, path: str) -> list[Any]:
@@ -617,7 +620,7 @@ class SharepointUtils(object):
                 f"sites/{site_id}/drives/{drive_id}/root/children"
             )
             data = self._parse_json(resp, "listing root children")
-            return cast(List[dict[str, Any]], data.get("value", []))
+            return cast(list[dict[str, Any]], data.get("value", []))
 
         path_parts = path.split("/")
 
@@ -627,7 +630,7 @@ class SharepointUtils(object):
             f"{site_id}/drives/{drive_id}/root/children"
         )
         data = self._parse_json(resp, "listing root children")
-        items = cast(List[dict[str, Any]], data.get("value", []))
+        items = cast(list[dict[str, Any]], data.get("value", []))
 
         for component in path_parts:
             current_item = next(
@@ -645,7 +648,7 @@ class SharepointUtils(object):
                     f"{current_item['id']}/children"
                 )
                 data = self._parse_json(resp, f"listing children for '{component}'")
-                items = cast(List[dict[str, Any]], data.get("value", []))
+                items = cast(list[dict[str, Any]], data.get("value", []))
             else:
                 # it's a file; ensure we have downloadUrl
                 if "@microsoft.graph.downloadUrl" not in current_item:

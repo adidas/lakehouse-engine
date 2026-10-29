@@ -1,7 +1,5 @@
 """Test full loads."""
 
-from typing import List
-
 import pytest
 
 from lakehouse_engine.core.definitions import InputFormat
@@ -31,7 +29,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
         ["full_overwrite", InputFormat.DELTAFILES.value],
     ],
 )
-def test_batch_full_load(scenario: List[str]) -> None:
+def test_batch_full_load(scenario: list[str]) -> None:
     """Test full loads in batch mode.
 
     Args:

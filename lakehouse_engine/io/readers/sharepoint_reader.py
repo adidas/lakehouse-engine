@@ -5,12 +5,15 @@ import fnmatch
 import time
 from functools import reduce
 from pathlib import Path
-from typing import Optional
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
 
-from lakehouse_engine.core.definitions import InputSpec, SharepointFile
+from lakehouse_engine.core.definitions import (
+    InputSpec,
+    SharepointFile,
+    SharepointOptions,
+)
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.io.exceptions import (
     InvalidSharepointPathException,
@@ -26,14 +29,14 @@ _LOGGER = LoggingHandler(__name__).get_logger()
 class SharepointReader(Reader):
     """Reader implementation for Sharepoint files."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct SharepointReader instance.
 
         Args:
             input_spec: InputSpec with Sharepoint parameters.
         """
         super().__init__(input_spec)
-        self.opts = self._input_spec.sharepoint_opts
+        self.opts = self._get_sharepoint_opts()
         self.sharepoint_utils = self._get_sharepoint_utils()
 
         if self.opts.file_name and self.opts.folder_relative_path:
@@ -69,6 +72,12 @@ class SharepointReader(Reader):
 
         self._set_folder_paths()
 
+    def _get_sharepoint_opts(self) -> SharepointOptions:
+        """Return sharepoint options ensuring they are available."""
+        if not self._input_spec.sharepoint_opts:
+            raise ValueError("sharepoint_opts must be provided for Sharepoint reader.")
+        return self._input_spec.sharepoint_opts
+
     def _set_folder_paths(self) -> None:
         """Set self.file_path, self.success_folder, and self.error_folder."""
         # Compute archive base folder from final self.file_path
@@ -102,7 +111,7 @@ class SharepointReader(Reader):
             InputNotFoundException: Missing required Sharepoint options.
             NotSupportedException: Streaming requested or reader unsupported.
         """
-        self._input_spec.sharepoint_opts.validate_for_reader()
+        self.opts.validate_for_reader()
 
         if self._input_spec.read_type == "streaming":
             raise NotSupportedException(
@@ -118,20 +127,20 @@ class SharepointReader(Reader):
             SharepointUtils.
         """
         return SharepointUtils(
-            client_id=self._input_spec.sharepoint_opts.client_id,
-            tenant_id=self._input_spec.sharepoint_opts.tenant_id,
-            local_path=self._input_spec.sharepoint_opts.local_path,
-            api_version=self._input_spec.sharepoint_opts.api_version,
-            site_name=self._input_spec.sharepoint_opts.site_name,
-            drive_name=self._input_spec.sharepoint_opts.drive_name,
-            file_name=self._input_spec.sharepoint_opts.file_name,
-            folder_relative_path=self._input_spec.sharepoint_opts.folder_relative_path,
-            chunk_size=self._input_spec.sharepoint_opts.chunk_size,
-            local_options=self._input_spec.sharepoint_opts.local_options,
-            secret=self._input_spec.sharepoint_opts.secret,
-            conflict_behaviour=self._input_spec.sharepoint_opts.conflict_behaviour,
-            file_pattern=self._input_spec.sharepoint_opts.file_pattern,
-            file_type=self._input_spec.sharepoint_opts.file_type,
+            client_id=self.opts.client_id,
+            tenant_id=self.opts.tenant_id,
+            local_path=self.opts.local_path,
+            api_version=self.opts.api_version,
+            site_name=self.opts.site_name,
+            drive_name=self.opts.drive_name,
+            file_name=self.opts.file_name or "",
+            folder_relative_path=self.opts.folder_relative_path,
+            chunk_size=self.opts.chunk_size or (5 * 1024 * 1024),
+            local_options=self.opts.local_options,
+            secret=self.opts.secret or "",
+            conflict_behaviour=self.opts.conflict_behaviour or "replace",
+            file_pattern=self.opts.file_pattern,
+            file_type=self.opts.file_type,
         )
 
 
@@ -142,7 +151,9 @@ class SharepointCsvReader(SharepointReader):
     Ensures schema consistency and archives processed files.
     """
 
-    def read(self, file_path: str = None, pattern: str = None) -> DataFrame:
+    def read(
+        self, file_path: str | None = None, pattern: str | None = None
+    ) -> DataFrame:
         """Read CSV data from Sharepoint.
 
         Args:
@@ -186,9 +197,9 @@ class SharepointCsvReader(SharepointReader):
 
     def _with_archive_flags(self, sp_file: SharepointFile) -> SharepointFile:
         """Apply archive-related runtime flags before archiving a file."""
-        sp_file.skip_rename = bool(
-            self._input_spec.sharepoint_opts.skip_rename
-        ) or getattr(sp_file, "skip_rename", False)
+        sp_file.skip_rename = bool(self.opts.skip_rename) or getattr(
+            sp_file, "skip_rename", False
+        )
         return sp_file
 
     def _load_and_archive_file(self, sp_file: SharepointFile) -> DataFrame:
@@ -257,7 +268,7 @@ class SharepointCsvReader(SharepointReader):
             )
 
     def _get_csv_files_in_folder(
-        self, folder_path: str, pattern: str = None
+        self, folder_path: str, pattern: str | None = None
     ) -> list[SharepointFile]:
         """List CSV files in a Sharepoint folder, optionally filtered by pattern.
 
@@ -315,6 +326,8 @@ class SharepointCsvReader(SharepointReader):
 
         local_file = self.sharepoint_utils.save_to_staging_area(sp_file)
 
+        if not sp_file.content:
+            raise ValueError(f"Failed to read Sharepoint file: '{sp_file.file_path}'.")
         spark_options = self.resolve_spark_csv_options(sp_file.content)
 
         try:
@@ -333,15 +346,16 @@ class SharepointCsvReader(SharepointReader):
             return sp_file, df
 
         except Exception as e:
-            _LOGGER.error(
+            _LOGGER.exception(
                 f"Failed to read local copy of Sharepoint file: {local_file}",
-                exc_info=True,
             )
             raise ValueError(
                 f"Failed to read Sharepoint file: '{sp_file.file_path}'."
             ) from e
 
-    def read_csv_folder(self, folder_path: str, pattern: str = None) -> DataFrame:
+    def read_csv_folder(
+        self, folder_path: str, pattern: str | None = None
+    ) -> DataFrame:
         """Read and combine CSVs from a Sharepoint folder.
 
         If a pattern is provided, only files whose names contain the pattern will be
@@ -400,7 +414,7 @@ class SharepointCsvReader(SharepointReader):
     def _validate_and_read_file(
         self,
         file: SharepointFile,
-        base_schema: Optional[StructType],
+        base_schema: StructType | None,
     ) -> tuple[SharepointFile, DataFrame]:
         """Validate schema and read CSV file into a Spark DataFrame.
 
@@ -455,7 +469,7 @@ class SharepointCsvReader(SharepointReader):
                     move_enabled=self.opts.archive_enabled,
                 )
                 file._already_archived = True
-            except Exception as archive_error:
+            except Exception as archive_error:  # noqa: BLE001
                 _LOGGER.warning(f"Secondary archiving failed: {archive_error}")
         else:
             _LOGGER.info(
@@ -465,8 +479,8 @@ class SharepointCsvReader(SharepointReader):
     def detect_delimiter(
         self,
         file_content: bytes,
-        provided_delimiter: Optional[str] = None,
-        expected_columns: Optional[list] = None,
+        provided_delimiter: str | None = None,
+        expected_columns: list | None = None,
     ) -> str:
         """Detect the appropriate delimiter for a CSV file.
 
@@ -521,7 +535,7 @@ class SharepointCsvReader(SharepointReader):
 
             return detected_delimiter
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _LOGGER.warning(
                 f"Failed to auto-detect delimiter. Defaulting to comma. Reason: {e}"
             )
@@ -536,7 +550,7 @@ class SharepointCsvReader(SharepointReader):
         Returns:
             Dict of Spark CSV options (includes delimiter).
         """
-        local_options = self._input_spec.sharepoint_opts.local_options or {}
+        local_options = self.opts.local_options or {}
 
         if "sep" in local_options:
             user_delimiter = local_options["sep"]
@@ -573,7 +587,7 @@ class SharepointCsvReader(SharepointReader):
                         expected_columns,
                         actual_columns,
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 _LOGGER.warning(
                     "Failed to validate expected_columns against CSV header. "
                     "The read will proceed. Reason: %s",
@@ -630,6 +644,8 @@ class SharepointReaderFactory:
         Raises:
             ValueError: If file format is unsupported or cannot be determined.
         """
+        if not input_spec.sharepoint_opts:
+            raise ValueError("sharepoint_opts must be provided for Sharepoint reader.")
         opts = input_spec.sharepoint_opts
 
         # 1. If reading a specific file, use file_name

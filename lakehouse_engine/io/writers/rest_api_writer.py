@@ -1,7 +1,9 @@
 """Module to define behaviour to write to REST APIs."""
 
 import json
-from typing import Any, Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
+from typing import Any
 
 from pyspark.sql import DataFrame, Row
 
@@ -22,7 +24,9 @@ class RestApiWriter(Writer):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct RestApiWriter instances.
 
         Args:
@@ -74,19 +78,18 @@ class RestApiWriter(Writer):
         Returns:
             Function to be called inside Spark dataframe.foreach.
         """
-        headers = output_spec.options.get("rest_api_header", None)
-        basic_auth_dict = output_spec.options.get("rest_api_basic_auth", None)
-        url = output_spec.options["rest_api_url"]
-        method = output_spec.options.get("rest_api_method", RestMethods.POST.value)
-        sleep_seconds = output_spec.options.get("rest_api_sleep_seconds", 0)
-        is_file_payload = output_spec.options.get("rest_api_is_file_payload", False)
-        file_payload_name = output_spec.options.get(
-            "rest_api_file_payload_name", "file"
-        )
-        extra_json_payload = output_spec.options.get(
-            "rest_api_extra_json_payload", None
-        )
-        success_status_codes = output_spec.options.get(
+        options = output_spec.options or {}
+        headers = options.get("rest_api_header", None)
+        basic_auth_dict = options.get("rest_api_basic_auth", None)
+        url = options.get("rest_api_url")
+        if not url:
+            raise ValueError("rest_api_url must be provided in output options.")
+        method = options.get("rest_api_method", RestMethods.POST.value)
+        sleep_seconds = options.get("rest_api_sleep_seconds", 0)
+        is_file_payload = options.get("rest_api_is_file_payload", False)
+        file_payload_name = options.get("rest_api_file_payload_name", "file")
+        extra_json_payload = options.get("rest_api_extra_json_payload", None)
+        success_status_codes = options.get(
             "rest_api_success_status_codes", RestStatusCodes.OK_STATUS_CODES.value
         )
 
@@ -160,7 +163,7 @@ class RestApiWriter(Writer):
 
     @staticmethod
     def _write_to_rest_api_in_streaming_mode(
-        df: DataFrame, output_spec: OutputSpec, data: OrderedDict
+        df: DataFrame, output_spec: OutputSpec, data: OrderedDict | None
     ) -> None:
         """Write to REST API in streaming mode.
 
@@ -183,8 +186,8 @@ class RestApiWriter(Writer):
             stream_df.awaitTermination(output_spec.streaming_await_termination_timeout)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+    def _write_transformed_micro_batch(
+        output_spec: OutputSpec, data: OrderedDict | None
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

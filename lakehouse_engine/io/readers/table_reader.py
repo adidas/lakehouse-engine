@@ -10,7 +10,7 @@ from lakehouse_engine.io.reader import Reader
 class TableReader(Reader):
     """Class to read data from a table."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct TableReader instances.
 
         Args:
@@ -24,6 +24,8 @@ class TableReader(Reader):
         Returns:
             A dataframe containing the data from the table.
         """
+        if not self._input_spec.db_table:
+            raise ValueError("db_table must be provided for table reader.")
         if self._input_spec.read_type == ReadType.BATCH.value:
             return ExecEnv.SESSION.read.options(
                 **self._input_spec.options if self._input_spec.options else {}

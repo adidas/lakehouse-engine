@@ -3,7 +3,7 @@
 from lakehouse_engine.core.definitions import SQLParser
 
 
-class SQLParserUtils(object):
+class SQLParserUtils:
     """Parser utilities class."""
 
     def split_sql_commands(
@@ -106,7 +106,9 @@ class SQLParserUtils(object):
 
         return self.separated_sql_commands
 
-    def _get_substring(self, first_char: int = None, last_char: int = None) -> str:
+    def _get_substring(
+        self, first_char: int | None = None, last_char: int | None = None
+    ) -> str:
         """Get the substring based on the indexes passed as arguments.
 
         Args:
@@ -158,7 +160,7 @@ class SQLParserUtils(object):
             or closing of a comment, is inside of quotes, comments,...
         """
         if value.__class__.__name__ == "list":
-            return sum(value) == 0
+            return sum(int(v) for v in value) == 0
         else:
             return value != SQLParser.BACKSLASH.value
 

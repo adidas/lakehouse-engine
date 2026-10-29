@@ -217,8 +217,7 @@ def test_table_manager(scenarios: dict, caplog: Any) -> None:
             )
             assert (
                 "sql command: DELETE FROM test_db.DummyTable"
-                "BronzeSimpleSplitScenario WHERE year=2021"
-                in caplog.text  # nosec: B608
+                "BronzeSimpleSplitScenario WHERE year=2021" in caplog.text  # nosec: B608
             )
 
         if scenarios.get("drop_tbl_json") is not None:

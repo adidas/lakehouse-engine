@@ -1,10 +1,11 @@
 """Utilities for databricks operations."""
 
 import ast
+import importlib
 import json
 import os
 import re
-from typing import Any, Tuple
+from typing import Any
 
 from pyspark.sql import SparkSession
 
@@ -12,7 +13,7 @@ from lakehouse_engine.core.definitions import EngineStats
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class DatabricksUtils(object):
+class DatabricksUtils:
     """Databricks utilities class."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -24,10 +25,7 @@ class DatabricksUtils(object):
         Returns:
             True if the current databricks workload is serverless, False otherwise.
         """
-        if os.getenv("IS_SERVERLESS", "false").lower() == "true":
-            return True
-        else:
-            return False
+        return os.getenv("IS_SERVERLESS", "false").lower() == "true"
 
     @staticmethod
     def get_db_utils(spark: SparkSession) -> Any:
@@ -40,20 +38,20 @@ class DatabricksUtils(object):
             Dbutils from databricks.
         """
         try:
-            from pyspark.dbutils import DBUtils
+            dbutils_module = importlib.import_module("pyspark.dbutils")
+            dbutils_class = dbutils_module.DBUtils
 
             if "dbutils" not in locals():
-                dbutils = DBUtils(spark)
+                dbutils = dbutils_class(spark)
             else:
                 dbutils = locals().get("dbutils")
         except ImportError:
-            import IPython
-
-            dbutils = IPython.get_ipython().user_ns["dbutils"]
+            ipython_module = importlib.import_module("IPython")
+            dbutils = ipython_module.get_ipython().user_ns["dbutils"]
         return dbutils
 
     @staticmethod
-    def get_databricks_job_information(spark: SparkSession) -> Tuple[str, str]:
+    def get_databricks_job_information(spark: SparkSession) -> tuple[str, str]:
         """Get notebook context from running acon.
 
         Args:
@@ -64,12 +62,10 @@ class DatabricksUtils(object):
         """
         dbutils = DatabricksUtils.get_db_utils(spark)
         notebook_context = json.loads(
-            (
-                dbutils.notebook.entry_point.getDbutils()
-                .notebook()
-                .getContext()
-                .safeToJson()
-            )
+            dbutils.notebook.entry_point.getDbutils()
+            .notebook()
+            .getContext()
+            .safeToJson()
         )
 
         return notebook_context["attributes"].get("orgId"), notebook_context[
@@ -155,9 +151,8 @@ class DatabricksUtils(object):
             # to split it and adequately process it
             if "#" in spark_conf_value:
                 array_key = spark_conf_value.split("#")
-                array_values = ast.literal_eval(
-                    ExecEnv.SESSION.conf.get(array_key[0], "[]")
-                )
+                raw_value = ExecEnv.SESSION.conf.get(array_key[0], "[]") or "[]"
+                array_values = ast.literal_eval(raw_value)
                 final_value = [
                     key_val["value"]
                     for key_val in array_values
@@ -186,19 +181,22 @@ class DatabricksUtils(object):
             usage_stats: usage_stats dictionary file.
         """
         try:
-            from dbruntime.databricks_repl_context import get_context
+            import importlib
 
             from lakehouse_engine.core.exec_env import ExecEnv
 
-            context = get_context()
+            context_module = importlib.import_module(
+                "dbruntime.databricks_repl_context"
+            )
+            context = context_module.get_context()
             for key, attr in EngineStats.DEF_DATABRICKS_CONTEXT_KEYS.items():
                 if key == "dp_name":
                     usage_stats[key] = DatabricksUtils._get_dp_name(
-                        getattr(context, attr, None)
+                        getattr(context, attr, "")
                     )
                 elif key == "environment":
                     usage_stats[key] = ExecEnv.get_environment()
                 else:
                     usage_stats[key] = getattr(context, attr, None)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             cls._LOGGER.error(f"Error getting Serverless Usage Context: {ex}")

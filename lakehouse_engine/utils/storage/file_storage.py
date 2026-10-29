@@ -19,7 +19,6 @@ class FileStorage(ABC):
         Returns:
             File payload/content.
         """
-        pass
 
     @classmethod
     @abstractmethod
@@ -30,4 +29,3 @@ class FileStorage(ABC):
             url: url of the file.
             content: content to write into the file.
         """
-        pass

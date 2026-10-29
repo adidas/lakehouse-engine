@@ -1,7 +1,7 @@
 """Module for writer factory."""
 
 from abc import ABC
-from typing import OrderedDict
+from collections import OrderedDict
 
 from pyspark.sql import DataFrame
 
@@ -23,7 +23,7 @@ from lakehouse_engine.io.writers.sharepoint_writer import SharepointWriter
 from lakehouse_engine.io.writers.table_writer import TableWriter
 
 
-class WriterFactory(ABC):  # noqa: B024
+class WriterFactory(ABC):
     """Class for writer factory."""
 
     AVAILABLE_WRITERS = {
@@ -43,7 +43,7 @@ class WriterFactory(ABC):  # noqa: B024
         """Get the writer name according to the output specification.
 
         Args:
-            OutputSpec spec: output specification to write data.
+            spec: output specification to write data.
 
         Returns:
             Writer: writer name that will be created to write the data.
@@ -61,7 +61,9 @@ class WriterFactory(ABC):  # noqa: B024
         return writer_name
 
     @classmethod
-    def get_writer(cls, spec: OutputSpec, df: DataFrame, data: OrderedDict) -> Writer:
+    def get_writer(
+        cls, spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> Writer:
         """Get a writer according to the output specification using a factory pattern.
 
         Args:

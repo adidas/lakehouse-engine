@@ -1,7 +1,8 @@
 """Module with column reshaping transformers."""
 
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 import pyspark.sql.types as spark_types
 from pyspark.sql import DataFrame
@@ -21,13 +22,13 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 
 
-class ColumnReshapers(object):
+class ColumnReshapers:
     """Class containing column reshaping transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
 
     @classmethod
-    def cast(cls, cols: Dict[str, str]) -> Callable:
+    def cast(cls, cols: dict[str, str]) -> Callable:
         """Cast specific columns into the designated type.
 
         Args:
@@ -71,11 +72,11 @@ class ColumnReshapers(object):
     @classmethod
     def flatten_schema(
         cls,
-        max_level: int = None,
+        max_level: int | None = None,
         shorten_names: bool = False,
         alias: bool = True,
         num_chars: int = 7,
-        ignore_cols: List = None,
+        ignore_cols: list | None = None,
     ) -> Callable:
         """Flatten the schema of the dataframe.
 
@@ -115,9 +116,9 @@ class ColumnReshapers(object):
     def explode_columns(
         cls,
         explode_arrays: bool = False,
-        array_cols_to_explode: List[str] = None,
+        array_cols_to_explode: list[str] | None = None,
         explode_maps: bool = False,
-        map_cols_to_explode: List[str] = None,
+        map_cols_to_explode: list[str] | None = None,
     ) -> Callable:
         """Explode columns with types like ArrayType and MapType.
 
@@ -157,7 +158,7 @@ class ColumnReshapers(object):
         return inner
 
     @classmethod
-    def _get_columns(cls, df: DataFrame, data_type: Any) -> List:
+    def _get_columns(cls, df: DataFrame, data_type: Any) -> list:
         """Get a list of columns from the dataframe of the data types specified.
 
         Args:
@@ -174,7 +175,7 @@ class ColumnReshapers(object):
         return cols
 
     @classmethod
-    def with_expressions(cls, cols_and_exprs: Dict[str, str]) -> Callable:
+    def with_expressions(cls, cols_and_exprs: dict[str, str]) -> Callable:
         """Execute Spark SQL expressions to create the specified columns.
 
         This function uses the Spark expr function. [Check here](
@@ -202,7 +203,7 @@ class ColumnReshapers(object):
     @classmethod
     def rename(
         cls,
-        cols: Dict[str, str],
+        cols: dict[str, str],
         escape_col_names: bool = True,
     ) -> Callable:
         """Rename specific columns into the designated name.
@@ -237,10 +238,10 @@ class ColumnReshapers(object):
     @classmethod
     def from_avro(
         cls,
-        schema: str = None,
+        schema: str | None = None,
         key_col: str = "key",
         value_col: str = "value",
-        options: dict = None,
+        options: dict | None = None,
         expand_key: bool = False,
         expand_value: bool = True,
     ) -> Callable:
@@ -266,13 +267,14 @@ class ColumnReshapers(object):
             cols_to_select = [
                 column for column in df.columns if column not in [key_col, value_col]
             ]
+            schema_to_use = schema if schema is not None else ""
 
             return df.select(
                 *cols_to_select,
                 key_col,
-                from_avro(col(value_col), schema, options if options else None).alias(
-                    value_col
-                ),
+                from_avro(
+                    col(value_col), schema_to_use, options if options else None
+                ).alias(value_col),
             ).select(
                 *cols_to_select,
                 f"{key_col}.*" if expand_key else key_col,
@@ -287,11 +289,11 @@ class ColumnReshapers(object):
         schema_registry: str,
         value_schema: str,
         value_col: str = "value",
-        key_schema: str = None,
+        key_schema: str | None = None,
         key_col: str = "key",
         expand_key: bool = False,
         expand_value: bool = True,
-        options: dict = None,
+        options: dict | None = None,
     ) -> Callable:
         """Select all attributes from avro using a schema registry.
 
@@ -319,22 +321,25 @@ class ColumnReshapers(object):
                 column for column in df.columns if column not in [key_col, value_col]
             ]
 
-            return df.select(  # type: ignore
+            # Ty ignore is needed because this version of the from_avro function is
+            # implemented by the databricks runtime and the type checker does not
+            # recognize it as a valid function.
+            return df.select(
                 *cols_to_select,
                 (
-                    from_avro(
+                    from_avro(  # ty: ignore
                         data=col(key_col),
-                        subject=key_schema,
-                        schemaRegistryAddress=schema_registry,  # type: ignore
+                        subject=key_schema,  # ty: ignore
+                        schemaRegistryAddress=schema_registry,  # ty: ignore
                         options=options if options else None,
                     ).alias(key_col)
                     if key_schema
                     else key_col
                 ),
-                from_avro(
+                from_avro(  # ty: ignore
                     data=col(value_col),
-                    subject=value_schema,
-                    schemaRegistryAddress=schema_registry,  # type: ignore
+                    subject=value_schema,  # ty: ignore
+                    schemaRegistryAddress=schema_registry,  # ty: ignore
                     options=options if options else None,
                 ).alias(value_col),
             ).select(
@@ -349,9 +354,9 @@ class ColumnReshapers(object):
     def from_json(
         cls,
         input_col: str,
-        schema_path: Optional[str] = None,
-        schema: Optional[dict] = None,
-        json_options: Optional[dict] = None,
+        schema_path: str | None = None,
+        schema: dict | None = None,
+        json_options: dict | None = None,
         drop_all_cols: bool = False,
         disable_dbfs_retry: bool = False,
     ) -> Callable:
@@ -411,9 +416,9 @@ class ColumnReshapers(object):
     @classmethod
     def to_json(
         cls,
-        in_cols: List[str],
+        in_cols: list[str],
         out_col: str,
-        json_options: Optional[dict] = None,
+        json_options: dict | None = None,
     ) -> Callable:
         """Convert dataframe columns into a json value.
 
@@ -441,7 +446,9 @@ class ColumnReshapers(object):
         return inner
 
     @classmethod
-    def _explode_arrays(cls, df: DataFrame, cols_to_explode: List[str]) -> DataFrame:
+    def _explode_arrays(
+        cls, df: DataFrame, cols_to_explode: list[str] | None
+    ) -> DataFrame:
         """Explode array columns from dataframe.
 
         Args:
@@ -460,7 +467,9 @@ class ColumnReshapers(object):
         return df
 
     @classmethod
-    def _explode_maps(cls, df: DataFrame, cols_to_explode: List[str]) -> DataFrame:
+    def _explode_maps(
+        cls, df: DataFrame, cols_to_explode: list[str] | None
+    ) -> DataFrame:
         """Explode map columns from dataframe.
 
         Args:

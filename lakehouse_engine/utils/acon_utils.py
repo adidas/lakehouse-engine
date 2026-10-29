@@ -54,7 +54,7 @@ def validate_and_resolve_acon(acon: dict, execution_point: str = "") -> dict:
     if execution_point:
         acon = resolve_dq_functions(acon, execution_point)
 
-    _LOGGER.info(f"Read Algorithm Configuration: {str(acon)}")
+    _LOGGER.info(f"Read Algorithm Configuration: {acon!s}")
 
     return acon
 
@@ -68,11 +68,11 @@ def validate_readers(acon: dict) -> None:
     Raises:
         RuntimeError: If the input format is not supported.
     """
-    if "input_specs" in acon.keys() or "input_spec" in acon.keys():
+    if "input_specs" in acon or "input_spec" in acon:
         for spec in acon.get("input_specs", []) or [acon.get("input_spec", {})]:
             if (
                 not InputFormat.exists(spec.get("data_format"))
-                and "db_table" not in spec.keys()
+                and "db_table" not in spec
             ):
                 raise WrongIOFormatException(
                     f"Input format not supported: {spec.get('data_format')}"
@@ -88,7 +88,7 @@ def validate_writers(acon: dict) -> None:
     Raises:
         RuntimeError: If the output format is not supported.
     """
-    if "output_specs" in acon.keys() or "output_spec" in acon.keys():
+    if "output_specs" in acon or "output_spec" in acon:
         for spec in acon.get("output_specs", []) or [acon.get("output_spec", {})]:
             if not OutputFormat.exists(spec.get("data_format")):
                 raise WrongIOFormatException(
@@ -96,7 +96,7 @@ def validate_writers(acon: dict) -> None:
                 )
 
 
-def validate_managers(acon: dict, error_list: list = None) -> None:
+def validate_managers(acon: dict, error_list: list | None = None) -> None:
     """Function to validate the managers in the acon.
 
     Args:
@@ -215,9 +215,10 @@ def resolve_dq_functions(acon: dict, execution_point: str) -> dict:
         Acon after resolving the dq functions.
     """
     if acon.get("dq_spec"):
-        if acon.get("dq_spec").get("dq_type") == DQType.PRISMA.value:
+        dq_spec = acon.get("dq_spec")
+        if dq_spec and dq_spec.get("dq_type") == DQType.PRISMA.value:
             acon["dq_spec"] = PrismaUtils.build_prisma_dq_spec(
-                spec=acon.get("dq_spec"), execution_point=execution_point
+                spec=dq_spec, execution_point=execution_point
             )
     elif acon.get("dq_specs"):
         resolved_dq_specs = []

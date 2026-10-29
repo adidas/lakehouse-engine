@@ -1,7 +1,7 @@
 """Defines change data feed processor behaviour."""
 
+from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import OrderedDict
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame
@@ -20,8 +20,10 @@ from lakehouse_engine.io.reader_factory import ReaderFactory
 from lakehouse_engine.io.writer_factory import WriterFactory
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
+ERROR_MESSAGE = "materialized_cdf_location must be provided."
 
-class CDFProcessor(object):
+
+class CDFProcessor:
     """Change data feed processor class."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -33,6 +35,7 @@ class CDFProcessor(object):
         Args:
             spec: terminator specification.
         """
+        args = spec.args or {}
         cls._logger.info("Reading CDF from input table...")
 
         df_cdf = ReaderFactory.get_data(cls._get_table_cdf_input_specs(spec))
@@ -45,25 +48,23 @@ class CDFProcessor(object):
         cls._write_cdf_to_external(
             spec,
             new_df_cdf.repartition(
-                spec.args.get(
-                    "materialized_cdf_num_partitions", col("_commit_timestamp")
-                )
+                args.get("materialized_cdf_num_partitions", col("_commit_timestamp"))
             ),
         )
 
         # used to delete old data on CDF table (don't remove parquet).
-        if spec.args.get("clean_cdf", True):
+        if args.get("clean_cdf", True):
             cls._logger.info("Cleaning CDF table...")
             cls.delete_old_data(spec)
 
         # used to delete old parquet files.
-        if spec.args.get("vacuum_cdf", False):
+        if args.get("vacuum_cdf", False):
             cls._logger.info("Vacuuming CDF table...")
             cls.vacuum_cdf_data(spec)
 
     @staticmethod
     def _write_cdf_to_external(
-        spec: TerminatorSpec, df: DataFrame, data: OrderedDict = None
+        spec: TerminatorSpec, df: DataFrame, data: OrderedDict | None = None
     ) -> None:
         """Write cdf results dataframe.
 
@@ -72,14 +73,18 @@ class CDFProcessor(object):
             df: dataframe with cdf results to write.
             data: list of all dfs generated on previous steps before writer.
         """
+        args = spec.args or {}
+        materialized_cdf_location = args.get("materialized_cdf_location")
+        if not materialized_cdf_location:
+            raise ValueError(ERROR_MESSAGE)
         WriterFactory.get_writer(
             spec=OutputSpec(
                 spec_id="materialized_cdf",
                 input_id="input_table",
-                location=spec.args["materialized_cdf_location"],
+                location=materialized_cdf_location,
                 write_type=WriteType.APPEND.value,
-                data_format=spec.args.get("data_format", OutputFormat.DELTAFILES.value),
-                options=spec.args["materialized_cdf_options"],
+                data_format=args.get("data_format", OutputFormat.DELTAFILES.value),
+                options=args.get("materialized_cdf_options"),
                 partitions=["_commit_timestamp"],
             ),
             df=df,
@@ -96,14 +101,19 @@ class CDFProcessor(object):
         Returns:
             List of input specifications.
         """
+        args = spec.args or {}
         options = {
             "readChangeFeed": "true",
-            **spec.args.get("db_table_options", {}),
+            **args.get("db_table_options", {}),
         }
+
+        db_table = args.get("db_table")
+        if not db_table:
+            raise ValueError("db_table must be provided.")
 
         input_specs = InputSpec(
             spec_id="input_table",
-            db_table=spec.args["db_table"],
+            db_table=db_table,
             read_type=ReadType.STREAMING.value,
             data_format=OutputFormat.DELTAFILES.value,
             options=options,
@@ -118,15 +128,16 @@ class CDFProcessor(object):
         Args:
             spec: terminator specifications.
         """
+        args = spec.args or {}
         today_datetime = datetime.today()
-        limit_date = today_datetime + timedelta(
-            days=spec.args.get("days_to_keep", 30) * -1
-        )
+        limit_date = today_datetime + timedelta(days=args.get("days_to_keep", 30) * -1)
         limit_timestamp = limit_date.strftime("%Y%m%d%H%M%S")
 
-        cdf_delta_table = DeltaTable.forPath(
-            ExecEnv.SESSION, spec.args["materialized_cdf_location"]
-        )
+        materialized_cdf_location = args.get("materialized_cdf_location")
+        if not materialized_cdf_location:
+            raise ValueError(ERROR_MESSAGE)
+
+        cdf_delta_table = DeltaTable.forPath(ExecEnv.SESSION, materialized_cdf_location)
 
         cdf_delta_table.delete(col("_commit_timestamp") < limit_timestamp)
 
@@ -137,8 +148,10 @@ class CDFProcessor(object):
         Args:
             spec: terminator specifications.
         """
-        cdf_delta_table = DeltaTable.forPath(
-            ExecEnv.SESSION, spec.args["materialized_cdf_location"]
-        )
+        args = spec.args or {}
+        materialized_cdf_location = args.get("materialized_cdf_location")
+        if not materialized_cdf_location:
+            raise ValueError(ERROR_MESSAGE)
+        cdf_delta_table = DeltaTable.forPath(ExecEnv.SESSION, materialized_cdf_location)
 
-        cdf_delta_table.vacuum(spec.args.get("vacuum_hours", 168))
+        cdf_delta_table.vacuum(args.get("vacuum_hours", 168))

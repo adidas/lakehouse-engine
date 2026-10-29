@@ -4,7 +4,6 @@ import ast
 import calendar
 import json
 from datetime import datetime
-from typing import Optional
 
 import pendulum
 from pyspark.sql import DataFrame
@@ -15,7 +14,7 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class GABUtils(object):
+class GABUtils:
     """Class containing utility functions for GAB."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -65,7 +64,7 @@ class GABUtils(object):
             '{query}',
             '{status}',
             '{error_message}'
-        )""".format(  # nosec: B608
+        )""".format(  # noqa: S608
             database=target_database,
             run_start_time=run_start_time,
             run_end_time=run_end_time,
@@ -98,7 +97,7 @@ class GABUtils(object):
     @classmethod
     def get_json_column_as_dict(
         cls, lookup_query_builder: DataFrame, query_id: str, query_column: str
-    ) -> dict:  # type: ignore
+    ) -> dict:
         """Get JSON column as dictionary.
 
         Args:
@@ -116,10 +115,13 @@ class GABUtils(object):
 
         json_column = json.loads(column_df_json)
 
+        column_as_json: dict = {}
         for mapping in json_column.values():
-            column_as_json = ast.literal_eval(mapping)
+            parsed_mapping = ast.literal_eval(mapping)
+            if isinstance(parsed_mapping, dict):
+                column_as_json = parsed_mapping
 
-        return column_as_json  # type: ignore
+        return column_as_json
 
     @classmethod
     def extract_columns_from_mapping(
@@ -127,7 +129,7 @@ class GABUtils(object):
         columns: dict,
         is_dimension: bool,
         extract_column_without_alias: bool = False,
-        table_alias: Optional[str] = None,
+        table_alias: str | None = None,
         is_extracted_value_as_name: bool = True,
     ) -> tuple[list[str], list[str]] | list[str]:
         """Extract and transform columns to SQL select statement.
@@ -141,12 +143,8 @@ class GABUtils(object):
             is_extracted_value_as_name: identify if the extracted value is the
                 column name.
         """
-        column_with_alias = (
-            "".join([table_alias, ".", "{} as {}"]) if table_alias else "{} as {}"
-        )
-        column_without_alias = (
-            "".join([table_alias, ".", "{}"]) if table_alias else "{}"
-        )
+        column_with_alias = f"{table_alias}.{{}} as {{}}" if table_alias else "{} as {}"
+        column_without_alias = f"{table_alias}.{{}}" if table_alias else "{}"
 
         extracted_columns_with_alias = []
         extracted_columns_without_alias = []
@@ -195,16 +193,17 @@ class GABUtils(object):
             is_extracted_value_as_name: flag indicating if the name of the column is the
                 extracted value.
         """
-        extracted_value = (
-            column_value
-            if is_dimension
-            else (column_value["metric_name"])  # type: ignore
-        )
+        if is_dimension:
+            extracted_value = column_value
+        else:
+            if not isinstance(column_value, dict):
+                raise TypeError("Expected metric mapping to be a dictionary.")
+            extracted_value = column_value["metric_name"]
 
         return (
-            (extracted_value, column_name)  # type: ignore
+            (str(extracted_value), column_name)
             if is_extracted_value_as_name
-            else (column_name, extracted_value)
+            else (column_name, str(extracted_value))
         )
 
     @classmethod
@@ -224,11 +223,12 @@ class GABUtils(object):
             is_extracted_value_as_name: flag indicating if the name of the column is the
                 extracted value.
         """
-        extracted_value: str = (
-            column_value
-            if is_dimension
-            else (column_value["metric_name"])  # type: ignore
-        )
+        if is_dimension:
+            extracted_value = str(column_value)
+        else:
+            if not isinstance(column_value, dict):
+                raise TypeError("Expected metric mapping to be a dictionary.")
+            extracted_value = str(column_value["metric_name"])
 
         return extracted_value if is_extracted_value_as_name else column_name
 
@@ -348,7 +348,7 @@ class GABUtils(object):
         sorted_cadences_to_execute: dict = dict(
             sorted(
                 cadences_to_execute.items(),
-                key=lambda item: cad_order.get(item[0]),  # type: ignore
+                key=lambda item: cad_order.get(item[0], float("inf")),
             )
         )
         # ordering cadences to execute it from bigger (YEAR) to smaller (DAY)
@@ -424,10 +424,8 @@ class GABUtils(object):
         cadence_snapshot_configuration = dict(
             sorted(
                 cadence_snapshot_configuration.items(),
-                key=(
-                    lambda item: GABCadence.get_ordered_cadences().get(  # type: ignore
-                        item[0]
-                    )
+                key=lambda item: GABCadence.get_ordered_cadences().get(
+                    item[0], float("inf")
                 ),
             )
         )
@@ -480,7 +478,7 @@ class GABUtils(object):
         return datetime.date(date_to_format).strftime(GABDefaults.DATE_FORMAT.value)
 
 
-class GABPartitionUtils(object):
+class GABPartitionUtils:
     """Class to extract a partition based in a date period."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -539,45 +537,31 @@ class GABPartitionUtils(object):
         end_date_month = cls._extract_date_part_from_date("MONTH", end_date)
         end_date_day = cls._extract_date_part_from_date("DAY", end_date)
 
-        year_statement = "(year = {0} and (".format(years[0]) + "{})"
+        year_statement = f"(year = {years[0]} and (" + "{})"
         if start_date_month != "12":
             start_date_partition = year_statement.format(
-                "(month = {0} and day between {1} and 31)".format(
-                    start_date_month, start_date_day
-                )
-                + " or (month between {0} and 12)".format(int(start_date_month) + 1)
+                f"(month = {start_date_month} and day between {start_date_day} and 31)"
+                + f" or (month between {int(start_date_month) + 1} and 12)"
             )
         else:
             start_date_partition = year_statement.format(
-                "month = {0} and day between {1} and 31".format(
-                    start_date_month, start_date_day
-                )
+                f"month = {start_date_month} and day between {start_date_day} and 31"
             )
 
         period_years_partition = ""
 
         if len(years) == 3:
-            period_years_partition = ") or (year = {0}".format(years[1])
+            period_years_partition = f") or (year = {years[1]}"
         elif len(years) > 3:
-            period_years_partition = ") or (year between {0} and {1})".format(
-                years[1], years[-2]
-            )
+            period_years_partition = f") or (year between {years[1]} and {years[-2]})"
 
         if end_date_month != "01":
             end_date_partition = (
-                ") or (year = {0} and ((month between 01 and {1})".format(
-                    years[-1], int(end_date_month) - 1
-                )
-                + " or (month = {0} and day between 1 and {1})))".format(
-                    end_date_month, end_date_day
-                )
+                f") or (year = {years[-1]} and ((month between 01 and {int(end_date_month) - 1})"
+                + f" or (month = {end_date_month} and day between 1 and {end_date_day})))"
             )
         else:
-            end_date_partition = (
-                ") or (year = {0} and month = 1 and day between 01 and {1})".format(
-                    years[-1], end_date_day
-                )
-            )
+            end_date_partition = f") or (year = {years[-1]} and month = 1 and day between 01 and {end_date_day})"
         partition_condition = (
             start_date_partition + period_years_partition + end_date_partition
         )
@@ -601,39 +585,27 @@ class GABPartitionUtils(object):
         end_date_day = cls._extract_date_part_from_date("DAY", end_date)
 
         if start_date_month != end_date_month:
-            months = []
-            for i in range(int(start_date_month), int(end_date_month) + 1):
-                months.append(i)
+            months = list(range(int(start_date_month), int(end_date_month) + 1))
 
-            start_date_partition = (
-                "year = {0} and ((month={1} and day between {2} and 31)".format(
-                    start_date_year, months[0], start_date_day
-                )
-            )
+            start_date_partition = f"year = {start_date_year} and ((month={months[0]} and day between {start_date_day} and 31)"
             period_years_partition = ""
             if len(months) == 2:
                 period_years_partition = start_date_partition
             elif len(months) == 3:
                 period_years_partition = (
-                    start_date_partition + " or (month = {0})".format(months[1])
+                    start_date_partition + f" or (month = {months[1]})"
                 )
             elif len(months) > 3:
                 period_years_partition = (
                     start_date_partition
-                    + " or (month between {0} and {1})".format(months[1], months[-2])
+                    + f" or (month between {months[1]} and {months[-2]})"
                 )
             partition_condition = (
                 period_years_partition
-                + " or (month = {0} and day between 1 and {1}))".format(
-                    end_date_month, end_date_day
-                )
+                + f" or (month = {end_date_month} and day between 1 and {end_date_day}))"
             )
         else:
-            partition_condition = (
-                "year = {0} and month = {1} and day between {2} and {3}".format(
-                    end_date_year, end_date_month, start_date_day, end_date_day
-                )
-            )
+            partition_condition = f"year = {end_date_year} and month = {end_date_month} and day between {start_date_day} and {end_date_day}"
 
         return partition_condition
 

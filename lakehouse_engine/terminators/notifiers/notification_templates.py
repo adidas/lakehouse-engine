@@ -1,7 +1,7 @@
 """Email notification templates."""
 
 
-class NotificationsTemplates(object):
+class NotificationsTemplates:
     """Templates for notifications."""
 
     EMAIL_NOTIFICATIONS_TEMPLATES = {

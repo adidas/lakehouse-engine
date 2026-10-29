@@ -1,6 +1,6 @@
 """Expectation to check if column 'a' is lower or equal than column 'b'."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import ColumnPairMapExpectation
@@ -55,9 +55,9 @@ class ColumnPairCustom(ColumnPairMapMetricProvider):
                 f" Found: {margin} as {type(margin)}"
             )
         else:
-            approx = margin  # type: ignore
+            approx = margin
 
-        return column_A <= column_B + approx  # type: ignore
+        return column_A <= column_B + approx
 
 
 class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
@@ -170,9 +170,9 @@ class ExpectColumnPairAToBeSmallerOrEqualThanB(ColumnPairMapExpectation):
 
     def _validate(
         self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> Any:
         """Custom implementation of the GE _validate method.
 

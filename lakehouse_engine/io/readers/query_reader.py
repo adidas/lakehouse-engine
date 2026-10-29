@@ -10,7 +10,7 @@ from lakehouse_engine.io.reader import Reader
 class QueryReader(Reader):
     """Class to read data from a query."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct QueryReader instances.
 
         Args:
@@ -24,4 +24,6 @@ class QueryReader(Reader):
         Returns:
             A dataframe containing the data from the query.
         """
+        if not self._input_spec.query:
+            raise ValueError("query must be provided for query reader.")
         return ExecEnv.SESSION.sql(self._input_spec.query)

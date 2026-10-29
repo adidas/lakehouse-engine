@@ -38,7 +38,7 @@ class GAB(Algorithm):
     )
     _SPARK_DEFAULT_PARALLELISM_VALUE = "10000"
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct GAB instances.
 
         Args:
@@ -67,17 +67,15 @@ class GAB(Algorithm):
         self._LOGGER.info(f"Gab Base Path {gab_path}")
 
         lookup_query_builder_df = lookup_query_builder_df.filter(
-            (
-                (lookup_query_builder_df.query_label.isin(query_label))
-                & (lookup_query_builder_df.queue.isin(queue))
-                & (lookup_query_builder_df.is_active != lit("N"))
-            )
+            (lookup_query_builder_df.query_label.isin(query_label))
+            & (lookup_query_builder_df.queue.isin(queue))
+            & (lookup_query_builder_df.is_active != lit("N"))
         )
 
         cached = True
         try:
             lookup_query_builder_df.cache()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             cached = False
             self._LOGGER.warning(
                 "Could not cache lookup_query_builder_df dataframe. "
@@ -182,12 +180,13 @@ class GAB(Algorithm):
             stage_file_path = stage["file_path"]
             full_path = gab_path + stage_file_path
             cls._LOGGER.info(f"Stage file path is: {full_path}")
-            file_read = open(full_path, "r").read()
-            templated_file = file_read.replace(
-                "replace_offset_value", str(use_case["timezone_offset"])
-            )
-            stage["templated_file"] = templated_file
-            stage["full_file_path"] = full_path
+            with open(full_path, "r") as stage_file:
+                file_read = stage_file.read()
+                templated_file = file_read.replace(
+                    "replace_offset_value", str(use_case["timezone_offset"])
+                )
+                stage["templated_file"] = templated_file
+                stage["full_file_path"] = full_path
 
     def _process_use_case_query_cadence(
         self,
@@ -246,9 +245,7 @@ class GAB(Algorithm):
                 stages=stages,
             )
 
-        return (cadence in reconciliation.keys()) or (
-            reconciliation_cadences is not None
-        )
+        return (cadence in reconciliation) or (reconciliation_cadences is not None)
 
     def _process_reconciliation_cadence(
         self,
@@ -310,7 +307,7 @@ class GAB(Algorithm):
         filter_end_date_str = GABUtils.format_datetime_to_default(filter_end_date)
 
         partition_end = GABUtils.format_datetime_to_default(
-            (window_end_date - timedelta(days=1))
+            window_end_date - timedelta(days=1)
         )
 
         window_start_date_str = GABUtils.format_datetime_to_default(window_start_date)
@@ -416,7 +413,10 @@ class GAB(Algorithm):
 
         for item in gab_base_configuration_copy.values():
             self._update_rendered_item_cadence(
-                reconciliation_cadence, cadence, project_col, item  # type: ignore
+                reconciliation_cadence,
+                cadence,
+                project_col,
+                item,
             )
 
         (
@@ -488,22 +488,20 @@ class GAB(Algorithm):
         Args:
             query_id: use case query id.
         """
-        last_success_run_sql = """
+        last_success_run_sql = f"""
             SELECT run_start_time
-            FROM {database}.gab_log_events
+            FROM {self.spec.target_database}.gab_log_events
             WHERE query_id = {query_id}
             AND stage_name = 'Final Insert'
             AND status = 'Success'
             ORDER BY 1 DESC
             LIMIT 1
-            """.format(  # nosec: B608
-            database=self.spec.target_database, query_id=query_id
-        )
+            """  # noqa: S608
         try:
             latest_run_date: datetime = ExecEnv.SESSION.sql(
                 last_success_run_sql
             ).collect()[0][0]
-        except Exception:
+        except Exception:  # noqa: BLE001
             latest_run_date = datetime.strptime(
                 "2020-01-01", GABDefaults.DATE_FORMAT.value
             )
@@ -516,14 +514,11 @@ class GAB(Algorithm):
         Args:
             query_id: use case query id.
         """
-        query_config_sql = """
+        query_config_sql = f"""
             SELECT lh_created_on
-            FROM {lkp_query_builder}
+            FROM {self.spec.lookup_table}
             WHERE query_id = {query_id}
-        """.format(  # nosec: B608
-            lkp_query_builder=self.spec.lookup_table,
-            query_id=query_id,
-        )
+        """  # noqa: S608
 
         latest_config_date: datetime = ExecEnv.SESSION.sql(query_config_sql).collect()[
             0
@@ -614,7 +609,7 @@ class GAB(Algorithm):
         project_col: str,
         window_start_date: str,
         partition_end: str,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str | None, str | None, str | None]:
         """Get use case configuration fields to replace pre-configured parameters.
 
         Args:
@@ -666,20 +661,15 @@ class GAB(Algorithm):
             )
 
             if cadence_dict[GABKeys.JOIN_SELECT]:
-                join_condition = """
+                join_condition = f"""
                  inner join (
-                     {join_select} from df_cal
+                     {cadence_dict[GABKeys.JOIN_SELECT]} from df_cal
                      where calendar_date
-                     between '{bucket_start}' and '{bucket_end}'
+                     between '{window_start_date}' and '{partition_end}'
                  )
-                 df_cal on date({date_column})
+                 df_cal on date({project_col})
                      between df_cal.cadence_start_date and df_cal.cadence_end_date
-                 """.format(
-                    join_select=cadence_dict[GABKeys.JOIN_SELECT],
-                    bucket_start=window_start_date,
-                    bucket_end=partition_end,
-                    date_column=project_col,
-                )
+                 """
 
         return rendered_from_date, rendered_to_date, join_condition
 
@@ -689,14 +679,14 @@ class GAB(Algorithm):
         cadence: str,
         start_of_the_week: str,
         query_id: str,
-        rendered_date: str,
+        rendered_date: str | None,
         filter_start_date: str,
         filter_end_date: str,
         filter_col: str,
         timezone_offset: str,
-        join_condition: str,
+        join_condition: str | None,
         partition_filter: str,
-        rendered_to_date: str,
+        rendered_to_date: str | None,
     ) -> str:
         """Replace jinja templated parameters in the SQL with the actual data.
 
@@ -715,10 +705,10 @@ class GAB(Algorithm):
             rendered_to_date: projection end date.
         """
         return Template(templated).render(
-            cadence="'{cadence}' as cadence".format(cadence=cadence),
+            cadence=f"'{cadence}' as cadence",
             cadence_run=cadence,
             week_start=start_of_the_week,
-            query_id="'{query_id}' as query_id".format(query_id=query_id),
+            query_id=f"'{query_id}' as query_id",
             project_date_column=rendered_date,
             target_table=self.spec.target_table,
             database=self.spec.source_database,
@@ -771,13 +761,15 @@ class GAB(Algorithm):
                 if stage["repartition"].get("numPartitions"):
                     num_partitions = stage["repartition"]["numPartitions"]
 
+                partition_count = int(num_partitions or 1)
+
                 if stage["repartition"].get("keys"):
                     tmp = tmp.repartition(
-                        int(num_partitions), *stage["repartition"]["keys"]
+                        partition_count, *stage["repartition"]["keys"]
                     )
                     self._LOGGER.info("Repartitioned on given Key(s)")
                 else:
-                    tmp = tmp.repartition(int(num_partitions))
+                    tmp = tmp.repartition(partition_count)
                     self._LOGGER.info("Repartitioned on given partition count")
 
             temp_step_view_name: str = stage["table_alias"]
@@ -785,17 +777,12 @@ class GAB(Algorithm):
 
             if stage["storage_level"]:
                 ExecEnv.SESSION.sql(
-                    "CACHE TABLE {tbl} "
-                    "OPTIONS ('storageLevel' '{type}')".format(
+                    "CACHE TABLE {tbl} OPTIONS ('storageLevel' '{type}')".format(
                         tbl=temp_step_view_name,
                         type=stage["storage_level"],
                     )
                 )
-                ExecEnv.SESSION.sql(
-                    "SELECT COUNT(*) FROM {tbl}".format(  # nosec: B608
-                        tbl=temp_step_view_name
-                    )
-                )
+                ExecEnv.SESSION.sql(f"SELECT COUNT(*) FROM {temp_step_view_name}")  # noqa: S608
                 self._LOGGER.info(f"Cached stage view - {temp_step_view_name} ")
 
             creation_status = "Success"
@@ -803,7 +790,7 @@ class GAB(Algorithm):
         except Exception as err:
             creation_status = "Failed"
             error_message = err
-            raise err
+            raise
         finally:
             run_end_time = datetime.now()
             GABUtils().logger(
@@ -865,6 +852,8 @@ class GAB(Algorithm):
             target_database=self.spec.target_database,
             target_table=self.spec.target_table,
         ).generate_sql()
+        if not gen_ins:
+            raise ValueError("Failed to generate insert SQL statement.")
         try:
             ExecEnv.SESSION.sql(gen_ins)
 
@@ -901,10 +890,7 @@ class GAB(Algorithm):
         Args:
             unpersist_list: list containing the view names to unpersist.
         """
-        [
-            ExecEnv.SESSION.sql("UNCACHE TABLE {tbl}".format(tbl=i))
-            for i in unpersist_list
-        ]
+        [ExecEnv.SESSION.sql(f"UNCACHE TABLE {i}") for i in unpersist_list]
 
     def _generate_ddl(
         self,

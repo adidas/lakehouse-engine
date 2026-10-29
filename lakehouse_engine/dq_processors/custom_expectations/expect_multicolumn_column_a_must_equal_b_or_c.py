@@ -1,6 +1,6 @@
 """Expectation to check if column 'a' equals 'b', or 'c'."""
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from great_expectations.execution_engine import ExecutionEngine, SparkDFExecutionEngine
 from great_expectations.expectations.expectation import MulticolumnMapExpectation
@@ -74,7 +74,7 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
 
     Returns:
         An ExpectationSuiteValidationResult.
-    """  # noqa: E501
+    """
 
     ignore_row_if: Literal[
         "all_values_are_missing", "any_value_is_missing", "never"
@@ -154,13 +154,13 @@ class ExpectMulticolumnColumnAMustEqualBOrC(MulticolumnMapExpectation):
         "validation_regex_b",
         "validation_regex_c",
         "mostly",
-    )  # type: ignore
+    )
 
     def _validate(
         self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
     ) -> Any:
         """Custom implementation of the GE _validate method.
 

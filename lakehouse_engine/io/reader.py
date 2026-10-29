@@ -11,7 +11,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 class Reader(ABC):
     """Abstract Reader class."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct Reader instances.
 
         Args:

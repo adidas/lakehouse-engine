@@ -1,7 +1,5 @@
 """Module containing the Algorithm class."""
 
-from typing import List, Tuple
-
 from lakehouse_engine.core.definitions import (
     DQDefaults,
     DQFunctionSpec,
@@ -14,7 +12,7 @@ from lakehouse_engine.core.executable import Executable
 class Algorithm(Executable):
     """Class to define the behavior of every algorithm based on ACONs."""
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct Algorithm instances.
 
         Args:
@@ -25,7 +23,7 @@ class Algorithm(Executable):
     @classmethod
     def get_dq_spec(
         cls, spec: dict
-    ) -> Tuple[DQSpec, List[DQFunctionSpec], List[DQFunctionSpec]]:
+    ) -> tuple[DQSpec, list[DQFunctionSpec], list[DQFunctionSpec]]:
         """Get data quality specification object from acon.
 
         Args:
@@ -117,7 +115,7 @@ class Algorithm(Executable):
         return dq_spec, dq_functions, critical_functions
 
     @staticmethod
-    def _get_dq_functions(spec: dict, function_key: str) -> List[DQFunctionSpec]:
+    def _get_dq_functions(spec: dict, function_key: str) -> list[DQFunctionSpec]:
         """Get DQ Functions from a DQ Spec, based on a function_key.
 
         Args:

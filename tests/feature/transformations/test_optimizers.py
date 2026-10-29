@@ -34,7 +34,7 @@ def test_optimizer(scenario: str) -> None:
             DataFrame: same as the input DataFrame.
         """
         if not df.is_cached:
-            raise Exception
+            raise Exception  # noqa: TRY002
 
         return df
 
@@ -48,7 +48,7 @@ def test_optimizer(scenario: str) -> None:
             DataFrame: same as the input DataFrame.
         """
         if df.is_cached:
-            raise Exception
+            raise Exception  # noqa: TRY002
 
         return df
 

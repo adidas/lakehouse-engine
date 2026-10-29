@@ -91,8 +91,9 @@ def test_spark_type_to_paimon_simple(
 def test_spark_type_to_paimon_timestamp_ntz() -> None:
     """Type TimestampNTZType is converted to TIMESTAMP(6) without LTZ suffix."""
     timestamp_ntz = getattr(T, "TimestampNTZType", None)
-    if timestamp_ntz is None:
-        pytest.skip("TimestampNTZType not available in this Spark version.")
+    if not timestamp_ntz:
+        pytest.skip()
+    assert callable(timestamp_ntz)
     assert PaimonUtils.spark_type_to_paimon(timestamp_ntz(), True) == "TIMESTAMP(6)"
 
 

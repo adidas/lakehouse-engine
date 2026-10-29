@@ -1,6 +1,6 @@
 """Module with integration tests for gab feature."""
 
-from typing import Any, Optional
+from typing import Any
 
 import pendulum
 import pytest
@@ -135,8 +135,8 @@ def _feed_dim_calendar(df: DataFrame) -> DataFrame:
 
 def _feed_table_with_test_data(
     table_name: str,
-    source_dataframe: Optional[DataFrame] = None,
-    transformer_specs: list = None,
+    source_dataframe: DataFrame | None = None,
+    transformer_specs: list | None = None,
     input_id_to_write: str = "data_to_load",
 ) -> None:
     """Feed table with test data.
@@ -389,7 +389,7 @@ def test_gold_asset_builder(scenario: dict, caplog: Any) -> None:
     if not use_case_name.startswith("skip"):
         for expected_gold_asset in scenario["gold_assets"]:
             result_df = ExecEnv.SESSION.sql(
-                f"SELECT * FROM test_db.{expected_gold_asset}"  # nosec
+                f"SELECT * FROM test_db.{expected_gold_asset}"  # noqa: S608
             )
             control_df = DataframeHelpers.read_from_file(
                 f"{TEST_RESOURCES}/control/data/{expected_gold_asset}.csv",

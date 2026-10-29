@@ -240,11 +240,15 @@ def _prepare_and_compare_dfs(scenario: str) -> None:
         f"{log_folder_path}{log_file_path}", "json"
     )
 
+    eng_start_row = eng_usage_df.select("start_timestamp").first()
+    control_start_row = control_df.select("start_timestamp").first()
+    if not eng_start_row or not control_start_row:
+        raise ValueError(
+            "Expected start_timestamp rows to be available for comparison."
+        )
+
     assert eng_usage_df.columns == control_df.columns
-    assert (
-        eng_usage_df.select("start_timestamp").first()[0]
-        >= control_df.select("start_timestamp").first()[0]
-    )
+    assert eng_start_row[0] >= control_start_row[0]
 
     assert _prepare_df_comparison(eng_usage_df) == _prepare_df_comparison(control_df)
 
@@ -258,6 +262,9 @@ def _prepare_df_comparison(df: DataFrame) -> str:
     Returns: a string representation of the Dataframe, ready to be compared.
     """
     cols_to_ignore = ["start_timestamp", "engine_version"]
-    str_df = str(df.drop(*cols_to_ignore).first()[0])
+    first_row = df.drop(*cols_to_ignore).first()
+    if first_row is None:
+        raise ValueError("Expected dataframe row for comparison preparation.")
+    str_df = str(first_row[0])
     str_df = re.sub("'<function ", "", str_df)
     return re.sub(" at.*'", "", str_df)

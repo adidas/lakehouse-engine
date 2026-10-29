@@ -1,10 +1,11 @@
 """Definitions of standard values and structures for core components."""
 
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar, Collection, List, Optional, Tuple
+from typing import ClassVar, Self
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import (
@@ -36,7 +37,7 @@ class CollectEngineUsage(Enum):
 
 
 @dataclass
-class EngineConfig(object):
+class EngineConfig:
     """Definitions that can come from the Engine Config file.
 
     - dq_bucket: S3 prod bucket used to store data quality related artifacts.
@@ -62,24 +63,24 @@ class EngineConfig(object):
     - maven_repo: repository to use to fetch maven dependencies.
     """
 
-    dq_bucket: Optional[str] = None
-    dq_dev_bucket: Optional[str] = None
-    notif_disallowed_email_servers: Optional[list] = None
-    engine_usage_path: Optional[str] = None
-    engine_dev_usage_path: Optional[str] = None
+    dq_bucket: str | None = None
+    dq_dev_bucket: str | None = None
+    notif_disallowed_email_servers: list | None = None
+    engine_usage_path: str | None = None
+    engine_dev_usage_path: str | None = None
     collect_engine_usage: str = CollectEngineUsage.ENABLED.value
-    dq_functions_column_list: Optional[list] = None
-    dq_result_sink_columns_to_delete: Optional[list] = None
-    sharepoint_authority: Optional[str] = None
-    sharepoint_company_domain: Optional[str] = None
-    sharepoint_api_domain: Optional[str] = None
+    dq_functions_column_list: list | None = None
+    dq_result_sink_columns_to_delete: list | None = None
+    sharepoint_authority: str | None = None
+    sharepoint_company_domain: str | None = None
+    sharepoint_api_domain: str | None = None
     raise_on_config_not_available: bool = False
-    prod_catalog: Optional[str] = None
-    environment: Optional[str] = None
-    maven_repo: Optional[str] = None
+    prod_catalog: str | None = None
+    environment: str | None = None
+    maven_repo: str | None = None
 
 
-class EngineStats(object):
+class EngineStats:
     """Definitions for collection of Lakehouse Engine Stats.
 
     !!! note
@@ -127,13 +128,13 @@ class InputFormat(Enum):
     SHAREPOINT = "sharepoint"
 
     @classmethod
-    def values(cls):  # type: ignore
+    def values(cls) -> list:
         """Generates a list containing all enum values.
 
         Returns:
             A list with all enum values.
         """
-        return (c.value for c in cls)
+        return [c.value for c in cls]
 
     @classmethod
     def exists(cls, input_format: str) -> bool:
@@ -168,8 +169,8 @@ class SharepointFile:
     file_name: str
     time_created: str
     time_modified: str
-    content: Optional[bytes] = None
-    _folder: Optional[str] = None
+    content: bytes | None = None
+    _folder: str | None = None
     skip_rename: bool = False
     _already_archived: bool = False
 
@@ -202,7 +203,7 @@ class SharepointFile:
 
 
 @dataclass
-class SharepointOptions(object):
+class SharepointOptions:
     """Options for Sharepoint I/O (used by both reader and writer).
 
     This dataclass is shared by the Sharepoint reader and writer. Some fields
@@ -256,30 +257,30 @@ class SharepointOptions(object):
     drive_name: str
     secret: str
     local_path: str
-    file_name: Optional[str] = None  # used by reader (optional) and writer (target)
+    file_name: str | None = None  # used by reader (optional) and writer (target)
     api_version: str = "v1.0"
-    conflict_behaviour: Optional[str] = None
-    allowed_extensions: Optional[Collection[str]] = None
+    conflict_behaviour: str | None = None
+    allowed_extensions: Collection[str] | None = None
 
     # Reader
-    file_type: Optional[str] = None
-    folder_relative_path: Optional[str] = None
-    file_pattern: Optional[str] = None
-    chunk_size: Optional[int] = 100 * 1024 * 1024  # 100 MB (read & write)
-    local_options: Optional[dict] = None  # (read & write)
+    file_type: str | None = None
+    folder_relative_path: str | None = None
+    file_pattern: str | None = None
+    chunk_size: int | None = 100 * 1024 * 1024  # 100 MB (read & write)
+    local_options: dict | None = None  # (read & write)
 
     # Reader archiving
     archive_enabled: bool = True
     skip_rename: bool = False
-    archive_success_subfolder: Optional[str] = "done"
-    archive_error_subfolder: Optional[str] = "error"
+    archive_success_subfolder: str | None = "done"
+    archive_error_subfolder: str | None = "error"
 
-    REQUIRED_READER_OPTS: ClassVar[Tuple[str, ...]] = (
+    REQUIRED_READER_OPTS: ClassVar[tuple[str, ...]] = (
         "site_name",
         "drive_name",
         "folder_relative_path",
     )
-    REQUIRED_WRITER_OPTS: ClassVar[Tuple[str, ...]] = (
+    REQUIRED_WRITER_OPTS: ClassVar[tuple[str, ...]] = (
         "site_name",
         "drive_name",
         "local_path",
@@ -456,13 +457,13 @@ class OutputFormat(Enum):
     SHAREPOINT = "sharepoint"
 
     @classmethod
-    def values(cls):  # type: ignore
+    def values(cls) -> list:
         """Generates a list containing all enum values.
 
         Returns:
             A list with all enum values.
         """
-        return (c.value for c in cls)
+        return [c.value for c in cls]
 
     @classmethod
     def exists(cls, output_format: str) -> bool:
@@ -612,7 +613,7 @@ class WriteType(Enum):
 
 
 @dataclass
-class InputSpec(object):
+class InputSpec:
     """Specification of an algorithm input.
 
     This is very aligned with the way the execution environment connects to the sources
@@ -654,25 +655,25 @@ class InputSpec(object):
 
     spec_id: str
     read_type: str
-    data_format: Optional[str] = None
-    sftp_files_format: Optional[str] = None
-    df_name: Optional[DataFrame] = None
-    db_table: Optional[str] = None
-    location: Optional[str] = None
-    sharepoint_opts: Optional[SharepointOptions] = None
-    query: Optional[str] = None
-    enforce_schema_from_table: Optional[str] = None
-    schema: Optional[dict] = None
-    schema_path: Optional[str] = None
+    data_format: str | None = None
+    sftp_files_format: str | None = None
+    df_name: DataFrame | None = None
+    db_table: str | None = None
+    location: str | None = None
+    sharepoint_opts: SharepointOptions | None = None
+    query: str | None = None
+    enforce_schema_from_table: str | None = None
+    schema: dict | None = None
+    schema_path: str | None = None
     disable_dbfs_retry: bool = False
     with_filepath: bool = False
-    options: Optional[dict] = None
-    jdbc_args: Optional[dict] = None
+    options: dict | None = None
+    jdbc_args: dict | None = None
     calculate_upper_bound: bool = False
-    calc_upper_bound_schema: Optional[str] = None
+    calc_upper_bound_schema: str | None = None
     generate_predicates: bool = False
     predicates_add_null: bool = True
-    temp_view: Optional[str] = None
+    temp_view: str | None = None
 
     def __post_init__(self) -> None:
         """Normalize Sharepoint options if passed as a raw dictionary.
@@ -686,7 +687,7 @@ class InputSpec(object):
 
 
 @dataclass
-class TransformerSpec(object):
+class TransformerSpec:
     """Transformer Specification, i.e., a single transformation amongst many.
 
     - function: name of the function (or callable function) to be executed.
@@ -700,7 +701,7 @@ class TransformerSpec(object):
 
 
 @dataclass
-class TransformSpec(object):
+class TransformSpec:
     """Transformation Specification.
 
     I.e., the specification that defines the many transformations to be done to the data
@@ -717,7 +718,7 @@ class TransformSpec(object):
 
     spec_id: str
     input_id: str
-    transformers: List[TransformerSpec]
+    transformers: list[TransformerSpec]
     force_streaming_foreach_batch_processing: bool = False
 
 
@@ -748,7 +749,7 @@ class DQTableBaseParameters(Enum):
 
 
 @dataclass
-class DQFunctionSpec(object):
+class DQFunctionSpec:
     """Defines a data quality function specification.
 
     - function - name of the data quality function (expectation) to execute.
@@ -757,11 +758,11 @@ class DQFunctionSpec(object):
     """
 
     function: str
-    args: Optional[dict] = None
+    args: dict | None = None
 
 
 @dataclass
-class DQSpec(object):
+class DQSpec:
     """Data quality overall specification.
 
     - spec_id - id of the specification.
@@ -853,43 +854,43 @@ class DQSpec(object):
     spec_id: str
     input_id: str
     dq_type: str
-    dq_functions: Optional[List[DQFunctionSpec]] = None
-    dq_db_table: Optional[str] = None
-    dq_table_table_filter: Optional[str] = None
-    dq_table_extra_filters: Optional[str] = None
-    execution_point: Optional[str] = None
-    unexpected_rows_pk: Optional[List[str]] = None
-    tbl_to_derive_pk: Optional[str] = None
-    gx_result_format: Optional[str] = DQResultFormat.COMPLETE.value
-    tag_source_data: Optional[bool] = False
+    dq_functions: list[DQFunctionSpec] | None = None
+    dq_db_table: str | None = None
+    dq_table_table_filter: str | None = None
+    dq_table_extra_filters: str | None = None
+    execution_point: str | None = None
+    unexpected_rows_pk: list[str] | None = None
+    tbl_to_derive_pk: str | None = None
+    gx_result_format: str | None = DQResultFormat.COMPLETE.value
+    tag_source_data: bool | None = False
     store_backend: str = DQDefaults.STORE_BACKEND.value
-    local_fs_root_dir: Optional[str] = None
-    bucket: Optional[str] = None
+    local_fs_root_dir: str | None = None
+    bucket: str | None = None
     expectations_store_prefix: str = DQDefaults.EXPECTATIONS_STORE_PREFIX.value
     validations_store_prefix: str = DQDefaults.VALIDATIONS_STORE_PREFIX.value
     checkpoint_store_prefix: str = DQDefaults.CHECKPOINT_STORE_PREFIX.value
-    data_asset_name: Optional[str] = None
-    expectation_suite_name: Optional[str] = None
-    result_sink_db_table: Optional[str] = None
-    result_sink_location: Optional[str] = None
-    result_sink_chunk_size: Optional[int] = 1000000
-    processed_keys_location: Optional[str] = None
-    data_product_name: Optional[str] = None
-    result_sink_partitions: Optional[List[str]] = None
+    data_asset_name: str | None = None
+    expectation_suite_name: str | None = None
+    result_sink_db_table: str | None = None
+    result_sink_location: str | None = None
+    result_sink_chunk_size: int = 1000000
+    processed_keys_location: str | None = None
+    data_product_name: str | None = None
+    result_sink_partitions: list[str] | None = None
     result_sink_format: str = OutputFormat.DELTAFILES.value
-    result_sink_options: Optional[dict] = None
+    result_sink_options: dict | None = None
     result_sink_explode: bool = True
-    result_sink_extra_columns: Optional[List[str]] = None
-    source: Optional[str] = None
+    result_sink_extra_columns: list[str] | None = None
+    source: str | None = None
     fail_on_error: bool = True
     cache_df: bool = False
-    critical_functions: Optional[List[DQFunctionSpec]] = None
-    max_percentage_failure: Optional[float] = None
+    critical_functions: list[DQFunctionSpec] | None = None
+    max_percentage_failure: float | None = None
     enable_row_condition: bool = False
 
 
 @dataclass
-class MergeOptions(object):
+class MergeOptions:
     """Options for a merge operation.
 
     - merge_predicate: predicate to apply to the merge operation so that we can
@@ -912,15 +913,15 @@ class MergeOptions(object):
     merge_predicate: str
     insert_only: bool = False
     merge_schema: bool = False
-    delete_predicate: Optional[str] = None
-    update_predicate: Optional[str] = None
-    insert_predicate: Optional[str] = None
-    update_column_set: Optional[dict] = None
-    insert_column_set: Optional[dict] = None
+    delete_predicate: str | None = None
+    update_predicate: str | None = None
+    insert_predicate: str | None = None
+    update_column_set: dict | None = None
+    insert_column_set: dict | None = None
 
 
 @dataclass
-class OutputSpec(object):
+class OutputSpec:
     """Specification of an algorithm output.
 
     This is very aligned with the way the execution environment connects to the output
@@ -970,25 +971,25 @@ class OutputSpec(object):
     input_id: str
     write_type: str
     data_format: str = OutputFormat.DELTAFILES.value
-    db_table: Optional[str] = None
-    location: Optional[str] = None
-    sharepoint_opts: Optional[SharepointOptions] = None
-    merge_opts: Optional[MergeOptions] = None
-    partitions: Optional[List[str]] = None
-    streaming_micro_batch_transformers: Optional[List[TransformerSpec]] = None
-    streaming_once: Optional[bool] = None
-    streaming_processing_time: Optional[str] = None
+    db_table: str | None = None
+    location: str | None = None
+    sharepoint_opts: SharepointOptions | None = None
+    merge_opts: MergeOptions | None = None
+    partitions: list[str] | None = None
+    streaming_micro_batch_transformers: list[TransformerSpec] | None = None
+    streaming_once: bool | None = None
+    streaming_processing_time: str | None = None
     streaming_available_now: bool = True
-    streaming_continuous: Optional[str] = None
+    streaming_continuous: str | None = None
     streaming_await_termination: bool = True
-    streaming_await_termination_timeout: Optional[int] = None
+    streaming_await_termination_timeout: int | None = None
     with_batch_id: bool = False
-    options: Optional[dict] = None
-    streaming_micro_batch_dq_processors: Optional[List[DQSpec]] = None
+    options: dict | None = None
+    streaming_micro_batch_dq_processors: list[DQSpec] | None = None
 
 
 @dataclass
-class TerminatorSpec(object):
+class TerminatorSpec:
     """Terminator Specification.
 
     I.e., the specification that defines a terminator operation to be executed. Examples
@@ -1000,12 +1001,12 @@ class TerminatorSpec(object):
     """
 
     function: str
-    args: Optional[dict] = None
-    input_id: Optional[str] = None
+    args: dict | None = None
+    input_id: str | None = None
 
 
 @dataclass
-class ReconciliatorSpec(object):
+class ReconciliatorSpec:
     """Reconciliator Specification.
 
     - metrics: list of metrics in the form of:
@@ -1042,18 +1043,18 @@ class ReconciliatorSpec(object):
        dataframes are empty, recon will exit success code (passed)
     """
 
-    metrics: List[dict]
+    metrics: list[dict]
     truth_input_spec: InputSpec
     current_input_spec: InputSpec
-    truth_preprocess_query: Optional[str] = None
-    truth_preprocess_query_args: Optional[List[dict]] = None
-    current_preprocess_query: Optional[str] = None
-    current_preprocess_query_args: Optional[List[dict]] = None
-    ignore_empty_df: Optional[bool] = False
+    truth_preprocess_query: str | None = None
+    truth_preprocess_query_args: list[dict] | None = None
+    current_preprocess_query: str | None = None
+    current_preprocess_query_args: list[dict] | None = None
+    ignore_empty_df: bool | None = False
 
 
 @dataclass
-class DQValidatorSpec(object):
+class DQValidatorSpec:
     """Data Quality Validator Specification.
 
     - input_spec: input specification of the data to be checked/validated.
@@ -1066,7 +1067,7 @@ class DQValidatorSpec(object):
 
     input_spec: InputSpec
     dq_spec: DQSpec
-    restore_prev_version: Optional[bool] = False
+    restore_prev_version: bool | None = False
 
 
 class SQLDefinitions(Enum):
@@ -1093,7 +1094,7 @@ class FileManagerAPIKeys(Enum):
 
 
 @dataclass
-class SensorSpec(object):
+class SensorSpec:
     """Sensor Specification.
 
     - sensor_id: sensor id.
@@ -1116,15 +1117,15 @@ class SensorSpec(object):
     """
 
     sensor_id: str
-    assets: List[str]
-    control_db_table_name: str
-    input_spec: InputSpec
-    preprocess_query: Optional[str]
-    checkpoint_location: Optional[str]
+    assets: list[str]
+    control_db_table_name: str | None
+    input_spec: InputSpec | None
+    preprocess_query: str | None
+    checkpoint_location: str | None
     fail_on_empty_result: bool = True
 
     @classmethod
-    def create_from_acon(cls, acon: dict):  # type: ignore
+    def create_from_acon(cls, acon: dict) -> Self:
         """Create SensorSpec from acon.
 
         Args:
@@ -1198,13 +1199,13 @@ class RestoreType(Enum):
     EXPEDITED = "Expedited"
 
     @classmethod
-    def values(cls):  # type: ignore
+    def values(cls) -> list:
         """Generates a list containing all enum values.
 
         Returns:
             A list with all enum values.
         """
-        return (c.value for c in cls)
+        return [c.value for c in cls]
 
     @classmethod
     def exists(cls, restore_type: str) -> bool:
@@ -1291,7 +1292,7 @@ class GABStartOfWeek(Enum):
 
 
 @dataclass
-class GABSpec(object):
+class GABSpec:
     """Gab Specification.
 
     - query_label_filter: query use-case label to execute.
@@ -1324,7 +1325,7 @@ class GABSpec(object):
     calendar_table: str
 
     @classmethod
-    def create_from_acon(cls, acon: dict):  # type: ignore
+    def create_from_acon(cls, acon: dict) -> Self:
         """Create GabSpec from acon.
 
         Args:
@@ -1404,7 +1405,7 @@ class GABCadence(Enum):
         """
         return sorted(
             cadences_to_order,
-            key=lambda item: cls.get_ordered_cadences().get(item),  # type: ignore
+            key=lambda item: cls.get_ordered_cadences().get(item, float("inf")),
         )
 
 
@@ -1770,7 +1771,7 @@ class GABCombinedConfiguration(Enum):
 
 
 @dataclass
-class HeartbeatConfigSpec(object):
+class HeartbeatConfigSpec:
     """Heartbeat Configurations and control table specifications.
 
     This provides the way in which the Heartbeat can pass environment and
@@ -1807,16 +1808,16 @@ class HeartbeatConfigSpec(object):
     lakehouse_engine_sensor_db_table: str
     token: str
     domain: str
-    options: Optional[dict]
-    jdbc_db_table: Optional[str]
-    base_checkpoint_location: Optional[str]
-    kafka_configs: Optional[dict]
-    kafka_secret_scope: Optional[str]
-    base_trigger_file_location: Optional[str]
-    schema_dict: Optional[dict]
+    options: dict | None
+    jdbc_db_table: str | None
+    base_checkpoint_location: str | None
+    kafka_configs: dict | None
+    kafka_secret_scope: str | None
+    base_trigger_file_location: str | None
+    schema_dict: dict | None
 
     @classmethod
-    def create_from_acon(cls, acon: dict):  # type: ignore
+    def create_from_acon(cls, acon: dict) -> Self:
         """Create HeartbeatConfigSpec from acon.
 
         Args:
@@ -1850,13 +1851,13 @@ class HeartbeatSensorSource(Enum):
     TRIGGER_FILE = "trigger_file"
 
     @classmethod
-    def values(cls):  # type: ignore
+    def values(cls) -> list:
         """Generates a list containing all enum values.
 
         Returns:
             A list with all enum values.
         """
-        return (c.value for c in cls)
+        return [c.value for c in cls]
 
 
 class HeartbeatStatus(Enum):

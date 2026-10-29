@@ -1,11 +1,11 @@
 """Custom transformers module."""
 
-from typing import Callable
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
 
-class CustomTransformers(object):
+class CustomTransformers:
     """Class representing a CustomTransformers."""
 
     @staticmethod

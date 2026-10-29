@@ -2,7 +2,6 @@
 
 import re
 from os import listdir
-from typing import List
 
 
 def get_file_names_without_file_type(
@@ -21,7 +20,7 @@ def get_file_names_without_file_type(
     Returns:
         A list of file names without file type.
     """
-    file_list: List[str] = []
+    file_list: list[str] = []
 
     for file in listdir(path):
         if not re.search(exclude_regex, file) and file.endswith(file_type):

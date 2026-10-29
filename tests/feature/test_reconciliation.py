@@ -1,6 +1,6 @@
 """Test reconciliation."""
 
-from typing import Any, List, Union
+from typing import Any
 
 import pytest
 
@@ -266,8 +266,10 @@ ACONS = {
             "failed_reconciliation_pct",
             "current_fail.json",
             "truth.json",
-            "Reconciliation result: {'net_sales_absolute_diff_sum': 100.0, "
-            "'net_sales_percentage_diff_avg': 0.0625}",
+            (
+                "Reconciliation result: {'net_sales_absolute_diff_sum': 100.0, "
+                "'net_sales_percentage_diff_avg': 0.0625}"
+            ),
             "The Reconciliation process has failed with status: red.",
         ],
         [
@@ -275,15 +277,19 @@ ACONS = {
             "current.json",
             "truth_empty.json",
             None,
-            "The reconciliation has failed because either the truth dataset or the "
-            "current results dataset was empty.",
+            (
+                "The reconciliation has failed because either the truth dataset or the "
+                "current results dataset was empty."
+            ),
         ],
         [
             "different_rows",
             "current_different_rows.json",
             "truth_different_rows.json",
-            "Reconciliation result: {'net_sales_absolute_diff_sum': 500.0, "
-            "'net_sales_absolute_diff_avg': 100.0}",
+            (
+                "Reconciliation result: {'net_sales_absolute_diff_sum': 500.0, "
+                "'net_sales_absolute_diff_avg': 100.0}"
+            ),
             "The Reconciliation process has failed with status: red.",
         ],
         [
@@ -298,8 +304,10 @@ ACONS = {
             "current.json",
             "truth.json",
             None,
-            "The reconciliation has failed because either the truth dataset or the "
-            "current results dataset was empty.",
+            (
+                "The reconciliation has failed because either the truth dataset or the "
+                "current results dataset was empty."
+            ),
         ],
     ],
 )
@@ -339,12 +347,12 @@ def test_reconciliation(scenario: str, caplog: Any) -> None:
         "empty_df_false_check",
     ]:
         with pytest.raises(ReconciliationFailedException) as e:
-            execute_reconciliation(acon=acon)  # type: ignore
+            execute_reconciliation(acon=acon)
         if scenario[3]:
             assert scenario[3] in caplog.text
         assert str(e.value) == scenario[4]
     else:
-        execute_reconciliation(acon=acon)  # type: ignore
+        execute_reconciliation(acon=acon)
         assert scenario[4] in caplog.text
 
 
@@ -358,8 +366,10 @@ def test_reconciliation(scenario: str, caplog: Any) -> None:
             0.1,
             "current_nulls_and_zeros",
             "truth_nulls_and_zeros",
-            "Reconciliation result: {'net_sales_percentage_diff_sum': 0.0, "
-            "'net_sales_percentage_diff_avg': 0.0}",
+            (
+                "Reconciliation result: {'net_sales_percentage_diff_sum': 0.0, "
+                "'net_sales_percentage_diff_avg': 0.0}"
+            ),
             "The Reconciliation process has succeeded.",
         ],
         [
@@ -369,8 +379,10 @@ def test_reconciliation(scenario: str, caplog: Any) -> None:
             0,
             "current_nulls_and_zeros_fail",
             "truth_nulls_and_zeros_fail",
-            "Reconciliation result: {'net_sales_percentage_diff_sum': 1.0, "
-            "'net_sales_percentage_diff_avg': 0.3333333333333333}",
+            (
+                "Reconciliation result: {'net_sales_percentage_diff_sum': 1.0, "
+                "'net_sales_percentage_diff_avg': 0.3333333333333333}"
+            ),
             "The Reconciliation process has failed with status: red.",
         ],
         [
@@ -380,14 +392,16 @@ def test_reconciliation(scenario: str, caplog: Any) -> None:
             0.1,
             "current_nulls_and_zeros_fail",
             "truth_nulls_and_zeros_fail",
-            "Reconciliation result: {'net_sales_percentage_diff_sum': 1.0, "
-            "'net_sales_percentage_diff_avg': 0.3333333333333333}",
+            (
+                "Reconciliation result: {'net_sales_percentage_diff_sum': 1.0, "
+                "'net_sales_percentage_diff_avg': 0.3333333333333333}"
+            ),
             "The Reconciliation process has failed with status: red.",
         ],
     ],
 )
 def test_nulls_and_zero_values_and_threshold(
-    scenario: List[Union[str, float]], caplog: Any
+    scenario: list[str | float], caplog: Any
 ) -> None:
     """Test truth and current datasets with nulls and zeros.
 
@@ -413,12 +427,10 @@ def test_nulls_and_zero_values_and_threshold(
 
     acon = ACON_WITHOUT_QUERIES
     acon["current_input_spec"]["location"] = (  # type: ignore
-        f"file:///app/tests/"
-        f"lakehouse/in/feature/reconciliation/data/{scenario[4]}.json"
+        f"file:///app/tests/lakehouse/in/feature/reconciliation/data/{scenario[4]}.json"
     )
     acon["truth_input_spec"]["location"] = (  # type: ignore
-        f"file:///app/tests/"
-        f"lakehouse/in/feature/reconciliation/data/{scenario[5]}.json"
+        f"file:///app/tests/lakehouse/in/feature/reconciliation/data/{scenario[5]}.json"
     )
     acon["metrics"][0]["type"] = scenario[1]  # type: ignore
     acon["metrics"][0]["yellow"] = scenario[2]  # type: ignore

@@ -5,7 +5,7 @@ import os
 from lakehouse_engine.core.exec_env import ExecEnv
 
 
-class ExecEnvHelpers(object):
+class ExecEnvHelpers:
     """Class with helper functions to interact with test execution environment."""
 
     @staticmethod
@@ -23,7 +23,7 @@ class ExecEnvHelpers(object):
                 enable_hive_support=False,
                 config={
                     "spark.remote": connect_url,
-                    "spark.packages": "io.delta:delta-connect-client_4.1_2.13:4.3.1,org.xerial:sqlite-jdbc:3.50.3.0,com.google.protobuf:protobuf-java:3.25.1",  # noqa: E501
+                    "spark.packages": "io.delta:delta-connect-client_4.1_2.13:4.3.1,org.xerial:sqlite-jdbc:3.50.3.0,com.google.protobuf:protobuf-java:3.25.1",
                     "spark.jars.repositories": str(ExecEnv.ENGINE_CONFIG.maven_repo),
                     "spark.sql.sources.parallelPartitionDiscovery.parallelism": "2",
                 },
@@ -35,11 +35,11 @@ class ExecEnvHelpers(object):
                 config={
                     "spark.master": "local[2]",
                     "spark.driver.memory": spark_driver_memory,
-                    "spark.sql.warehouse.dir": "file:///app/tests/lakehouse/spark-warehouse/",  # noqa: E501
+                    "spark.sql.warehouse.dir": "file:///app/tests/lakehouse/spark-warehouse/",
                     "spark.sql.shuffle.partitions": "2",
                     "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-                    "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",  # noqa: E501
-                    "spark.jars.packages": "io.delta:delta-spark_4.1_2.13:4.3.1,org.xerial:sqlite-jdbc:3.50.3.0",  # noqa: E501
+                    "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+                    "spark.jars.packages": "io.delta:delta-spark_4.1_2.13:4.3.1,org.xerial:sqlite-jdbc:3.50.3.0",
                     "spark.jars.repositories": str(ExecEnv.ENGINE_CONFIG.maven_repo),
                     "spark.jars.excludes": "net.sourceforge.f2j:arpack_combined_all",
                     "spark.sql.sources.parallelPartitionDiscovery.parallelism": "2",

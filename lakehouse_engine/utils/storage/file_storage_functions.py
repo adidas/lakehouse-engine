@@ -12,7 +12,7 @@ from lakehouse_engine.utils.storage.local_fs_storage import LocalFSStorage
 from lakehouse_engine.utils.storage.s3_storage import S3Storage
 
 
-class FileStorageFunctions(ABC):  # noqa: B024
+class FileStorageFunctions(ABC):
     """Class for common file storage functions."""
 
     @classmethod
@@ -35,7 +35,7 @@ class FileStorageFunctions(ABC):  # noqa: B024
         elif url.scheme == "s3" and cls.is_boto3_configured():
             try:
                 return json.load(S3Storage.get_file_payload(url))
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return json.loads(DBFSStorage.get_file_payload(url))
         elif url.scheme == "file":
             return json.load(LocalFSStorage.get_file_payload(url))
@@ -66,7 +66,7 @@ class FileStorageFunctions(ABC):  # noqa: B024
         elif url.scheme == "s3" and cls.is_boto3_configured():
             try:
                 return S3Storage.get_file_payload(url).read().decode("utf-8")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return DBFSStorage.get_file_payload(url)
         elif url.scheme == "file":
             return LocalFSStorage.get_file_payload(url).read()
@@ -97,7 +97,7 @@ class FileStorageFunctions(ABC):  # noqa: B024
         elif path.startswith("s3://") and cls.is_boto3_configured():
             try:
                 S3Storage.write_payload_to_file(url, content)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 DBFSStorage.write_payload_to_file(url, content)
         elif path.startswith(("s3://", "dbfs:/")):
             DBFSStorage.write_payload_to_file(url, content)
@@ -113,5 +113,5 @@ class FileStorageFunctions(ABC):  # noqa: B024
         try:
             boto3.client("sts").get_caller_identity()
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False

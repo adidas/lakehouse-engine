@@ -1,14 +1,12 @@
 """Module with sensor terminator."""
 
-from typing import List
-
 from lakehouse_engine.core.definitions import SensorSpec, SensorStatus
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.sensor_manager import SensorControlTableManager
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class SensorTerminator(object):
+class SensorTerminator:
     """Sensor Terminator class."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -19,7 +17,7 @@ class SensorTerminator(object):
         sensor_id: str,
         control_db_table_name: str,
         status: str = SensorStatus.PROCESSED_NEW_DATA.value,
-        assets: List[str] = None,
+        assets: list[str] | None = None,
     ) -> None:
         """Update internal sensor status.
 
@@ -46,7 +44,7 @@ class SensorTerminator(object):
             sensor_spec=SensorSpec(
                 sensor_id=sensor_id,
                 control_db_table_name=control_db_table_name,
-                assets=assets,
+                assets=assets or [],
                 input_spec=None,
                 preprocess_query=None,
                 checkpoint_location=None,

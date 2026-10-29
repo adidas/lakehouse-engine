@@ -1,6 +1,7 @@
 """Module to take care of creating a singleton of the execution environment class."""
 
 from dataclasses import replace
+from typing import Any
 
 from pyspark.sql import DataFrame, SparkSession
 
@@ -10,7 +11,7 @@ from lakehouse_engine.utils.databricks_utils import DatabricksUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class ExecEnv(object):
+class ExecEnv:
     """Represents the basic resources regarding the engine execution environment.
 
     Currently, it is used to encapsulate both the logic to get the Spark
@@ -26,8 +27,8 @@ class ExecEnv(object):
     def set_default_engine_config(
         cls,
         package: str = "lakehouse_engine.configs",
-        custom_configs_dict: dict = None,
-        custom_configs_file_path: str = None,
+        custom_configs_dict: dict | None = None,
+        custom_configs_file_path: str | None = None,
     ) -> None:
         """Set default engine configurations.
 
@@ -54,10 +55,10 @@ class ExecEnv(object):
     @classmethod
     def get_or_create(
         cls,
-        session: SparkSession = None,
+        session: SparkSession | None = None,
         enable_hive_support: bool = True,
-        app_name: str = None,
-        config: dict = None,
+        app_name: str | None = None,
+        config: dict | None = None,
     ) -> None:
         """Get or create an execution environment session (currently Spark).
 
@@ -90,13 +91,18 @@ class ExecEnv(object):
 
         if session:
             cls.SESSION = session
-        elif SparkSession.getActiveSession():
-            cls.SESSION = SparkSession.getActiveSession()
-            cls._set_spark_configs(final_config)
         else:
+            active_session = SparkSession.getActiveSession()
+            if active_session:
+                cls.SESSION = active_session
+                cls._set_spark_configs(final_config)
+                return
+
             cls._LOGGER.info("Creating a new Spark Session")
 
-            session_builder = SparkSession.builder.appName(app_name)
+            session_builder = SparkSession.builder.appName(
+                app_name if app_name is not None else "lakehouse-engine"
+            )
             cls._set_spark_configs(final_config, session_builder)
 
             if enable_hive_support:
@@ -111,11 +117,17 @@ class ExecEnv(object):
         from an external scope as it cannot serialise it, so the session
         needs to be retrieved and stored again in the ExecEnv class.
         """
-        cls.SESSION = df.sparkSession.getActiveSession()
+        active_session = df.sparkSession.getActiveSession()
+        if active_session:
+            cls.SESSION = active_session
+        else:
+            cls.SESSION = df.sparkSession
 
     @classmethod
     def _set_spark_configs(
-        cls, final_config: dict, session_builder: SparkSession.Builder = None
+        cls,
+        final_config: dict[str, Any],
+        session_builder: SparkSession.Builder | None = None,
     ) -> None:
         """Set Spark session configurations based on final_config.
 
@@ -143,7 +155,7 @@ class ExecEnv(object):
                         f"environment and will be skipped."
                     )
                 else:
-                    raise e
+                    raise
 
     @classmethod
     def get_environment(cls) -> str:

@@ -67,7 +67,7 @@ def test_drop_duplicates_with_watermark(scenario: dict) -> None:
 
     for load in range(1, loads + 1):
         LocalStorage.copy_file(
-            f"{TEST_RESOURCES}/{scenario_name}/data/source/part-0{str(load)}.csv",
+            f"{TEST_RESOURCES}/{scenario_name}/data/source/part-0{load!s}.csv",
             f"{TEST_LAKEHOUSE_IN}/{scenario_name}/data/",
         )
         acon = ConfigUtils.get_acon(
@@ -116,8 +116,8 @@ def test_joins_with_watermark(scenario: dict) -> None:
         )
 
     for load in range(1, loads + 1):
-        file_prefix = f"part-0{str(load)}.csv"
-        if load >= 1 and not scenario_name == "streaming_inner_join":
+        file_prefix = f"part-0{load!s}.csv"
+        if load >= 1 and scenario_name != "streaming_inner_join":
             LocalStorage.copy_file(
                 f"{TEST_RESOURCES}/{scenario_name}/data/source/customer-{file_prefix}",
                 f"{TEST_LAKEHOUSE_IN}/{scenario_name}/data/customers/",

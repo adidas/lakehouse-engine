@@ -15,7 +15,7 @@ from lakehouse_engine.utils.extraction.jdbc_extraction_utils import (
 class JDBCReader(Reader):
     """Class to read from JDBC source."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct JDBCReader instances.
 
         Args:
@@ -52,7 +52,7 @@ class JDBCReader(Reader):
                         "default_upper_bound", JDBCExtraction.default_upper_bound
                     ),
                 )
-            )  # type: ignore
+            )
             options["upperBound"] = jdbc_util.get_spark_jdbc_optimal_upper_bound()
 
         if self._input_spec.jdbc_args:

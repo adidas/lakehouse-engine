@@ -44,10 +44,8 @@ _TEST_SENSOR_DELTA_TABLE_BASE_SCHEMA = {
 
 _TEST_SENSOR_DELTA_TABLE_SCHEMA = {
     **_TEST_SENSOR_DELTA_TABLE_BASE_SCHEMA,
-    **{
-        "upstream_key": "string",
-        "upstream_value": "string",
-    },
+    "upstream_key": "string",
+    "upstream_value": "string",
 }
 
 
@@ -137,6 +135,7 @@ def test_table_sensor(scenario: list) -> None:
         sensor_table_data = SensorControlTableManager.read_sensor_table_data(
             sensor_id=sensor_id, control_db_table_name=control_db_table_name
         )
+        assert sensor_table_data
         assert sensor_table_data.status == SensorStatus.ACQUIRED_NEW_DATA.value
         assert has_new_data
 
@@ -152,6 +151,7 @@ def test_table_sensor(scenario: list) -> None:
             sensor_table_data = SensorControlTableManager.read_sensor_table_data(
                 sensor_id=sensor_id, control_db_table_name=control_db_table_name
             )
+            assert sensor_table_data
 
             assert sensor_table_data.status == SensorStatus.PROCESSED_NEW_DATA.value
     else:
@@ -273,9 +273,7 @@ def test_jdbc_sensor(scenario: str) -> None:
             table=sensor_table,
         )
         _insert_into_jdbc_table(init=True)
-    elif scenario == "2nd_run_with_new_data":
-        _insert_into_jdbc_table(time=datetime.now())
-    elif scenario == "4th_run_with_new_data":
+    elif scenario == "2nd_run_with_new_data" or scenario == "4th_run_with_new_data":
         _insert_into_jdbc_table(time=datetime.now())
 
     acon = {
@@ -307,6 +305,7 @@ def test_jdbc_sensor(scenario: str) -> None:
         sensor_table_data = SensorControlTableManager.read_sensor_table_data(
             sensor_id=sensor_id, control_db_table_name=control_db_table_name
         )
+        assert sensor_table_data
 
         assert sensor_table_data.status == SensorStatus.ACQUIRED_NEW_DATA.value
 
@@ -318,6 +317,7 @@ def test_jdbc_sensor(scenario: str) -> None:
         sensor_table_data = SensorControlTableManager.read_sensor_table_data(
             sensor_id=sensor_id, control_db_table_name=control_db_table_name
         )
+        assert sensor_table_data
 
         assert sensor_table_data.status == SensorStatus.PROCESSED_NEW_DATA.value
         assert has_new_data
@@ -391,6 +391,7 @@ def test_update_sensor_status() -> None:
     row = SensorControlTableManager.read_sensor_table_data(
         sensor_id=sensor_id, control_db_table_name=control_db_table_name
     )
+    assert row
 
     assert (
         row.sensor_id == sensor_id
@@ -402,7 +403,7 @@ def test_update_sensor_status() -> None:
 def _insert_data_into_upstream_table(
     table: str,
     db: str = "test_db",
-    values: str = None,
+    values: str | None = None,
 ) -> None:
     """Insert data into upstream table for testing sensoring based on tables.
 
@@ -422,7 +423,7 @@ def _insert_data_into_upstream_table(
             f"'2023-05-30 23:28:49.089522', null, null, null)"
         )
 
-    ExecEnv.SESSION.sql(f"INSERT INTO {db}.{table} VALUES {values}")  # nosec: B608
+    ExecEnv.SESSION.sql(f"INSERT INTO {db}.{table} VALUES {values}")  # noqa: S608
 
 
 def _insert_files_sensor_test_data(files_location: str) -> StructType:
@@ -451,7 +452,7 @@ def _insert_files_sensor_test_data(files_location: str) -> StructType:
 
 def _insert_into_jdbc_table(
     init: bool = False,
-    time: datetime = None,
+    time: datetime | None = None,
 ) -> None:
     """Insert data into the jdbc table for tests.
 

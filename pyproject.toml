@@ -9,7 +9,7 @@ name = "lakehouse-engine"
 requires-python = ">=3.12"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-version = "2.2.0"
+version = "2.2.1"
 authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
 description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
 keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
@@ -25,7 +25,90 @@ classifiers = [
     "Topic :: Software Development",
     "License :: OSI Approved :: Apache Software License"
 ]
-dynamic = ["dependencies", "optional-dependencies"]
+dependencies = [
+    "boto3==1.43.108",
+    "Jinja2==3.1.6",
+    "pyyaml==6.0.2",
+    "pendulum==3.1.0",
+    "importlib-resources==6.5.2",
+    "urllib3==2.8.0",
+    "certifi==2026.10.19"  # Pinning transitive dependency of requests to avoid security issues [LAKEHOUSE-2501]
+]
+
+[project.optional-dependencies]
+os = [
+    "pyspark[connect]==4.1.4",
+    "delta-spark==4.4.0"
+]
+azure = [
+    "msgraph-sdk==1.40.0",
+    "nest-asyncio==1.6.0",
+    "msal==1.37.0",
+    "multidict==6.9.1",
+    "pyjwt[crypto]==2.15.0"
+]
+dq = [
+    "great-expectations==1.20.0"
+]
+sftp = [
+    "paramiko==5.0.0"
+]
+sharepoint = [
+    "tenacity==9.0.0",
+    "msal==1.37.0",
+    "requests==2.34.2",
+    "multidict==6.9.1",
+    "pyjwt[crypto]==2.15.0"
+]
+cicd = [
+    "requests==2.34.2",
+    "pytest==9.0.3",
+    "pytest-cov==6.2.1",
+    "ruff==0.16.5",
+    "flake8==7.3.0",
+    "flake8-expression-complexity==0.1.1",
+    "flake8-cognitive-complexity==0.1.0",
+    "flake8-pyproject==1.2.4",
+    "ty==0.0.75",
+    "bump2version==1.0.1",
+    "lxml==6.1.0",
+    "pytest-sftpserver==1.3.0",
+    "cachecontrol==0.14.4",
+    "filelock==4.2.4",
+    "aiosmtpd==1.4.6",
+    "distlib==0.3.6",
+    "ghp-import==2.1.0",
+    "griffe==1.15.0",
+    "Markdown==3.10",
+    "markdown-callouts==0.4.0",
+    "markdown-exec==1.12.1",
+    "markdown-include==0.8.1",
+    "mergedeep==1.3.4",
+    "mike==2.2.0",
+    "mkdocs==1.6.1",
+    "mkdocs-autorefs==1.4.3",
+    "mkdocs-material==9.7.7",
+    "mkdocs-material-extensions==1.3.1",
+    "mkdocstrings-crystal==0.3.9",
+    "mkdocs-macros-plugin==1.5.0",
+    "mkdocstrings-python==2.0.1",
+    "mkdocstrings[python]==1.0.0",
+    "mkdocs-gen-files==0.6.0",
+    "mkdocs-section-index==0.3.10",
+    "mkdocs-literate-nav==0.6.2",
+    "pymdown-extensions==11.0.1",
+    "pyyaml_env_tag==0.1",
+    "regex==2023.6.3",
+    "watchdog==3.0.0",
+    "pygments==2.20.0",
+    "types-boto3==1.40.23",
+    "types-paramiko==2.12.0",
+    "types-requests<2.31.0.7",
+    "moto==4.2.14",
+    "Werkzeug==3.1.9",
+    "junitparser==4.0.2",
+    "twine==5.1.1"
+]
 
 [project.urls]
 Repository = "https://github.com/adidas/lakehouse-engine"
@@ -33,14 +116,6 @@ Documentation = "https://adidas.github.io/lakehouse-engine-docs/index.html"
 Issues = "https://github.com/adidas/lakehouse-engine/issues"
 Releases = "https://github.com/adidas/lakehouse-engine/releases"
 
-[tool.setuptools.dynamic]
-dependencies = { file = ["cicd/requirements.lock"] }
-optional-dependencies.os = { file = ["cicd/requirements_os.lock"] }
-optional-dependencies.azure = { file = ["cicd/requirements_azure.lock"] }
-optional-dependencies.dq = { file = ["cicd/requirements_dq.lock"] }
-optional-dependencies.sftp = { file = ["cicd/requirements_sftp.lock"] }
-optional-dependencies.sharepoint = { file = ["cicd/requirements_sharepoint.lock"] }
-optional-dependencies.cicd = { file = ["cicd/requirements_full.lock"] }
 
 [tool.setuptools.packages.find]
 exclude = ["tests*", "lakehouse_engine_usage*"]
@@ -49,33 +124,52 @@ namespaces = false
 [tool.setuptools.package-data]
 lakehouse_engine = ["configs/engine.yaml"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py312"
 
-[tool.mypy]
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = false
-strict_optional = false
-disallow_untyped_defs = true
+[tool.ruff.lint.per-file-ignores]
+"lakehouse_engine/io/__init__.py" = ["A005"]
+"tests/**/*.py" = ["S101"]
 
-[[tool.mypy.overrides]]
-module = [
-    "delta.*",
-    "pyspark.*",
-    "py4j.*",
-    "great_expectations.*",
-    "pandas.*",
-    "IPython.*",
-    "nest_asyncio.*",
-    "msgraph.*",
-    "importlib.*",
-    "yaml.*",
-    "ruamel.*",
-    "msal.*",
-    "dbruntime.databricks_repl_context.*"
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.lint]
+extend-select = [
+    "D",
+    "ANN",
+    "PYI",
+    "S",
+    "Q",
+    "ERA",
+    "C90"
 ]
-ignore_missing_imports = true
+
+ignore = [
+    "ANN401",
+    "DTZ",
+    "SIM117",
+    "TRY004",
+    "RUF012",
+    "PLR1704",
+    "TRY401",
+    "PIE796",
+    "PYI024",
+    "S113"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.flake8]
+select = "ECE,CCR001"
+max-expression-complexity = 11
+max-cognitive-complexity = 15
 
 [tool.pytest.ini_options]
 testpaths = [

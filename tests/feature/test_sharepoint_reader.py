@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -17,7 +17,7 @@ from tests.utils.mocks import MockRESTResponse
 TEST_NAME = "sharepoint"
 TEST_RESOURCES = f"{FEATURE_RESOURCES}/{TEST_NAME}"
 
-TEST_SCENARIOS_READER_SUCCESS: List[List[str]] = [
+TEST_SCENARIOS_READER_SUCCESS: list[list[str]] = [
     ["reader", "read_single_csv_success"],
     ["reader", "read_single_csv_full_path_success"],
     ["reader", "read_folder_csv_success"],
@@ -29,7 +29,7 @@ TEST_SCENARIOS_READER_SUCCESS: List[List[str]] = [
     ["reader", "read_folder_csv_archive_success_subfolder_override_success"],
 ]
 
-TEST_SCENARIOS_READER_FAILURES: List[List[str]] = [
+TEST_SCENARIOS_READER_FAILURES: list[list[str]] = [
     [
         "reader",
         "read_folder_csv_one_file_schema_mismatch_should_archive_error",
@@ -48,8 +48,10 @@ TEST_SCENARIOS_READER_FAILURES: List[List[str]] = [
     ],
     [
         "reader",
-        "read_folder_csv_one_file_schema_mismatch_"
-        "custom_error_subfolder_should_archive_error",
+        (
+            "read_folder_csv_one_file_schema_mismatch_"
+            "custom_error_subfolder_should_archive_error"
+        ),
         r"Schema mismatch",
     ],
     [
@@ -65,7 +67,7 @@ TEST_SCENARIOS_READER_FAILURES: List[List[str]] = [
 ]
 
 
-TEST_SCENARIOS_READER_EXCEPTIONS: List[List[str]] = [
+TEST_SCENARIOS_READER_EXCEPTIONS: list[list[str]] = [
     [
         "reader",
         "read_single_csv_full_path_with_file_name_should_fail",
@@ -116,7 +118,7 @@ def _read_bytes(path_value: str) -> bytes:
     return Path(path_value).read_bytes()
 
 
-def _get_output_path_by_scenario() -> Dict[str, str]:
+def _get_output_path_by_scenario() -> dict[str, str]:
     """Return the delta output location for each success scenario."""
     return {
         "read_single_csv_success": (
@@ -176,7 +178,7 @@ def _setup_sharepoint_reader_mocks_for_success(
             {"name": "ignore.txt", "createdDateTime": "", "lastModifiedDateTime": ""},
         ]
 
-        file_bytes_by_path: Dict[str, bytes] = {
+        file_bytes_by_path: dict[str, bytes] = {
             "sp_test/sample_1.csv": _read_bytes(
                 f"{TEST_RESOURCES}/reader/data/sample_1.csv"
             ),
@@ -235,25 +237,25 @@ def _assert_archive_calls_for_success(
     """
     is_folder_read_scenario = scenario_name.startswith("read_folder_")
 
-    folder_expected_calls_by_scenario: Dict[str, int] = {
+    folder_expected_calls_by_scenario: dict[str, int] = {
         "read_folder_csv_success": 3,
         "read_folder_csv_pattern_success": 2,
         "read_folder_csv_archive_enabled_success": 3,
         "read_folder_csv_archive_success_subfolder_override_success": 3,
     }
 
-    folder_archive_enabled_scenarios: Set[str] = {
+    folder_archive_enabled_scenarios: set[str] = {
         "read_folder_csv_archive_enabled_success",
         "read_folder_csv_archive_success_subfolder_override_success",
     }
 
-    single_file_archive_enabled_scenarios: Set[str] = {
+    single_file_archive_enabled_scenarios: set[str] = {
         "read_single_csv_archive_enabled_success",
         "read_single_csv_archive_default_enabled_success",
         "read_single_csv_archive_success_subfolder_override_success",
     }
 
-    success_subfolder_by_scenario: Dict[str, str] = {
+    success_subfolder_by_scenario: dict[str, str] = {
         "read_single_csv_archive_success_subfolder_override_success": "processed",
         "read_folder_csv_archive_success_subfolder_override_success": "processed",
     }
@@ -343,7 +345,7 @@ def test_sharepoint_reader_success(
     mock_list_items_in_path: Any,
     mock_get_file_metadata: Any,
     mock_archive_sharepoint_file: Any,
-    scenario: List[str],
+    scenario: list[str],
 ) -> None:
     """Test Sharepoint reader happy paths (single file, full path, folder)."""
     scenario_name = scenario[1]
@@ -396,7 +398,7 @@ def test_sharepoint_reader_failures(
     mock_list_items_in_path: Any,
     mock_get_file_metadata: Any,
     mock_archive_sharepoint_file: Any,
-    scenario: List[str],
+    scenario: list[str],
     tmp_path: Path,
 ) -> None:
     """Test Sharepoint reader runtime failure scenarios.
@@ -422,7 +424,7 @@ def test_sharepoint_reader_failures(
 
     should_assert_no_archive_calls = False
     expected_error_subfolder = "error"
-    allowed_file_names: Set[str] = set()
+    allowed_file_names: set[str] = set()
 
     should_patch_spark_load = False
 
@@ -442,7 +444,7 @@ def test_sharepoint_reader_failures(
             },
         ]
 
-        file_bytes_by_path: Dict[str, bytes] = {
+        file_bytes_by_path: dict[str, bytes] = {
             "sp_test/sample_1.csv": _read_bytes(
                 f"{TEST_RESOURCES}/reader/data/sample_1.csv"
             ),
@@ -547,9 +549,9 @@ def test_sharepoint_reader_failures(
                 "pyspark.sql.readwriter.DataFrameReader.load",
                 side_effect=Exception("Spark load failed"),
             ),
+            pytest.raises(ValueError, match=expected_error_regex),
         ):
-            with pytest.raises(ValueError, match=expected_error_regex):
-                load_data(acon_path)
+            load_data(acon_path)
     else:
         with pytest.raises(ValueError, match=expected_error_regex):
             load_data(acon_path)
@@ -593,14 +595,14 @@ def test_sharepoint_reader_failures(
         MockRESTResponse(
             status_code=200,
             json_data=json.loads(
-                open(f"{TEST_RESOURCES}/reader/mocks/get_site_id.json").read()
+                open(f"{TEST_RESOURCES}/reader/mocks/get_site_id.json").read()  # noqa: SIM115
             ),
         ),
         # drive id
         MockRESTResponse(
             status_code=200,
             json_data=json.loads(
-                open(f"{TEST_RESOURCES}/reader/mocks/get_drive_id.json").read()
+                open(f"{TEST_RESOURCES}/reader/mocks/get_drive_id.json").read()  # noqa: SIM115
             ),
         ),
     ],
@@ -614,7 +616,7 @@ def test_sharepoint_reader_exceptions(
     mock_make_request: Any,
     mock_get_token: Any,
     mock_create_app: Any,
-    scenario: List[str],
+    scenario: list[str],
 ) -> None:
     """Test Sharepoint reader invalid configs that must fail fast."""
     scenario_name = scenario[1]

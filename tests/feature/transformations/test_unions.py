@@ -1,7 +1,5 @@
 """Test Union Transformers."""
 
-from typing import List
-
 import pytest
 from pyspark.sql.utils import AnalysisException
 
@@ -42,7 +40,7 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
         ],
     ],
 )
-def test_unions(scenario: List[str]) -> None:
+def test_unions(scenario: list[str]) -> None:
     """Test union transformers.
 
     Args:

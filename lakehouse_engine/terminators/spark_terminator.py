@@ -4,7 +4,7 @@ from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class SparkTerminator(object):
+class SparkTerminator:
     """Spark Terminator class."""
 
     _logger = LoggingHandler(__name__).get_logger()

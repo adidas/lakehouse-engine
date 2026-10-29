@@ -17,7 +17,7 @@ from pyspark.sql.types import (
 )
 
 from lakehouse_engine.algorithms.sensors.sensor import SensorStatus
-from lakehouse_engine.core.definitions import SensorSpec
+from lakehouse_engine.core.definitions import InputSpec, SensorSpec
 from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.core.sensor_manager import (
     SensorControlTableManager,
@@ -281,35 +281,28 @@ def test_read_sensor_table_data(
     """
     expected_result = scenario["expected_result"]
 
-    with patch.object(DeltaTable, "forName", MagicMock()) as delta_table_for_name_mock:
-        delta_table_for_name_mock.start()
-        with patch.object(
-            delta_table_for_name_mock.return_value,
-            "toDF",
-            MagicMock(return_value=control_table_fixture),
-        ) as delta_table_for_to_df_mock:
-            delta_table_for_to_df_mock.start()
+    delta_table = MagicMock()
+    delta_table.toDF.return_value = control_table_fixture
 
-            if scenario["scenario_name"] == "sensor_id_and_sensor_asset_are_absent":
-                with pytest.raises(ValueError) as exception:
-                    SensorControlTableManager.read_sensor_table_data(
-                        sensor_id=scenario["sensor_id"],
-                        control_db_table_name=scenario["control_db_table_name"],
-                        assets=scenario["assets"],
-                    )
-
-                assert expected_result in str(exception.value)
-            else:
-                subject = SensorControlTableManager.read_sensor_table_data(
+    with patch.object(DeltaTable, "forName", return_value=delta_table):
+        if scenario["scenario_name"] == "sensor_id_and_sensor_asset_are_absent":
+            with pytest.raises(ValueError) as exception:
+                SensorControlTableManager.read_sensor_table_data(
                     sensor_id=scenario["sensor_id"],
                     control_db_table_name=scenario["control_db_table_name"],
                     assets=scenario["assets"],
                 )
 
-                assert subject.asDict() == expected_result
+            assert expected_result in str(exception.value)
+        else:
+            subject = SensorControlTableManager.read_sensor_table_data(
+                sensor_id=scenario["sensor_id"],
+                control_db_table_name=scenario["control_db_table_name"],
+                assets=scenario["assets"],
+            )
 
-            delta_table_for_to_df_mock.stop()
-    delta_table_for_name_mock.stop()
+            assert subject is not None
+            assert subject.asDict() == expected_result
 
 
 @pytest.mark.parametrize(
@@ -509,7 +502,7 @@ def test_if_generate_filter_exp_preprocess_query(scenario: dict, capsys: Any) ->
         {
             "scenario_name": "generate_sensor_table_preprocess_query",
             "sensor_id": "sensor_id_1",
-            "expected_result": "SELECT * "  # nosec
+            "expected_result": "SELECT * "  # noqa: S608
             "FROM sensor_new_data "
             "WHERE"
             " _change_type in ('insert', 'update_postimage')"
@@ -552,9 +545,7 @@ def dataframe_fixture() -> DataFrame:
         },
         {
             "scenario_name": "read_new_data_with_preprocess_query",
-            "preprocess_query": "SELECT *"
-            "FROM sensor_new_data "
-            "WHERE dummy_field = 'b' ",
+            "preprocess_query": "SELECT *FROM sensor_new_data WHERE dummy_field = 'b' ",
             "expected_result": 1,
         },
     ],
@@ -580,7 +571,12 @@ def test_read_new_data(
                 sensor_id="sensor_id_1",
                 assets=["asset_1"],
                 control_db_table_name="test_db.sensor_control_table",
-                input_spec=None,
+                input_spec=InputSpec(
+                    spec_id="sensor_upstream",
+                    read_type="batch",
+                    data_format="delta",
+                    location="s3://dummy-bucket/sensors/sensor_id_1",
+                ),
                 preprocess_query=scenario["preprocess_query"],
                 checkpoint_location="s3://dummy-bucket/sensors/sensor_id_1",
             )

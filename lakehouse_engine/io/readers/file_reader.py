@@ -11,7 +11,7 @@ from lakehouse_engine.utils.schema_utils import SchemaUtils
 class FileReader(Reader):
     """Class to read from files."""
 
-    def __init__(self, input_spec: InputSpec):
+    def __init__(self, input_spec: InputSpec) -> None:
         """Construct FileReader instances.
 
         Args:

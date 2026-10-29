@@ -3,7 +3,6 @@
 from collections import OrderedDict
 from copy import deepcopy
 from logging import Logger
-from typing import List, Optional
 
 from lakehouse_engine.algorithms.algorithm import Algorithm
 from lakehouse_engine.core.definitions import (
@@ -48,7 +47,7 @@ class DataLoader(Algorithm):
     abstraction for any specific algorithm included in the lakehouse-engine framework.
     """
 
-    def __init__(self, acon: dict):
+    def __init__(self, acon: dict) -> None:
         """Construct DataLoader algorithm instances.
 
         A data loader needs several specifications to work properly,
@@ -68,19 +67,19 @@ class DataLoader(Algorithm):
         """
         self._logger: Logger = LoggingHandler(self.__class__.__name__).get_logger()
         super().__init__(acon)
-        self.input_specs: List[InputSpec] = self._get_input_specs()
+        self.input_specs: list[InputSpec] = self._get_input_specs()
         # the streaming transformers plan is needed to future change the
         # execution specification to accommodate streaming mode limitations in invoking
         # certain functions (e.g., sort, window, generate row ids/auto increments, ...).
         self._streaming_micro_batch_transformers_plan: dict = {}
-        self.transform_specs: List[TransformSpec] = self._get_transform_specs()
+        self.transform_specs: list[TransformSpec] = self._get_transform_specs()
         # our data quality process is not compatible with streaming mode, hence we
         # have to run it in micro batches, similar to what happens to certain
         # transformation functions not supported in streaming mode.
         self._streaming_micro_batch_dq_plan: dict = {}
-        self.dq_specs: List[DQSpec] = self._get_dq_specs()
-        self.output_specs: List[OutputSpec] = self._get_output_specs()
-        self.terminate_specs: List[TerminatorSpec] = self._get_terminate_specs()
+        self.dq_specs: list[DQSpec] = self._get_dq_specs()
+        self.output_specs: list[OutputSpec] = self._get_output_specs()
+        self.terminate_specs: list[TerminatorSpec] = self._get_terminate_specs()
 
     def read(self) -> OrderedDict:
         """Read data from an input location into a distributed dataframe.
@@ -129,7 +128,7 @@ class DataLoader(Algorithm):
 
     def process_dq(
         self, data: OrderedDict
-    ) -> tuple[OrderedDict, Optional[dict[str, str]]]:
+    ) -> tuple[OrderedDict, dict[str, str] | None]:
         """Process the data quality tasks for the data that was read and/or transformed.
 
         It supports multiple input dataframes. Although just one is advisable.
@@ -169,7 +168,6 @@ class DataLoader(Algorithm):
                 if (
                     spec.dq_type == DQType.PRISMA.value or spec.dq_functions
                 ) and spec.spec_id not in self._streaming_micro_batch_dq_plan:
-
                     if spec.cache_df:
                         df_processed_df.cache()
                     dq_processed_dfs[spec.spec_id] = DQFactory.run_dq_process(
@@ -224,7 +222,7 @@ class DataLoader(Algorithm):
                     spec, data[spec.input_id] if spec.input_id else None
                 )
 
-    def execute(self) -> Optional[OrderedDict]:
+    def execute(self) -> OrderedDict | None:
         """Define the algorithm execution behaviour."""
         try:
             self._logger.info("Starting read stage...")
@@ -240,7 +238,7 @@ class DataLoader(Algorithm):
             self._logger.info("Execution of the algorithm has finished!")
         except Exception as e:
             NotifierFactory.generate_failure_notification(self.terminate_specs, e)
-            raise e
+            raise
 
         if errors:
             raise DQDuplicateRuleIdException(
@@ -254,7 +252,7 @@ class DataLoader(Algorithm):
 
         return written_dfs
 
-    def _get_input_specs(self) -> List[InputSpec]:
+    def _get_input_specs(self) -> list[InputSpec]:
         """Get the input specifications from an acon.
 
         Returns:
@@ -262,7 +260,7 @@ class DataLoader(Algorithm):
         """
         return [InputSpec(**spec) for spec in self.acon["input_specs"]]
 
-    def _get_transform_specs(self) -> List[TransformSpec]:
+    def _get_transform_specs(self) -> list[TransformSpec]:
         """Get the transformation specifications from an acon.
 
         If we are executing the algorithm in streaming mode and if the
@@ -329,7 +327,7 @@ class DataLoader(Algorithm):
 
         return transform_specs
 
-    def _get_dq_specs(self) -> List[DQSpec]:
+    def _get_dq_specs(self) -> list[DQSpec]:
         """Get list of data quality specification objects from acon.
 
         In streaming mode, we automatically convert the data quality specification in
@@ -350,7 +348,6 @@ class DataLoader(Algorithm):
 
         dq_specs = []
         for spec in self.acon.get("dq_specs", []):
-
             dq_spec, dq_functions, critical_functions = Algorithm.get_dq_spec(spec)
 
             if prev_spec_read_types[dq_spec.input_id] == ReadType.STREAMING.value:
@@ -366,13 +363,13 @@ class DataLoader(Algorithm):
 
             self._logger.info(
                 f"Streaming Micro Batch DQ Plan: "
-                f"{str(self._streaming_micro_batch_dq_plan)}"
+                f"{self._streaming_micro_batch_dq_plan!s}"
             )
             dq_specs.append(dq_spec)
 
         return dq_specs
 
-    def _get_output_specs(self) -> List[OutputSpec]:
+    def _get_output_specs(self) -> list[OutputSpec]:
         """Get the output specifications from an acon.
 
         Returns:
@@ -405,13 +402,11 @@ class DataLoader(Algorithm):
                 streaming_available_now=spec.get(
                     "streaming_available_now",
                     (
-                        False
-                        if (
+                        not (
                             spec.get("streaming_once", None)
                             or spec.get("streaming_processing_time", None)
                             or spec.get("streaming_continuous", None)
                         )
-                        else True
                     ),
                 ),
                 streaming_continuous=spec.get("streaming_continuous", None),
@@ -431,8 +426,8 @@ class DataLoader(Algorithm):
         ]
 
     def _get_streaming_transformer_plan(
-        self, input_id: str, dq_specs: Optional[List[DQSpec]]
-    ) -> List[TransformerSpec]:
+        self, input_id: str, dq_specs: list[DQSpec] | None
+    ) -> list[TransformerSpec]:
         """Gets the plan for transformations to be applied on streaming micro batches.
 
         When running both DQ processes and transformations in streaming micro batches,
@@ -449,7 +444,14 @@ class DataLoader(Algorithm):
             a list of TransformerSpec, representing the transformations plan.
         """
         transformer_id = (
-            [dq_spec.input_id for dq_spec in dq_specs if dq_spec.spec_id == input_id][0]
+            next(
+                (
+                    dq_spec.input_id
+                    for dq_spec in (dq_specs or [])
+                    if dq_spec.spec_id == input_id
+                ),
+                None,
+            )
             if self._streaming_micro_batch_dq_plan.get(input_id)
             and self._streaming_micro_batch_transformers_plan
             else input_id
@@ -461,7 +463,7 @@ class DataLoader(Algorithm):
 
         return streaming_micro_batch_transformers_plan
 
-    def _get_terminate_specs(self) -> List[TerminatorSpec]:
+    def _get_terminate_specs(self) -> list[TerminatorSpec]:
         """Get the terminate specifications from an acon.
 
         Returns:
@@ -499,8 +501,8 @@ class DataLoader(Algorithm):
     def _move_to_streaming_micro_batch_dq_processors(
         self,
         dq_spec: DQSpec,
-        dq_functions: List[DQFunctionSpec],
-        critical_functions: List[DQFunctionSpec],
+        dq_functions: list[DQFunctionSpec],
+        critical_functions: list[DQFunctionSpec],
     ) -> None:
         """Move the dq function to the list of streaming micro batch transformations.
 
@@ -526,7 +528,7 @@ class DataLoader(Algorithm):
         self._streaming_micro_batch_dq_plan[dq_spec.spec_id].append(dq_spec)
 
     @staticmethod
-    def _get_input_read_types(list_of_specs: List) -> dict:
+    def _get_input_read_types(list_of_specs: list) -> dict:
         """Get a dict of spec ids and read types from a list of input specs.
 
         Args:
@@ -538,7 +540,7 @@ class DataLoader(Algorithm):
         return {item["spec_id"]: item["read_type"] for item in list_of_specs}
 
     @staticmethod
-    def _get_transform_input_ids(list_of_specs: List) -> dict:
+    def _get_transform_input_ids(list_of_specs: list) -> dict:
         """Get a dict of transform spec ids and input ids from list of transform specs.
 
         Args:

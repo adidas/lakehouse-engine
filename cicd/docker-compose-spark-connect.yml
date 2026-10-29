@@ -5,8 +5,8 @@ services:
     user: "0:0"
     command: >
       /bin/bash -c "
-      pip install \$(find /app/dist -name '*.whl' -type f | head -1)[cicd] &&
-      spark-4.1.3-bin-hadoop3/sbin/start-connect-server.sh
+      uv run --with \"\$(find /app/dist -name '*.whl' -type f | head -1)[cicd,os,dq,azure,sftp,sharepoint]\" \
+      /home/appuser/spark/sbin/start-connect-server.sh
       --packages io.delta:delta-spark_4.1_2.13:4.3.1,io.delta:delta-connect-server_4.1_2.13:4.3.1,org.xerial:sqlite-jdbc:3.50.3.0,com.google.protobuf:protobuf-java:3.25.1
       --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
       --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
@@ -51,8 +51,8 @@ services:
       - spark-network
     command: >
       /bin/bash -c "echo 'Waiting for Spark Connect server to be ready...' &&
-      pip install \$(find /app/dist -name '*.whl' -type f | head -1)[cicd] &&
       sleep 30 &&
+      uv run --with \"\$(find /app/dist -name '*.whl' -type f | head -1)[cicd,os,dq,azure,sftp,sharepoint]\" \
       pytest
       --junitxml=artefacts/tests-connect.xml
       --cov-report xml --cov-report xml:artefacts/coverage-connect.xml

@@ -1,13 +1,13 @@
 """Watermarker module."""
 
-from typing import Callable
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class Watermarker(object):
+class Watermarker:
     """Class containing all watermarker transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()

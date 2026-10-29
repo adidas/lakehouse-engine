@@ -109,19 +109,19 @@ Alternatively, you can also upload the wheel to any target of your like (e.g. S3
 ---
 > ***Note:*** The Lakehouse Engine is packaged with plugins or optional dependencies, which are not installed by default. The goal is
 > to make its installation lighter and to avoid unnecessary dependencies. You can check all the optional dependencies in
-> the [tool.setuptools.dynamic] section of the [pyproject.toml](pyproject.toml) file. They are currently: os, dq, azure, sharepoint and sftp. So,
+> the [project.optional-dependencies] section of the [pyproject.toml](pyproject.toml) file. They are currently: os, dq, azure, sharepoint and sftp. So,
 > in case you want to make usage of the Data Quality features offered in the Lakehouse Engine, instead of running the previous command, you should run
 > the command below, which will bring the core functionalities, plus DQ.
-> ```
-> pip install lakehouse-engine[dq]
+> ```bash
+> pip install "lakehouse-engine[dq]"
 > ```
 > In case you are in an environment without pre-install spark and delta, you will also want to install the `os` optional dependencies, like so:
-> ```
-> pip install lakehouse-engine[os]
+> ```bash
+> pip install "lakehouse-engine[os]"
 > ```
 > And in case you want to install several optional dependencies, you can run a command like:
-> ```
-> pip install lakehouse-engine[dq,sftp]
+> ```bash
+> pip install "lakehouse-engine[dq,sftp]"
 > ```
 > It is advisable for a Data Product to pin a specific version of the Lakehouse Engine (and have recurring upgrading activities)
 > to avoid breaking changes in a new release.
@@ -320,6 +320,15 @@ Lakehouse Engine releases when calling internal functions (not exposed in the fa
 ---
 > ***Note:*** ACON structure might change across releases, please test your Data Product first before updating to a 
 new version of the Lakehouse Engine in your Production environment.
+---
+## Samples
+
+Some examples of how to use the Lakehouse Engine can be found in the [samples](samples/) folder. 
+The [table_tennis_medallion_architecture_tutorial](samples/table_tennis_medallion_architecture_tutorial/) folder contains a tutorial on how to use the Lakehouse Engine to implement a medallion architecture with the separation of bronze, silver, and gold layers.
+
+The [criket_dq_tutorial](samples/criket_dq_tutorial.py) folder contains a tutorial on how to use the Lakehouse Engine to implement a data quality process.
+
+The [tpch_load_and_analysis_tutorial](samples/tpch_load_and_analysis_tutorial.py) folder contains a tutorial on how to use the Lakehouse Engine to load and analyze data.
 
 ---
 ## Overwriting default configurations

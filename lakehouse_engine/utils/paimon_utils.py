@@ -17,7 +17,7 @@ pre-create the table or manage schema evolution manually.
 import json
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
@@ -42,7 +42,7 @@ SIMPLE_PAIMON_TYPES = {
 }
 
 
-class PaimonUtils(object):
+class PaimonUtils:
     """Helpers to bootstrap and describe Apache Paimon path-based tables."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -63,6 +63,8 @@ class PaimonUtils(object):
             df: dataframe to be written.
             output_spec: output specification driving the write operation.
         """
+        if not output_spec.location:
+            raise ValueError("output_spec.location must be provided for Paimon writes.")
         location = output_spec.location.rstrip("/")
 
         if cls._write_schema_file(spark, df, output_spec, location):
@@ -90,6 +92,8 @@ class PaimonUtils(object):
         Returns:
             DataFrame with columns aligned to the latest Paimon schema.
         """
+        if not output_spec.location:
+            raise ValueError("output_spec.location must be provided for Paimon writes.")
         location = output_spec.location.rstrip("/")
         try:
             dbutils = DatabricksUtils.get_db_utils(spark)
@@ -157,7 +161,7 @@ class PaimonUtils(object):
 
         try:
             dbutils.fs.put(schema_path, schema_json, False)
-        except Exception as e:  # noqa: BLE001
+        except Exception:
             if DatabricksUtils.check_dbutils_path_exists(dbutils, schema_path):
                 written_schema = cls._read_schema_file(dbutils, schema_path)
                 if cls._create_normalized_schema(
@@ -169,7 +173,7 @@ class PaimonUtils(object):
                         schema_path,
                     )
                     return True
-            raise e
+            raise
         return True
 
     @classmethod
@@ -177,10 +181,10 @@ class PaimonUtils(object):
         cls,
         dbutils: Any,
         location: str,
-        latest_version: Optional[int],
-        existing_schema: Optional[Dict[str, Any]],
-        desired_schema: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        latest_version: int | None,
+        existing_schema: dict[str, Any] | None,
+        desired_schema: dict[str, Any],
+    ) -> dict[str, Any]:
         """Relax required fields that were newly introduced in the latest schema.
 
         Args:
@@ -250,7 +254,7 @@ class PaimonUtils(object):
     @classmethod
     def _get_latest_schema_version(
         cls, dbutils: Any, location: str
-    ) -> Tuple[Optional[int], Optional[str]]:
+    ) -> tuple[int | None, str | None]:
         """Get latest ``schema-N`` version and path from table schema directory.
 
         Args:
@@ -266,7 +270,7 @@ class PaimonUtils(object):
         except Exception:  # noqa: BLE001
             return None, None
 
-        latest: Optional[Tuple[int, str]] = None
+        latest: tuple[int, str] | None = None
         for entry in entries:
             name = DatabricksUtils.get_dbutils_entry_name(entry)
             if not name:
@@ -296,7 +300,7 @@ class PaimonUtils(object):
         return json.loads(dbutils.fs.head(schema_path))
 
     @classmethod
-    def _create_normalized_schema(cls, schema: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_normalized_schema(cls, schema: dict[str, Any]) -> dict[str, Any]:
         """Normalize a schema payload for stable equality checks.
 
         This function removes non-essential fields from the schema as well as
@@ -345,8 +349,8 @@ class PaimonUtils(object):
         cls,
         df: DataFrame,
         output_spec: OutputSpec,
-        existing_schema: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        existing_schema: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Build the schema payload as a dictionary.
 
         When ``existing_schema`` is provided, field ids are preserved and only
@@ -386,8 +390,8 @@ class PaimonUtils(object):
 
     @classmethod
     def _build_fields_with_stable_ids(
-        cls, df: DataFrame, existing_schema: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        cls, df: DataFrame, existing_schema: dict[str, Any] | None
+    ) -> list[dict[str, Any]]:
         """Build fields list preserving ids from existing schema when possible.
 
         For evolved tables, newly added non-nullable DataFrame columns are downgraded
@@ -401,7 +405,7 @@ class PaimonUtils(object):
         incoming_names = {field.name for field in df.schema.fields}
 
         next_id = max((int(field["id"]) for field in existing_fields), default=-1) + 1
-        fields: List[Dict[str, Any]] = []
+        fields: list[dict[str, Any]] = []
         for field in df.schema.fields:
             existing = existing_by_name.get(field.name)
             if existing:
@@ -420,8 +424,8 @@ class PaimonUtils(object):
 
     @staticmethod
     def _get_existing_fields_by_name(
-        existing_fields: List[Dict[str, Any]],
-    ) -> Dict[str, Dict[str, Any]]:
+        existing_fields: list[dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
         """Map existing schema fields by name, ignoring malformed entries.
 
         Args:
@@ -439,9 +443,9 @@ class PaimonUtils(object):
     @classmethod
     def _build_preserved_missing_field_entries(
         cls,
-        existing_by_name: Dict[str, Dict[str, Any]],
+        existing_by_name: dict[str, dict[str, Any]],
         incoming_names: set,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Preserve existing schema columns absent from the incoming DataFrame."""
         missing_existing_columns = [
             existing_by_name[name]
@@ -461,8 +465,8 @@ class PaimonUtils(object):
 
     @classmethod
     def _build_existing_field_entry(
-        cls, spark_field: Any, existing_field: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cls, spark_field: Any, existing_field: dict[str, Any]
+    ) -> dict[str, Any]:
         """Build a field entry for an already-existing column."""
         rendered_type = cls.spark_type_to_paimon(
             spark_field.dataType, spark_field.nullable
@@ -486,7 +490,7 @@ class PaimonUtils(object):
     @classmethod
     def _build_new_field_entry(
         cls, spark_field: Any, has_existing_schema: bool, next_id: int
-    ) -> Tuple[Dict[str, Any], int]:
+    ) -> tuple[dict[str, Any], int]:
         """Build a field entry for a newly-added column."""
         rendered_type = cls.spark_type_to_paimon(
             spark_field.dataType,
@@ -516,15 +520,11 @@ class PaimonUtils(object):
         Returns:
             The top-level type without the trailing ``NOT NULL`` marker.
         """
-        return (
-            type_literal[: -len(PaimonUtils.NOT_NULL)]
-            if type_literal.endswith(PaimonUtils.NOT_NULL)
-            else type_literal
-        )
+        return type_literal.removesuffix(PaimonUtils.NOT_NULL)
 
     @classmethod
     def _align_dataframe_with_table_schema(
-        cls, df: DataFrame, schema: Dict[str, Any]
+        cls, df: DataFrame, schema: dict[str, Any]
     ) -> DataFrame:
         """Align DataFrame columns to schema fields, adding missing as null."""
         schema_fields = list(schema.get("fields", []))
@@ -608,8 +608,9 @@ class PaimonUtils(object):
         Returns:
             PAIMON type to be used.
         """
-        if type(dtype) in SIMPLE_PAIMON_TYPES:
-            return SIMPLE_PAIMON_TYPES[type(dtype)]
+        simple_type = SIMPLE_PAIMON_TYPES.get(type(dtype))
+        if simple_type is not None:
+            return simple_type
 
         timestamp_ntz = getattr(T, "TimestampNTZType", None)
         if timestamp_ntz is not None and isinstance(dtype, timestamp_ntz):
@@ -672,7 +673,7 @@ class PaimonUtils(object):
         return f"ROW<{inner}>"
 
     @staticmethod
-    def _extract_string_list(value: Any) -> List[str]:
+    def _extract_string_list(value: Any) -> list[str]:
         """Normalize a primary-key/partition option value into a list of strings.
 
         Args:

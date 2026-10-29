@@ -1,6 +1,6 @@
 """Contract of the lakehouse engine with all the available functions to be executed."""
 
-from typing import List, Optional, OrderedDict
+from collections import OrderedDict
 
 from lakehouse_engine.algorithms.data_loader import DataLoader
 from lakehouse_engine.algorithms.gab import GAB
@@ -27,11 +27,11 @@ from lakehouse_engine.utils.engine_usage_stats import EngineUsageStats
 
 
 def load_data(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
-) -> Optional[OrderedDict]:
+    spark_confs: dict | None = None,
+) -> OrderedDict | None:
     """Load data using the DataLoader algorithm.
 
     Args:
@@ -54,10 +54,10 @@ def load_data(
 
 
 def execute_reconciliation(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Execute the Reconciliator algorithm.
 
@@ -83,10 +83,10 @@ def execute_reconciliation(
 
 
 def execute_dq_validation(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Execute the DQValidator algorithm.
 
@@ -114,10 +114,10 @@ def execute_dq_validation(
 
 
 def manage_table(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Manipulate tables/views using Table Manager algorithm.
 
@@ -140,7 +140,7 @@ def manage_table(
 def execute_manager(
     acon: dict,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Execute the Lakehouse Engine Manager.
 
@@ -168,10 +168,10 @@ def execute_manager(
 
 
 def manage_files(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Manipulate s3 files using File Manager algorithm.
 
@@ -192,10 +192,10 @@ def manage_files(
 
 
 def execute_sensor(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> bool:
     """Execute a sensor based on a Sensor Algorithm Configuration.
 
@@ -218,10 +218,10 @@ def execute_sensor(
 
 
 def execute_sensor_heartbeat(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Execute a sensor based on a Heartbeat Algorithm Configuration.
 
@@ -327,7 +327,7 @@ def update_sensor_status(
     sensor_id: str,
     control_db_table_name: str,
     status: str = SensorStatus.PROCESSED_NEW_DATA.value,
-    assets: List[str] = None,
+    assets: list[str] | None = None,
 ) -> None:
     """Update internal sensor status.
 
@@ -359,11 +359,11 @@ def update_sensor_status(
 
 def generate_sensor_query(
     sensor_id: str,
-    filter_exp: str = None,
-    control_db_table_name: str = None,
-    upstream_key: str = None,
-    upstream_value: str = None,
-    upstream_table_name: str = None,
+    filter_exp: str | None = None,
+    control_db_table_name: str | None = None,
+    upstream_key: str | None = None,
+    upstream_value: str | None = None,
+    upstream_table_name: str | None = None,
 ) -> str:
     """Generates a preprocess query to be used in a sensor configuration.
 
@@ -450,10 +450,10 @@ def send_notification(args: dict) -> None:
 
 
 def execute_gab(
-    acon_path: Optional[str] = None,
-    acon: Optional[dict] = None,
+    acon_path: str | None = None,
+    acon: dict | None = None,
     collect_engine_usage: str = CollectEngineUsage.PROD_ONLY.value,
-    spark_confs: dict = None,
+    spark_confs: dict | None = None,
 ) -> None:
     """Execute the gold asset builder based on a GAB Algorithm Configuration.
 

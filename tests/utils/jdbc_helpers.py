@@ -39,7 +39,7 @@ _SPARK_TO_JDBC_TYPES = {
 }
 
 
-class JdbcHelpers(object):
+class JdbcHelpers:
     """Class with helper functions to interact with the test JDBC databases.
 
     Spark has no built-in dialect for SQLite, hence the default JDBC dialect is
@@ -79,7 +79,7 @@ class JdbcHelpers(object):
         """
         columns = ", ".join(
             f'"{field.name}" {cls.get_jdbc_type(field.dataType)}'
-            f'{"" if field.nullable else " NOT NULL"}'
+            f"{'' if field.nullable else ' NOT NULL'}"
             for field in schema.fields
         )
 

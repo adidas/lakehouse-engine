@@ -12,7 +12,7 @@ from lakehouse_engine.utils.logging_handler import LoggingHandler
 from lakehouse_engine.utils.storage.file_storage_functions import FileStorageFunctions
 
 
-class EngineUsageStats(object):
+class EngineUsageStats:
     """Engine Usage utilities class."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
@@ -22,8 +22,8 @@ class EngineUsageStats(object):
         cls,
         acon: dict,
         func_name: str,
-        collect_engine_usage: str = None,
-        spark_confs: dict = None,
+        collect_engine_usage: str | None = None,
+        spark_confs: dict | None = None,
     ) -> None:
         """Collects and store Lakehouse Engine usage statistics.
 
@@ -40,9 +40,10 @@ class EngineUsageStats(object):
         if not cls._should_collect_usage(collect_engine_usage):
             return
         try:
+            collect_engine_usage = collect_engine_usage or ""
             start_timestamp = datetime.now()
             timestamp_str = start_timestamp.strftime("%Y%m%d%H%M%S")
-            usage_stats = cls._prepare_usage_stats(acon, spark_confs)
+            usage_stats = cls._prepare_usage_stats(acon, spark_confs or {})
             engine_usage_path = cls._select_usage_path(
                 usage_stats, collect_engine_usage
             )
@@ -65,14 +66,14 @@ class EngineUsageStats(object):
                 cls._LOGGER.info("Storing Lakehouse Engine usage statistics")
             except FileNotFoundError as e:
                 cls._LOGGER.error(f"Could not write engine stats into file: {e}.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             cls._LOGGER.error(
                 "Failed while collecting the lakehouse engine stats: "
                 f"Unexpected {e=}, {type(e)=}."
             )
 
     @classmethod
-    def _should_collect_usage(cls, collect_engine_usage: str) -> bool:
+    def _should_collect_usage(cls, collect_engine_usage: str | None) -> bool:
         return (
             collect_engine_usage
             in [CollectEngineUsage.ENABLED.value, CollectEngineUsage.PROD_ONLY.value]
@@ -81,17 +82,17 @@ class EngineUsageStats(object):
         )
 
     @classmethod
-    def _prepare_usage_stats(cls, acon: dict, spark_confs: dict) -> dict:
+    def _prepare_usage_stats(cls, acon: dict, spark_confs: dict | None) -> dict:
         usage_stats = {"acon": ConfigUtils.remove_sensitive_info(acon)}
         if not ExecEnv.IS_SERVERLESS:
-            DatabricksUtils.get_spark_conf_values(usage_stats, spark_confs)
+            DatabricksUtils.get_spark_conf_values(usage_stats, spark_confs or {})
         else:
             DatabricksUtils.get_usage_context_for_serverless(usage_stats)
         return usage_stats
 
     @classmethod
     def _select_usage_path(
-        cls, usage_stats: dict, collect_engine_usage: str
+        cls, usage_stats: dict, collect_engine_usage: str | None
     ) -> str | None:
         if usage_stats.get("environment") == "prod":
             return ExecEnv.ENGINE_CONFIG.engine_usage_path

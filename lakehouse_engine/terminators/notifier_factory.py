@@ -6,7 +6,7 @@ from lakehouse_engine.terminators.notifiers.email_notifier import EmailNotifier
 from lakehouse_engine.terminators.notifiers.exceptions import NotifierNotFoundException
 
 
-class NotifierFactory(object):
+class NotifierFactory:
     """Class for notification factory."""
 
     NOTIFIER_TYPES = {NotifierType.EMAIL.value: EmailNotifier}
@@ -21,7 +21,8 @@ class NotifierFactory(object):
         Returns:
             Notifier: notifier that will handle notifications.
         """
-        notifier_name = spec.args.get("type")
+        args = spec.args or {}
+        notifier_name = args.get("type")
         notifier = cls.NOTIFIER_TYPES.get(notifier_name)
 
         if notifier:
@@ -46,7 +47,7 @@ class NotifierFactory(object):
                 notification_specs.append(terminator)
 
         for notification in notification_specs:
-            failure_notification_spec = notification.args
+            failure_notification_spec = notification.args or {}
             generate_failure_notification = failure_notification_spec.get(
                 "generate_failure_notification", False
             )

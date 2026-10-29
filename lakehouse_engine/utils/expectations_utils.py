@@ -1,6 +1,6 @@
 """Utilities to be used by custom expectations."""
 
-from typing import Any, Dict
+from typing import Any
 
 
 def validate_result(
@@ -25,12 +25,14 @@ def validate_result(
     test_unexpected_index_list = _get_test_unexpected_index_list(
         expectation_configuration.map_metric, metrics
     )
-    if example_unexpected_index_list:
-        if example_unexpected_index_list != test_unexpected_index_list:
-            raise AssertionError(
-                f"Example unexpected_index_list: {example_unexpected_index_list}\n"
-                f"Test unexpected_index_list: {test_unexpected_index_list}"
-            )
+    if (
+        example_unexpected_index_list
+        and example_unexpected_index_list != test_unexpected_index_list
+    ):
+        raise AssertionError(
+            f"Example unexpected_index_list: {example_unexpected_index_list}\n"
+            f"Test unexpected_index_list: {test_unexpected_index_list}"
+        )
 
 
 def _get_example_unexpected_index_list(expectation_configuration: Any) -> list:
@@ -50,7 +52,7 @@ def _get_example_unexpected_index_list(expectation_configuration: Any) -> list:
     filtered_example: dict = {"out": {"unexpected_index_list": []}}
 
     for example in expectation_configuration.examples:
-        for test in example["tests"]:  # type: ignore
+        for test in example["tests"]:
             example_result_format = []
             if "result_format" in expectation_configuration.result_format:
                 example_result_format = expectation_configuration.result_format
@@ -65,7 +67,7 @@ def _get_example_unexpected_index_list(expectation_configuration: Any) -> list:
     return example_unexpected_index_list
 
 
-def _get_test_unexpected_index_list(metric_name: str, metrics: Dict) -> list:
+def _get_test_unexpected_index_list(metric_name: str, metrics: dict) -> list:
     """Retrieves the unexpected index list from the test case that has been run.
 
     Args:

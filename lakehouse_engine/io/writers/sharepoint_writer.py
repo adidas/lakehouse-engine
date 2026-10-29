@@ -1,11 +1,11 @@
 """Module to define the behaviour to write to Sharepoint."""
 
 import os
-from typing import OrderedDict
+from collections import OrderedDict
 
 from pyspark.sql import DataFrame
 
-from lakehouse_engine.core.definitions import OutputSpec
+from lakehouse_engine.core.definitions import OutputSpec, SharepointOptions
 from lakehouse_engine.io.exceptions import (
     EndpointNotFoundException,
     NotSupportedException,
@@ -26,7 +26,9 @@ class SharepointWriter(Writer):
     must be implemented on the notebook-side.
     """
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct FileWriter instances.
 
         Args:
@@ -35,17 +37,24 @@ class SharepointWriter(Writer):
             data: list of all dfs generated on previous steps before writer.
         """
         super().__init__(output_spec, df, data)
+        self.opts = self._get_sharepoint_opts()
         self.sharepoint_utils = self._get_sharepoint_utils()
         self._logger = LoggingHandler(__name__).get_logger()
+
+    def _get_sharepoint_opts(self) -> SharepointOptions:
+        """Return sharepoint options ensuring they are available."""
+        if not self._output_spec.sharepoint_opts:
+            raise ValueError("sharepoint_opts must be provided for Sharepoint writer.")
+        return self._output_spec.sharepoint_opts
 
     def write(self) -> None:
         """Upload data to Sharepoint."""
         if self._df.isStreaming:
             raise NotSupportedException("Sharepoint writer doesn't support streaming!")
 
-        self._output_spec.sharepoint_opts.validate_for_writer()
+        self.opts.validate_for_writer()
         if not self.sharepoint_utils.check_if_endpoint_exists(
-            folder_root_path=self._output_spec.sharepoint_opts.folder_relative_path
+            folder_root_path=self.opts.folder_relative_path
         ):
             raise EndpointNotFoundException("The provided endpoint does not exist!")
 
@@ -53,18 +62,18 @@ class SharepointWriter(Writer):
 
     def _get_sharepoint_utils(self) -> SharepointUtils:
         sharepoint_utils = SharepointUtils(
-            client_id=self._output_spec.sharepoint_opts.client_id,
-            tenant_id=self._output_spec.sharepoint_opts.tenant_id,
-            local_path=self._output_spec.sharepoint_opts.local_path,
-            api_version=self._output_spec.sharepoint_opts.api_version,
-            site_name=self._output_spec.sharepoint_opts.site_name,
-            drive_name=self._output_spec.sharepoint_opts.drive_name,
-            file_name=self._output_spec.sharepoint_opts.file_name,
-            folder_relative_path=self._output_spec.sharepoint_opts.folder_relative_path,
-            chunk_size=self._output_spec.sharepoint_opts.chunk_size,
-            local_options=self._output_spec.sharepoint_opts.local_options,
-            secret=self._output_spec.sharepoint_opts.secret,
-            conflict_behaviour=self._output_spec.sharepoint_opts.conflict_behaviour,
+            client_id=self.opts.client_id,
+            tenant_id=self.opts.tenant_id,
+            local_path=self.opts.local_path,
+            api_version=self.opts.api_version,
+            site_name=self.opts.site_name,
+            drive_name=self.opts.drive_name,
+            file_name=self.opts.file_name or "",
+            folder_relative_path=self.opts.folder_relative_path,
+            chunk_size=self.opts.chunk_size or (5 * 1024 * 1024),
+            local_options=self.opts.local_options,
+            secret=self.opts.secret or "",
+            conflict_behaviour=self.opts.conflict_behaviour or "replace",
         )
 
         return sharepoint_utils
@@ -81,14 +90,14 @@ class SharepointWriter(Writer):
             df: The DataFrame to write to a local file and subsequently
                 upload to Sharepoint.
         """
-        local_path = self._output_spec.sharepoint_opts.local_path
-        file_name = self._output_spec.sharepoint_opts.file_name
+        local_path = self.opts.local_path
+        file_name = self.opts.file_name
 
         self._logger.info(f"Starting to write the data to the local path: {local_path}")
 
         try:
             self.sharepoint_utils.write_to_local_path(df)
-        except IOError as err:
+        except OSError as err:
             self.sharepoint_utils.delete_local_path()
             self._logger.info(f"Deleted the local folder: {local_path}")
             raise WriteToLocalException(

@@ -32,7 +32,7 @@ SENSITIVE_KEYS_REG = [
 class FilterSensitiveData(logging.Filter):
     """Logging filter to hide sensitive data from being shown in the logs."""
 
-    def filter(self, record: logging.LogRecord) -> bool:  # noqa: A003
+    def filter(self, record: logging.LogRecord) -> bool:
         """Hide sensitive information from being shown in the logs.
 
         Based on the configured regex and replace strings, the content of the log
@@ -50,10 +50,10 @@ class FilterSensitiveData(logging.Filter):
         return True
 
 
-class LoggingHandler(object):
+class LoggingHandler:
     """Handle the logging of the lakehouse engine project."""
 
-    def __init__(self, class_name: str):
+    def __init__(self, class_name: str) -> None:
         """Construct a LoggingHandler instance.
 
         Args:

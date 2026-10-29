@@ -12,6 +12,7 @@ from lakehouse_engine.io.writers.rest_api_writer import RestApiWriter
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 LOGGER = LoggingHandler(__name__).get_logger()
+
 RestResponse = namedtuple("RestResponse", "status_code text")
 
 

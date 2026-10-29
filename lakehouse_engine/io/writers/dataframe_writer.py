@@ -1,7 +1,8 @@
 """Module to define behaviour to write to dataframe."""
 
 import uuid
-from typing import Callable, Optional, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
@@ -19,7 +20,9 @@ class DataFrameWriter(Writer):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct DataFrameWriter instances.
 
         Args:
@@ -31,7 +34,7 @@ class DataFrameWriter(Writer):
         self._is_serverless = ExecEnv.IS_SERVERLESS
         self.view_prefix = "global_temp" if not self._is_serverless else ""
 
-    def write(self) -> Optional[OrderedDict]:
+    def write(self) -> OrderedDict | None:
         """Write data to dataframe."""
         self._output_spec.options = (
             self._output_spec.options if self._output_spec.options else {}
@@ -97,7 +100,7 @@ class DataFrameWriter(Writer):
         return inner
 
     def _write_to_dataframe_in_streaming_mode(
-        self, df: DataFrame, output_spec: OutputSpec, data: OrderedDict
+        self, df: DataFrame, output_spec: OutputSpec, data: OrderedDict | None
     ) -> DataFrame:
         """Write to DataFrame in streaming mode.
 
@@ -173,7 +176,10 @@ class DataFrameWriter(Writer):
         )
 
     def _write_transformed_micro_batch(
-        self, output_spec: OutputSpec, data: OrderedDict, stream_as_df_view: str
+        self,
+        output_spec: OutputSpec,
+        data: OrderedDict | None,
+        stream_as_df_view: str,
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

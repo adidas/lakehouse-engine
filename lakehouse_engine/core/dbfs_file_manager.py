@@ -89,8 +89,8 @@ class DBFSFileManager(FileManager):
             "move_objects": self.move_objects,
         }
 
-        self._logger.info("Function being executed: {}".format(self.function))
-        if self.function in available_functions.keys():
+        self._logger.info(f"Function being executed: {self.function}")
+        if self.function in available_functions:
             func = available_functions[self.function]
             func()
         else:
@@ -124,7 +124,7 @@ class DBFSFileManager(FileManager):
                     DBFSFileManager._logger.info(f"Not able to delete: {path}")
             except Exception as e:
                 DBFSFileManager._logger.error(f"Error deleting {path} - {e}")
-                raise e
+                raise
 
     def delete_objects(self) -> None:
         """Delete objects and 'directories'.
@@ -201,7 +201,7 @@ class DBFSFileManager(FileManager):
             DBFSFileManager._logger.error(
                 f"Error copying file {copy_from} to {copy_to} - {e}"
             )
-            raise e
+            raise
 
     def move_objects(self) -> None:
         """Moves objects and 'directories'.
@@ -260,4 +260,4 @@ class DBFSFileManager(FileManager):
             DBFSFileManager._logger.error(
                 f"Error moving file {move_from} to {move_to} - {e}"
             )
-            raise e
+            raise

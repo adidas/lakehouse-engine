@@ -1,7 +1,9 @@
 """Defines abstract writer behaviour."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
+from typing import Any
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import lit
@@ -15,8 +17,8 @@ class Writer(ABC):
     """Abstract Writer class."""
 
     def __init__(
-        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict = None
-    ):
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None = None
+    ) -> None:
         """Construct Writer instances.
 
         Args:
@@ -27,10 +29,10 @@ class Writer(ABC):
         self._logger = LoggingHandler(self.__class__.__name__).get_logger()
         self._output_spec = output_spec
         self._df = df
-        self._data = data
+        self._data = data or OrderedDict()
 
     @abstractmethod
-    def write(self) -> Optional[OrderedDict]:
+    def write(self) -> OrderedDict | None:
         """Abstract write method."""
         raise NotImplementedError
 
@@ -61,7 +63,7 @@ class Writer(ABC):
         output_spec: OutputSpec,
         batch_df: DataFrame,
         batch_id: int,
-        data: OrderedDict,
+        data: OrderedDict | None,
     ) -> DataFrame:
         """Get the result of the transformations applied to a micro batch dataframe.
 
@@ -76,10 +78,11 @@ class Writer(ABC):
             The transformed dataframe.
         """
         transformed_df = batch_df
+        data = data or OrderedDict()
         if output_spec.with_batch_id:
             transformed_df = transformed_df.withColumn("lhe_batch_id", lit(batch_id))
 
-        for transformer in output_spec.streaming_micro_batch_transformers:
+        for transformer in output_spec.streaming_micro_batch_transformers or []:
             transformed_df = transformed_df.transform(
                 TransformerFactory.get_transformer(transformer, data)
             )
@@ -87,7 +90,7 @@ class Writer(ABC):
         return transformed_df
 
     @classmethod
-    def get_streaming_trigger(cls, output_spec: OutputSpec) -> Dict:
+    def get_streaming_trigger(cls, output_spec: OutputSpec) -> dict:
         """Define which streaming trigger will be used.
 
         Args:
@@ -96,7 +99,7 @@ class Writer(ABC):
         Returns:
             A dict containing streaming trigger.
         """
-        trigger: Dict[str, Any] = {}
+        trigger: dict[str, Any] = {}
 
         if output_spec.streaming_available_now:
             trigger["availableNow"] = output_spec.streaming_available_now
@@ -114,7 +117,7 @@ class Writer(ABC):
         return trigger
 
     @staticmethod
-    def run_micro_batch_dq_process(df: DataFrame, dq_spec: List[DQSpec]) -> DataFrame:
+    def run_micro_batch_dq_process(df: DataFrame, dq_spec: list[DQSpec]) -> DataFrame:
         """Run the data quality process in a streaming micro batch dataframe.
 
         Iterates over the specs and performs the checks or analysis depending on the

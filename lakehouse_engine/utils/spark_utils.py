@@ -5,7 +5,7 @@ from pyspark.sql import DataFrame
 from lakehouse_engine.core.exec_env import ExecEnv
 
 
-class SparkUtils(object):
+class SparkUtils:
     """Spark utils that help retrieve and manage dataframes."""
 
     @staticmethod
@@ -13,7 +13,7 @@ class SparkUtils(object):
         df: DataFrame,
         view_name: str,
         return_prefix: bool = False,
-        is_serverless: bool = None,
+        is_serverless: bool | None = None,
     ) -> None | str:
         """Create a temporary view from a dataframe.
 

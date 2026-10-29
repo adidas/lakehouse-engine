@@ -1,6 +1,7 @@
 """Module to define behaviour to write to console."""
 
-from typing import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
 
@@ -15,7 +16,9 @@ class ConsoleWriter(Writer):
 
     _logger = LoggingHandler(__name__).get_logger()
 
-    def __init__(self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict):
+    def __init__(
+        self, output_spec: OutputSpec, df: DataFrame, data: OrderedDict | None
+    ) -> None:
         """Construct ConsoleWriter instances.
 
         Args:
@@ -47,10 +50,11 @@ class ConsoleWriter(Writer):
             df: dataframe to be shown.
             output_spec: output specification.
         """
+        options = output_spec.options or {}
         df.show(
-            n=output_spec.options.get("limit", 20),
-            truncate=output_spec.options.get("truncate", True),
-            vertical=output_spec.options.get("vertical", False),
+            n=options.get("limit", 20),
+            truncate=options.get("truncate", True),
+            vertical=options.get("vertical", False),
         )
 
     @staticmethod
@@ -73,7 +77,7 @@ class ConsoleWriter(Writer):
 
     @staticmethod
     def _write_to_console_in_streaming_mode(
-        df: DataFrame, output_spec: OutputSpec, data: OrderedDict
+        df: DataFrame, output_spec: OutputSpec, data: OrderedDict | None
     ) -> None:
         """Write to console in streaming mode.
 
@@ -100,8 +104,8 @@ class ConsoleWriter(Writer):
             stream_df.awaitTermination(output_spec.streaming_await_termination_timeout)
 
     @staticmethod
-    def _write_transformed_micro_batch(  # type: ignore
-        output_spec: OutputSpec, data: OrderedDict
+    def _write_transformed_micro_batch(
+        output_spec: OutputSpec, data: OrderedDict | None
     ) -> Callable:
         """Define how to write a streaming micro batch after transforming it.
 

@@ -50,6 +50,13 @@ Other algorithms use **different** top-level keys — for example, `Reconciliato
 The generated Lakehouse Engine documentation is sourced from `lakehouse_engine_usage/`, built with `make deploy-docs-to-github`, and then published to GitHub lakehouse-engine-docs repo to be server with GitHub Pages in https://adidas.github.io/lakehouse-engine-docs/lakehouse_engine.html. Treat that content as the primary place for end-to-end feature examples: every key feature should have a usage example there, and changes that affect user-facing behavior should be reflected in the relevant usage docs.
 Test fixture ACONs (JSON/YAML configs exercised by the test suite) live in `tests/resources/feature/`.
 
+## Samples
+
+Some examples of how to use the Lakehouse Engine can be found in the [samples](samples/) folder.
+The [table_tennis_medallion_architecture_tutorial](samples/table_tennis_medallion_architecture_tutorial/) folder contains a tutorial on how to use the Lakehouse Engine to implement a medallion architecture with the separation of bronze, silver, and gold layers.
+The [criket_dq_tutorial](samples/criket_dq_tutorial.py) folder contains a tutorial on how to use the Lakehouse Engine to implement a data quality process.
+The [tpch_load_and_analysis_tutorial](samples/tpch_load_and_analysis_tutorial.py) folder contains a tutorial on how to use the Lakehouse Engine to load and analyze data.
+
 ## Transformer Convention
 
 Transformers are referenced by **function name string** in ACON, resolved by `TransformerFactory`. Each transformer module (e.g., `transformers/filters.py`, `column_creators.py`) contains static methods decorated to be callable by name. To add a transformer: implement a static method in the appropriate module and register it in `TransformerFactory`.
@@ -62,10 +69,9 @@ All commands run inside Docker (the image must be built first):
 make build-image           # Build Docker image (ARM/AMD auto-detected)
 make test-local            # Run full test suite in local Spark mode
 make test-local test_only="tests/feature/test_delta_load.py"  # Run specific test
-make test-security      # Run Bandit security checks
 make audit-dep-safety   # Run pip-audit to check for vulnerable dependencies
-make lint                  # flake8 (Google docstring style) + mypy
-make style                 # isort + black auto-format
+make lint                  # ruff (Google docstring style) + ty
+make style                 # ruff formatting
 make terminal              # Drop into container shell for debugging
 ```
 
@@ -81,8 +87,8 @@ Tests use `tests/configs/engine.yaml` (the open source version uses `tests/confi
 
 - **Versioning**: version lives in `cicd/.bumpversion.cfg`. Run `make prepare-release increment=<major|minor|patch>` to bump and auto-generate `CHANGELOG.md`.
 - **Wheel builds**: `make build` produces `lakehouse-engine-<version>-py3-none-any.whl`. Non-release builds (when `version ≠ project_version`) produce `lakehouse-engine-experimental` wheels with a `+` suffix.
-- **Lock files**: split per optional feature (`cicd/requirements_*.lock`). After changing any `requirements*.txt`, run `make build-lock-files` to regenerate them. The full lock (`requirements_full.lock`) is the constraint base for all others.
-- **Security**: `make test-security` runs Bandit; `make audit-dep-safety` runs pip-audit.
+- **Lock file**: `uv.lock` is the single lock source of truth for core dependencies and extras. After changing dependencies in `pyproject.toml`, run `make build-lock-file` to refresh it.
+- **Security**: `make audit-dep-safety` runs `uv audit`.
 - **Open-source sync**: the internal repo contains files not present on [public GitHub](https://github.com/adidas/lakehouse-engine). On `make sync-to-github`, several internal-only files are **removed** and config files are **renamed**:
   - `lakehouse_engine/configs/engine_os.yaml` → `engine.yaml` (the `engine.yaml` internal file is deleted)
   - `tests/configs/engine_os.yaml` → `tests/configs/engine.yaml`
@@ -97,7 +103,7 @@ Tests use `tests/configs/engine.yaml` (the open source version uses `tests/confi
 - **Factory pattern throughout**: `ReaderFactory`, `WriterFactory`, `TransformerFactory`, `TerminatorFactory`, `NotifierFactory` all resolve string keys to implementations. New readers/writers/transformers require registering in the appropriate factory.
 - **Streaming micro-batch fallback**: Operations incompatible with Spark Structured Streaming (sorts, window functions, DQ checks) are automatically rerouted to `foreachBatch` micro-batch mode. See `DataLoader._streaming_micro_batch_transformers_plan`.
 - **Engine config vs. ACON config**: `engine.yaml` (`engine_os.yaml` for the open source version) holds environment-wide defaults (S3 paths, catalog, DQ buckets). ACON holds per-job logic. Override engine config via `ExecEnv.set_default_engine_config()`.
-- **Optional feature sets**: Dependencies are split into extras (`os`, `dq`, `azure`, `sftp`, `sharepoint`) defined in `pyproject.toml`. Lock files in `cicd/` must stay in sync via `make build-lock-files`.
+- **Optional feature sets**: Dependencies are split into extras (`os`, `dq`, `azure`, `sftp`, `sharepoint`) defined in `pyproject.toml` and resolved together in `uv.lock`.
 - **Versioning**: Version lives in `cicd/.bumpversion.cfg`. Non-release builds produce `lakehouse-engine-experimental` wheels with `+` suffix.
 - **Google-style docstrings** are enforced by flake8 (`cicd/flake8.conf`).
 - **Method names should be action-oriented**, e.g. get_acon_details rather than acon_details.

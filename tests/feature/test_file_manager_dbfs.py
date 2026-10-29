@@ -3,9 +3,10 @@
 import logging
 import os
 import shutil
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -162,14 +163,14 @@ def test_file_manager_dbfs(_patch: Any, caplog: Any) -> None:
         dbutils.fs.mkdirs(path=TEST_LAKEHOUSE_DBFS)
         dbutils.fs.put(path=f"{TEST_LAKEHOUSE_DBFS}/test_single_file.json", content="")
         dbutils.fs.mkdirs(path=f"{TEST_LAKEHOUSE_DBFS}/test_directory/")
-        for x in range(0, 2000):
+        for x in range(2000):
             dbutils.fs.put(
                 path=f"{TEST_LAKEHOUSE_DBFS}/test_directory/"
                 f"test_recursive_file{x}.json",
                 content="",
             )
         dbutils.fs.mkdirs(path=f"{TEST_LAKEHOUSE_DBFS}/test_directory_test/")
-        for x in range(0, 2000):
+        for x in range(2000):
             dbutils.fs.put(
                 path=f"{TEST_LAKEHOUSE_DBFS}/test_directory_test/"
                 f"test_recursive_file{x}.json",
@@ -203,7 +204,7 @@ def _test_file_manager_dbfs_copy(caplog: Any, dbutils: Any) -> None:
         acon_path=f"file://{TEST_RESOURCES}/copy_objects/"
         f"acon_copy_directory_dry_run.json"
     )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert (
             f"/app/tests/lakehouse/dbfs/test_directory/test_recursive_file{x}.json"
             in caplog.text
@@ -241,12 +242,12 @@ def _test_file_manager_dbfs_delete(caplog: Any, dbutils: Any) -> None:
         "{'tests/lakehouse/dbfs/test_directory': "
         "['/app/tests/lakehouse/dbfs/test_directory/" in caplog.text
     )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert (
             f"/app/tests/lakehouse/dbfs/test_directory/"
             f"test_recursive_file{x}.json" in caplog.text
         )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert (
             f"/app/tests/lakehouse/dbfs/destination_directory/"
             f"test_recursive_file{x}.json" in caplog.text
@@ -272,12 +273,12 @@ def _test_file_manager_dbfs_move(caplog: Any, dbutils: Any) -> None:
         "{'tests/lakehouse/dbfs/test_directory': "
         "['/app/tests/lakehouse/dbfs/test_directory/" in caplog.text
     )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert (
             f"/app/tests/lakehouse/dbfs/test_directory/"
             f"test_recursive_file{x}.json" in caplog.text
         )
-    for x in range(0, 2000):
+    for x in range(2000):
         assert (
             f"/app/tests/lakehouse/dbfs/destination_directory/"
             f"test_recursive_file{x}.json" in caplog.text

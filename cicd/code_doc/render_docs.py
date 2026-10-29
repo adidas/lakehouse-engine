@@ -41,7 +41,7 @@ documentation_to_copy = {
 }
 
 
-def _copy_documentation(directories: list = "", files: list = ""):
+def _copy_documentation(directories: list = "", files: list = "") -> None:
     """Copy files to other directory based on given parameters.
 
     Args:
@@ -64,7 +64,7 @@ _copy_documentation(
 )
 
 # Use mkdocs build command to build the documentation into the "site" folder
-os.system(f"cd {code_doc_path} && mkdocs build --site-dir {documentation_path}/site")
+os.system(f"cd {code_doc_path} && mkdocs build --site-dir {documentation_path}/site")  # noqa: S605
 
 # Remove the temporary docs directory mkdocs_base_path
 shutil.rmtree(mkdocs_base_path)

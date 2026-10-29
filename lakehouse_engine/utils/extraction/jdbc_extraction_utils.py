@@ -2,10 +2,10 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from logging import Logger
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from lakehouse_engine.core.definitions import InputFormat, InputSpec, ReadType
 from lakehouse_engine.utils.logging_handler import LoggingHandler
@@ -19,7 +19,7 @@ class JDBCExtractionType(Enum):
 
 
 @dataclass
-class JDBCExtraction(object):
+class JDBCExtraction:
     """Configurations available for an Extraction from a JDBC source.
 
     These configurations cover:
@@ -75,33 +75,33 @@ class JDBCExtraction(object):
     password: str
     url: str
     dbtable: str
-    calc_upper_bound_schema: Optional[str] = None
-    changelog_table: Optional[str] = None
-    partition_column: Optional[str] = None
-    latest_timestamp_data_location: Optional[str] = None
+    calc_upper_bound_schema: str | None = None
+    changelog_table: str | None = None
+    partition_column: str | None = None
+    latest_timestamp_data_location: str | None = None
     latest_timestamp_data_format: str = InputFormat.DELTAFILES.value
     extraction_type: str = JDBCExtractionType.DELTA.value
     driver: str = "com.sap.db.jdbc.Driver"
-    num_partitions: Optional[int] = None
-    lower_bound: Optional[int | float | str] = None
-    upper_bound: Optional[int | float | str] = None
+    num_partitions: int | None = None
+    lower_bound: int | float | str | None = None
+    upper_bound: int | float | str | None = None
     default_upper_bound: str = "1"
     fetch_size: str = "100000"
     compress: bool = True
-    custom_schema: Optional[str] = None
-    min_timestamp: Optional[str] = None
-    max_timestamp: Optional[str] = None
+    custom_schema: str | None = None
+    min_timestamp: str | None = None
+    max_timestamp: str | None = None
     generate_predicates: bool = False
-    predicates: Optional[List] = None
+    predicates: list | None = None
     predicates_add_null: bool = True
-    extraction_timestamp: str = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    max_timestamp_custom_schema: Optional[str] = None
+    extraction_timestamp: str = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+    max_timestamp_custom_schema: str | None = None
 
 
-class JDBCExtractionUtils(object):
+class JDBCExtractionUtils:
     """Utils for managing data extraction from particularly relevant JDBC sources."""
 
-    def __init__(self, jdbc_extraction: Any):
+    def __init__(self, jdbc_extraction: Any) -> None:
         """Construct JDBCExtractionUtils.
 
         Args:
@@ -113,7 +113,7 @@ class JDBCExtractionUtils(object):
 
     @staticmethod
     def get_additional_spark_options(
-        input_spec: InputSpec, options: dict, ignore_options: List = None
+        input_spec: InputSpec, options: dict, ignore_options: list | None = None
     ) -> dict:
         """Helper to get additional Spark Options initially passed.
 
@@ -154,13 +154,15 @@ class JDBCExtractionUtils(object):
             ignore_options = []
         ignore_options = ignore_options + list(options.keys()) + list(func_args)
 
+        input_options = input_spec.options or {}
+
         return {
             key: value
-            for key, value in input_spec.options.items()
+            for key, value in input_options.items()
             if key not in ignore_options and value is not None
         }
 
-    def get_predicates(self, predicates_query: str) -> List:
+    def get_predicates(self, predicates_query: str) -> list:
         """Get the predicates list, based on a predicates query.
 
         Args:
@@ -204,14 +206,14 @@ class JDBCExtractionUtils(object):
 
         return predicates_list
 
-    def get_spark_jdbc_options(self) -> Tuple[dict, dict]:
+    def get_spark_jdbc_options(self) -> tuple[dict, dict]:
         """Get the Spark options to extract data from a JDBC source.
 
         Returns:
             The Spark jdbc args dictionary, including the query to submit
             and also options args dictionary.
         """
-        options_args: Dict[str, Any] = {
+        options_args: dict[str, Any] = {
             "fetchSize": self._JDBC_EXTRACTION.fetch_size,
             "compress": self._JDBC_EXTRACTION.compress,
         }
@@ -260,11 +262,13 @@ class JDBCExtractionUtils(object):
             if self._JDBC_EXTRACTION.extraction_type == JDBCExtractionType.INIT.value
             else self._JDBC_EXTRACTION.changelog_table
         )
+        if not table:
+            raise AttributeError("Not able to determine source table for upper bound.")
         jdbc_args = {
             "url": self._JDBC_EXTRACTION.url,
-            "table": f"(SELECT COALESCE(MAX({self._JDBC_EXTRACTION.partition_column}), "
+            "table": f"(SELECT COALESCE(MAX({self._JDBC_EXTRACTION.partition_column}), "  # noqa: S608
             f"{self._JDBC_EXTRACTION.default_upper_bound}) "
-            f"upper_bound FROM {table})",  # nosec: B608
+            f"upper_bound FROM {table})",
             "properties": {
                 "user": self._JDBC_EXTRACTION.user,
                 "password": self._JDBC_EXTRACTION.password,
@@ -283,7 +287,14 @@ class JDBCExtractionUtils(object):
                 options=options,
             )
         )
-        upper_bound = upper_bound_df.first()[0]
+        upper_bound_row = upper_bound_df.first()
+        if not upper_bound_row:
+            raise AttributeError(
+                f"Not able to calculate upper bound from "
+                f"'{self._JDBC_EXTRACTION.dbtable}' using "
+                f"the column '{self._JDBC_EXTRACTION.partition_column}'"
+            )
+        upper_bound = upper_bound_row[0]
 
         if upper_bound is not None:
             self._LOGGER.info(
@@ -350,7 +361,10 @@ class JDBCExtractionUtils(object):
                 },
             )
         )
-        max_timestamp = max_timestamp_df.first()[0]
+        max_timestamp_row = max_timestamp_df.first()
+        if not max_timestamp_row:
+            raise AttributeError("Not able to calculate max timestamp from source.")
+        max_timestamp = max_timestamp_row[0]
         self._LOGGER.info(
             f"Max timestamp {max_timestamp} derived from query: {max_timestamp_query}"
         )
@@ -358,11 +372,9 @@ class JDBCExtractionUtils(object):
         return str(max_timestamp)
 
     @abstractmethod
-    def _get_delta_query(self) -> Tuple[str, str]:
+    def _get_delta_query(self) -> tuple[str, str]:
         """Get a query to extract delta (partially) from a source."""
-        pass
 
     @abstractmethod
-    def _get_init_query(self) -> Tuple[str, str]:
+    def _get_init_query(self) -> tuple[str, str]:
         """Get a query to extract init (fully) from a source."""
-        pass

@@ -34,7 +34,7 @@ import pytest
             },
             "exception": """Errors found during validation:
 Missing mandatory parameters for file manager function copy_objects: ['destination_bucket', 'destination_object', 'dry_run']
-Type validation errors for file manager function copy_objects: ["Parameter 'source_object' expected str, got list"]""",  # noqa: E501
+Type validation errors for file manager function copy_objects: ["Parameter 'source_object' expected str, got list"]""",
         },
         {
             "name": "Validate list of operations",
@@ -86,7 +86,7 @@ Type validation errors for file manager function copy_objects: ["Parameter 'sour
             "exception": """Errors found during validation:
 Type validation errors for file manager function delete_objects: ["Parameter 'object_paths' expected list, got str", "Parameter 'dry_run' expected bool, got str"]
 Type validation errors for table manager function execute_sql: ["Parameter 'sql' expected str, got int"]
-Function 'optimize_dataset' not supported for table manager""",  # noqa: E501
+Function 'optimize_dataset' not supported for table manager""",
         },
     ],
 )

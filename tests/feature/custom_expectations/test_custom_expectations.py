@@ -1,7 +1,7 @@
 """Test custom expectation validations."""
 
 from json import loads
-from typing import Any, Tuple
+from typing import Any
 
 import pytest
 from pyspark.sql import DataFrame
@@ -115,14 +115,14 @@ TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_NAME}"
             "custom_expectation_result": "success",
         },
         {
-            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",  # noqa: E501
+            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",
             "arguments": {"column_A": "EDATU", "column_B": "ERDAT"},
             "read_type": "streaming",
             "input_type": "dataframe_reader",
             "custom_expectation_result": "success",
         },
         {
-            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",  # noqa: E501
+            "expectation_name": "expect_column_pair_date_a_to_be_greater_than_or_equal_to_date_b",
             "arguments": {"column_A": "MBDAT", "column_B": "ERDATA"},
             "read_type": "batch",
             "input_type": "dataframe_reader",
@@ -197,7 +197,7 @@ def test_custom_expectation(scenario: dict, caplog: Any) -> None:
 
     dq_result_df, dq_control_df = _get_result_and_control_dfs(
         "test_db.sales_order",
-        f'dq_control_{scenario["custom_expectation_result"]}',
+        f"dq_control_{scenario['custom_expectation_result']}",
         True,
         scenario["expectation_name"],
     )
@@ -258,7 +258,7 @@ def _generate_acon(
             "input_id": "sales_source",
             "dq_type": dq_type,
             "store_backend": "file_system",
-            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT}/{scenario['expectation_name']}/dq",  # noqa: E501
+            "local_fs_root_dir": f"{TEST_LAKEHOUSE_OUT}/{scenario['expectation_name']}/dq",
             **dq_spec_add_options,
         },
         "restore_prev_version": scenario.get("restore_prev_version", False),
@@ -304,7 +304,7 @@ def _generate_dataframe(load_type: str, expectation_name: str) -> DataFrame:
 
 def _get_result_and_control_dfs(
     table: str, file_name: str, infer_schema: bool, expectation_name: str
-) -> Tuple[DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame]:
     """Helper to get the result and control dataframes.
 
     Args:

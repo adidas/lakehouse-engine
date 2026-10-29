@@ -1,15 +1,15 @@
 """Module with data masking transformers."""
 
-from typing import Callable, List
+from collections.abc import Callable
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import hash, sha2  # noqa: A004
+from pyspark.sql.functions import hash, sha2
 
 from lakehouse_engine.transformers.exceptions import WrongArgumentsException
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
 
-class DataMaskers(object):
+class DataMaskers:
     """Class containing data masking transformers."""
 
     _logger = LoggingHandler(__name__).get_logger()
@@ -17,7 +17,7 @@ class DataMaskers(object):
     @classmethod
     def hash_masker(
         cls,
-        cols: List[str],
+        cols: list[str],
         approach: str = "SHA",
         num_bits: int = 256,
         suffix: str = "_hash",
@@ -52,7 +52,7 @@ class DataMaskers(object):
         return inner
 
     @classmethod
-    def column_dropper(cls, cols: List[str]) -> Callable:
+    def column_dropper(cls, cols: list[str]) -> Callable:
         """Drop specific columns.
 
         Args:

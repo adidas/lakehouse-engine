@@ -48,12 +48,6 @@ pipeline {
             }
         }
 
-        stage('Build whl') {
-            steps {
-                sh 'make build version=$VERSION'
-            }
-        }
-
         stage('Create Docs') {
             steps {
                 sh 'make docs version=$VERSION'
@@ -65,12 +59,6 @@ pipeline {
                 stage('Lint') {
                     steps {
                         sh 'make lint version=$VERSION'
-                    }
-                }
-
-                stage('Test Security') {
-                    steps {
-                        sh 'make test-security version=$VERSION'
                     }
                 }
 
@@ -125,7 +113,6 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'artefacts/docs/**/*'
-            archiveArtifacts artifacts: 'artefacts/*.json'
             junit 'artefacts/tests.xml'
             recordCoverage(tools: [[parser: 'COBERTURA', pattern: "artefacts/coverage.xml"]])
         }
