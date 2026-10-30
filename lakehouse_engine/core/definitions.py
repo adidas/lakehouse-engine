@@ -1800,6 +1800,11 @@ class HeartbeatConfigSpec:
         created (read from config).
     - schema_dict: dict representation of schema of the trigger file (e.g. Spark struct
         type schema).
+    - max_event_gap_hours: optional maximum number of hours allowed between the oldest
+        and the most recent new event of the hard dependencies of a trigger job. If
+        the gap is bigger, the job is not triggered, because the events are considered
+        to belong to different upstream cycles. If not set, the heartbeat keeps its
+        default behavior.
     """
 
     sensor_source: str
@@ -1815,6 +1820,19 @@ class HeartbeatConfigSpec:
     kafka_secret_scope: str | None
     base_trigger_file_location: str | None
     schema_dict: dict | None
+    max_event_gap_hours: int | None
+
+    def __post_init__(self) -> None:
+        """Validate the heartbeat configurations."""
+        if self.max_event_gap_hours is not None and (
+            isinstance(self.max_event_gap_hours, bool)
+            or not isinstance(self.max_event_gap_hours, int)
+            or self.max_event_gap_hours < 1
+        ):
+            raise ValueError(
+                "max_event_gap_hours must be a positive integer, got "
+                f"{self.max_event_gap_hours!r}."
+            )
 
     @classmethod
     def create_from_acon(cls, acon: dict) -> Self:
@@ -1837,6 +1855,7 @@ class HeartbeatConfigSpec:
             kafka_secret_scope=acon.get("kafka_secret_scope"),
             base_trigger_file_location=acon.get("base_trigger_file_location"),
             schema_dict=acon.get("schema_dict"),
+            max_event_gap_hours=acon.get("max_event_gap_hours"),
         )
 
 

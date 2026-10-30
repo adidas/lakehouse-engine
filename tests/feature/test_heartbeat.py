@@ -282,6 +282,47 @@ def _trigger_heartbeat_sensor_jobs(
                     NULL,NULL,"LOAD_DATE","10155578201985")""",
             },
         },
+        {
+            "use_case_name": "heartbeat_max_event_gap",
+            "control_files": {
+                "ctrl_heart_tbl_heartb_feed_fname": "ctr_heart_tbl_heartb_feed.csv",
+                "ctrl_heart_tbl_exe_sns_hb_fname": "ctrl_heart_tbl_exec_sensor.csv",
+                "ctrl_heart_tbl_updated_fname": "ctrl_heart_tbl_updated.csv",
+                "ctrl_heart_tbl_trigger_job_fname": "ctrl_heart_tbl_trigger_job.csv",
+                "ctrl_sensor_tbl_upd_status_fname": "ctrl_sensor_tbl_upd_status.json",
+                "ctrl_heart_tbl_schema_fname": "ctrl_heart_tbl_schema.json",
+            },
+            "tables": {
+                "heartbeat_sensor_control_table": "heartbeat_sensor_control_table",
+                "sensor_table": "sensor_table",
+            },
+            "setup": {
+                "setup_heartbeat_data": "setup_heartbeat_data.csv",
+                "setup_sensor_data": "setup_sensor_data.json",
+                "schema_sensor_df": "schema_sensor_df.json",
+            },
+            "execute_sensor_heartbeat_results": {"new_events_available_count": 1},
+            "job_id": "1927384615203749",
+            "max_event_gap_hours": 6,
+            "trigger_heartbeat_sensor_jobs_records": {
+                "heartbeat": """
+                    ("delta_table","dummy_order","batch",
+                    "dummy_heartbeat_asset",NULL,NULL,NULL,
+                    "1015557820139870","data-product_job_name_orders",
+                    "NEW_EVENT_AVAILABLE",NULL,NULL,NULL,"UNPAUSED","true"),
+                    ("delta_table","dummy_invoice","batch",
+                    "dummy_heartbeat_asset",NULL,NULL,NULL,
+                    "1015557820139870","data-product_job_name_orders",
+                    "NEW_EVENT_AVAILABLE",NULL,NULL,NULL,"UNPAUSED","true")""",
+                "sensors": """
+                    ("dummy_order_1015557820139870",
+                    array("dummy_heartbeat_asset"),"ACQUIRED_NEW_DATA",
+                    TIMESTAMP'2025-08-14 08:00:00',NULL,"LOAD_DATE",NULL),
+                    ("dummy_invoice_1015557820139870",
+                    array("dummy_heartbeat_asset"),"ACQUIRED_NEW_DATA",
+                    TIMESTAMP'2025-08-14 20:00:00',NULL,"LOAD_DATE",NULL)""",
+            },
+        },
     ],
 )
 def test_heartbeat(scenario: dict) -> None:
@@ -318,6 +359,10 @@ def test_heartbeat(scenario: dict) -> None:
                - Expected Behavior:
                  - The record is updated during the process.
                  - A corresponding entry is created in the `sensor` table.
+        Heartbeat_max_event_gap: Same as Default, with max_event_gap_hours = 6.
+            1. The data feed, event detection and job completion behave as Default.
+            2. Two hard dependencies of the same job have new events 12 hours apart,
+                so the job is not triggered and both records stay NEW_EVENT_AVAILABLE.
     """
     scenario_name = scenario["use_case_name"]
     _LOGGER.info(f"Setting up Test - {scenario_name}.")
@@ -328,7 +373,7 @@ def test_heartbeat(scenario: dict) -> None:
     heartbeat_control_table_name = f"test_db.{tables['heartbeat_sensor_control_table']}"
     sensor_table_name = f"test_db.{tables['sensor_table']}"
 
-    acon = {
+    acon: dict = {
         "heartbeat_sensor_db_table": heartbeat_control_table_name,
         "lakehouse_engine_sensor_db_table": sensor_table_name,
         "data_format": "delta",
@@ -336,6 +381,8 @@ def test_heartbeat(scenario: dict) -> None:
         "token": "my-token",
         "domain": "my-adidas-domain.cloud.databricks.com",
     }
+    if scenario.get("max_event_gap_hours") is not None:
+        acon["max_event_gap_hours"] = scenario["max_event_gap_hours"]
 
     _create_heartbeat_table(scenario_name, tables)
 

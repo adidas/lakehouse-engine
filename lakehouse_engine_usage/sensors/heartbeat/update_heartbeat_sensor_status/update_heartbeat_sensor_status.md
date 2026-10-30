@@ -12,6 +12,20 @@ The `update_heartbeat_sensor_status` function is **critical for the Heartbeat Se
 !!! note
     **When to use**: This function must be called as the **final task** in every Databricks job that is orchestrated by the Heartbeat Sensor to properly update the `status` to `COMPLETED` and record the job completion timestamp.
 
+!!! note "Events acquired while the job is running"
+    The sensors of the job are marked as `PROCESSED_NEW_DATA`, except the ones that
+    acquired new data while the job was running (after its `job_start_timestamp`).
+    These keep the `ACQUIRED_NEW_DATA` status, so that the new data triggers the job
+    again and no upstream event is lost. This only applies to records `IN_PROGRESS`
+    (jobs triggered by the Heartbeat): for manual runs, all the sensors are marked as
+    `PROCESSED_NEW_DATA`.
+    This behaviour does not depend on `max_event_gap_hours`.
+    The sensor statuses are updated in a single merge, so if the sensor table is
+    changed by another process at the same time (e.g. the Heartbeat acquiring a new
+    event), the task fails with a Delta concurrent modification error instead of
+    overwriting that change. In that case, the job records stay `IN_PROGRESS`: repair
+    the update status task to complete the job.
+
 ## Configuration required to update heartbeat sensor status
 
 - **job_id**: The unique identifier of the Databricks job that was triggered by the Heartbeat sensor (e.g., `"MY_JOB_ID"`).

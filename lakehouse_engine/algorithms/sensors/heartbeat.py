@@ -15,8 +15,11 @@ from pyspark.sql.functions import (
     regexp_replace,
     row_number,
     trim,
+    unix_timestamp,
     upper,
 )
+from pyspark.sql.functions import max as spark_max
+from pyspark.sql.functions import min as spark_min
 from pyspark.sql.window import Window
 
 from lakehouse_engine.algorithms.algorithm import Algorithm
@@ -33,7 +36,6 @@ from lakehouse_engine.core.sensor_manager import (
     SensorJobRunManager,
     SensorUpstreamManager,
 )
-from lakehouse_engine.terminators.sensor_terminator import SensorTerminator
 from lakehouse_engine.utils.databricks_utils import DatabricksUtils
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
@@ -42,6 +44,7 @@ class Heartbeat(Algorithm):
     """Class representing a Heartbeat to check if the upstream has new data."""
 
     _LOGGER = LoggingHandler(__name__).get_logger()
+    _SOURCE_SENSOR_ID = "source.sensor_id"
 
     def __init__(self, acon: dict) -> None:
         """Construct Heartbeat instances.
@@ -61,7 +64,9 @@ class Heartbeat(Algorithm):
         sensor_source = self.spec.sensor_source
 
         active_jobs_from_heartbeat_control_table_df = self._get_active_heartbeat_jobs(
-            heartbeat_sensor_delta_table, sensor_source
+            heartbeat_sensor_delta_table,
+            sensor_source,
+            self.spec.max_event_gap_hours,
         )
 
         for (
@@ -86,24 +91,37 @@ class Heartbeat(Algorithm):
 
     @classmethod
     def _get_active_heartbeat_jobs(
-        cls, heartbeat_sensor_delta_table: DeltaTable, sensor_source: str
+        cls,
+        heartbeat_sensor_delta_table: DeltaTable,
+        sensor_source: str,
+        max_event_gap_hours: int | None = None,
     ) -> DataFrame:
         """Get UNPAUSED and NULL or COMPLETED status record from control table.
 
+        When max_event_gap_hours is set, NEW_EVENT_AVAILABLE records are also
+        returned, so that a stale event can be replaced by a newer one before the
+        job is triggered.
+
         :param heartbeat_sensor_delta_table: DeltaTable for heartbeat sensor.
         :param sensor_source: source system from Spec(e.g. sap_b4, delta, kafka etc.).
+        :param max_event_gap_hours: max hours between events of the same cycle.
 
         Returns:
             A control table DataFrame containing records for specified sensor_source
-            that are UNPAUSED and have a status of either NULL or COMPLETED.
+            that are UNPAUSED and have a status of either NULL or COMPLETED (or
+            NEW_EVENT_AVAILABLE, if max_event_gap_hours is set).
         """
         full_control_table = heartbeat_sensor_delta_table.toDF()
 
+        eligible_status = "status is null OR status == 'COMPLETED'"
+        if max_event_gap_hours is not None:
+            eligible_status += (
+                f" OR status == '{HeartbeatStatus.NEW_EVENT_AVAILABLE.value}'"
+            )
+
         filtered_control_table = full_control_table.filter(
             f"lower(sensor_source) == '{sensor_source}'"
-        ).filter(
-            "job_state == 'UNPAUSED' and (status is null OR status == 'COMPLETED')"
-        )
+        ).filter(f"job_state == 'UNPAUSED' and ({eligible_status})")
 
         return filtered_control_table
 
@@ -121,6 +139,23 @@ class Heartbeat(Algorithm):
             A unique, combined column value.
         """
         return f"{re.sub(r'[ :.]', '_', main_col)}_{col_to_append}"
+
+    @classmethod
+    def _get_sensor_table_sensor_id_col(cls) -> Column:
+        """Get the sensor id column as used in the lakehouse engine sensor table.
+
+        Spark column version of generate_unique_column_values: appends the
+        trigger_job_id to the sensor_id, replacing spaces, dots and colons with
+        underscores.
+
+        Returns:
+            A column with the sensor table sensor id.
+        """
+        return concat_ws(
+            "_",
+            regexp_replace(col("sensor_id"), r"[ :\.]", "_"),
+            col("trigger_job_id"),
+        )
 
     @classmethod
     def _get_sensor_acon_from_heartbeat(
@@ -415,11 +450,18 @@ class Heartbeat(Algorithm):
                 target.trigger_job_id = src.trigger_job_id AND
                 target.sensor_source = '{sensor_source}'"""
 
+            # Never overwrite a record whose trigger job is still running.
+            not_in_progress_condition = (
+                "target.status IS NULL OR "
+                f"target.status != '{HeartbeatStatus.IN_PROGRESS.value}'"
+            )
+
             if sensors_with_new_event_available.count() > 0:
                 cls.update_heartbeat_control_table(
                     heartbeat_sensor_delta_table,
                     sensors_with_new_event_available,
                     new_event_merge_condition,
+                    not_in_progress_condition,
                 )
         else:
             cls._LOGGER.info("No sensors to execute!")
@@ -430,12 +472,14 @@ class Heartbeat(Algorithm):
         heartbeat_sensor_delta_table: DeltaTable,
         updated_data: DataFrame,
         heartbeat_control_table_merge_condition: str,
+        update_condition: str | None = None,
     ) -> None:
         """Update heartbeat control table with the new data.
 
         :param heartbeat_sensor_delta_table: db_table heartbeat sensor control table.
         :param updated_data: data to update the control table.
         :param heartbeat_control_table_merge_condition: merge condition for table.
+        :param update_condition: optional condition to update matched records.
         """
         cls._LOGGER.info(f"updated data: {updated_data}")
 
@@ -443,7 +487,7 @@ class Heartbeat(Algorithm):
             updated_data.alias("src"),
             (heartbeat_control_table_merge_condition),
         ).whenMatchedUpdate(
-            set=HEARTBEAT_SENSOR_UPDATE_SET
+            condition=update_condition, set=HEARTBEAT_SENSOR_UPDATE_SET
         ).whenNotMatchedInsertAll().execute()
 
     @classmethod
@@ -546,6 +590,87 @@ class Heartbeat(Algorithm):
         return jobs_to_trigger
 
     @classmethod
+    def _is_event_gap_within_limit(
+        cls,
+        heartbeat_sensor_db_table: str,
+        sensor_db_table: str,
+        job_id: str,
+        max_event_gap_hours: int,
+    ) -> bool:
+        """Check if the new events of the hard dependencies are from the same cycle.
+
+        The time of each new event is the status_change_timestamp of the sensor
+        record with ACQUIRED_NEW_DATA status, as it only changes when the sensor
+        acquires new data from the upstream. If the gap between the oldest and the
+        most recent event is bigger than max_event_gap_hours, the events are
+        considered to belong to different upstream cycles. If any hard dependency
+        has no valid event time, the gap cannot be validated and the job is not
+        triggered either.
+
+        :param heartbeat_sensor_db_table: heartbeat sensor control table.
+        :param sensor_db_table: lakehouse engine sensor table.
+        :param job_id: trigger_job_id to be checked.
+        :param max_event_gap_hours: max hours between events of the same cycle.
+
+        Returns:
+            True if all hard dependencies have a valid event time and the gap is
+            within the limit, False otherwise.
+        """
+        hard_dependencies_df = (
+            ExecEnv.SESSION.table(heartbeat_sensor_db_table)
+            .filter(
+                (col("trigger_job_id") == job_id)
+                & (trim(upper(col("dependency_flag"))) == "TRUE")
+            )
+            .withColumn("sensor_table_sensor_id", cls._get_sensor_table_sensor_id_col())
+        )
+
+        acquired_sensors_df = ExecEnv.SESSION.table(sensor_db_table).filter(
+            col("status") == SensorStatus.ACQUIRED_NEW_DATA.value
+        )
+
+        # The sensor table may store this column as STRING (e.g. data product
+        # templates). try_cast returns null for values that can't be parsed, so they
+        # are counted as missing event times instead of failing the heartbeat.
+        event_time = acquired_sensors_df["status_change_timestamp"].try_cast(
+            "timestamp"
+        )
+        event_stats = (
+            hard_dependencies_df.join(
+                acquired_sensors_df,
+                hard_dependencies_df["sensor_table_sensor_id"]
+                == acquired_sensors_df["sensor_id"],
+                "left",
+            )
+            .agg(
+                count(lit(1)).alias("hard_dependencies"),
+                count(event_time).alias("valid_events"),
+                (
+                    unix_timestamp(spark_max(event_time))
+                    - unix_timestamp(spark_min(event_time))
+                ).alias("event_gap_seconds"),
+            )
+            .collect()[0]
+        )
+
+        if event_stats["valid_events"] < event_stats["hard_dependencies"]:
+            cls._LOGGER.warning(
+                f"Job {job_id} not triggered: only {event_stats['valid_events']} of "
+                f"{event_stats['hard_dependencies']} hard dependencies have a valid "
+                f"event time in {sensor_db_table} (ACQUIRED_NEW_DATA with a valid "
+                "status_change_timestamp), so the event gap cannot be validated."
+            )
+            return False
+
+        event_gap_seconds = event_stats["event_gap_seconds"]
+        cls._LOGGER.info(
+            f"Event gap for job {job_id}: {event_gap_seconds / 3600:.2f} hours "
+            f"(max allowed: {max_event_gap_hours} hours)."
+        )
+
+        return bool(event_gap_seconds <= max_event_gap_hours * 3600)
+
+    @classmethod
     def get_anchor_job_record(
         cls, heartbeat_sensor_table_df: DataFrame, job_id: str, sensor_source: str
     ) -> DataFrame:
@@ -615,6 +740,16 @@ class Heartbeat(Algorithm):
         for row in jobs_to_trigger:
             run_id = None
             exception = None
+
+            if self.spec.max_event_gap_hours is not None and (
+                not self._is_event_gap_within_limit(
+                    heartbeat_sensor_db_table,
+                    self.spec.lakehouse_engine_sensor_db_table,
+                    row["trigger_job_id"],
+                    self.spec.max_event_gap_hours,
+                )
+            ):
+                continue
 
             heartbeat_anchor_job_records_df = self.get_anchor_job_record(
                 heartbeat_sensor_table_df, row["trigger_job_id"], sensor_source
@@ -691,7 +826,7 @@ class Heartbeat(Algorithm):
         ).whenNotMatchedInsert(
             values={
                 "sensor_source": "source.sensor_source",
-                "sensor_id": "source.sensor_id",
+                "sensor_id": cls._SOURCE_SENSOR_ID,
                 "sensor_read_type": "source.sensor_read_type",
                 "asset_description": "source.asset_description",
                 "upstream_key": "source.upstream_key",
@@ -709,7 +844,7 @@ class Heartbeat(Algorithm):
         ).whenMatchedUpdate(
             set={
                 "sensor_source": "source.sensor_source",
-                "sensor_id": "source.sensor_id",
+                "sensor_id": cls._SOURCE_SENSOR_ID,
                 "sensor_read_type": "source.sensor_read_type",
                 "asset_description": "source.asset_description",
                 "upstream_key": "source.upstream_key",
@@ -751,33 +886,81 @@ class Heartbeat(Algorithm):
     def update_sensor_processed_status(
         cls,
         sensor_table: str,
-        job_id_filter_control_table_df: DataFrame,
+        job_id_control_table_df: DataFrame,
     ) -> None:
         """UPDATE sensor PROCESSED_NEW_DATA status.
 
         Update sensor control table with PROCESSED_NEW_DATA status and
-        status_change_timestamp for the triggered job.
+        status_change_timestamp for the triggered job, in a single conditional
+        merge. Sensors of IN_PROGRESS records (runs triggered by the heartbeat) that
+        acquired new data after the job_start_timestamp keep the ACQUIRED_NEW_DATA
+        status, so that the new data triggers the job again. As the condition is
+        checked by the merge itself, a concurrent change to the sensor table makes
+        the merge fail instead of being silently overwritten.
 
         Args:
             sensor_table: lakehouse engine sensor table name.
-            job_id_filter_control_table_df: Job Id filtered Heartbeat sensor
-            control table dataframe.
+            job_id_control_table_df: Heartbeat control table records of the job,
+                before being marked as COMPLETED.
         """
-        sensor_id_df = job_id_filter_control_table_df.withColumn(
-            "sensor_table_sensor_id",
-            concat_ws(
-                "_",
-                regexp_replace(col("sensor_id"), r"[ :\.]", "_"),
-                col("trigger_job_id"),
-            ),
+        sensors_to_process_df = job_id_control_table_df.select(
+            cls._get_sensor_table_sensor_id_col().alias("sensor_id"),
+            col("status").alias("heartbeat_status"),
+            col("job_start_timestamp"),
+            current_timestamp().alias("processed_timestamp"),
         )
 
-        for row in sensor_id_df.select("sensor_table_sensor_id").collect():
-            SensorTerminator.update_sensor_status(
-                sensor_id=row["sensor_table_sensor_id"],
-                control_db_table_name=sensor_table,
-                status=SensorStatus.PROCESSED_NEW_DATA.value,
-                assets=None,
+        # The sensor table may store status_change_timestamp as STRING (e.g. data
+        # product templates), so it is cast to timestamp before being compared.
+        not_acquired_during_job = (
+            "source.heartbeat_status IS NULL "
+            f"OR source.heartbeat_status != '{HeartbeatStatus.IN_PROGRESS.value}' "
+            "OR source.job_start_timestamp IS NULL "
+            f"OR target.status != '{SensorStatus.ACQUIRED_NEW_DATA.value}' "
+            "OR try_cast(target.status_change_timestamp AS TIMESTAMP) IS NULL "
+            "OR try_cast(target.status_change_timestamp AS TIMESTAMP) "
+            "<= source.job_start_timestamp"
+        )
+
+        (
+            DeltaTable.forName(ExecEnv.SESSION, sensor_table)
+            .alias("target")
+            .merge(
+                sensors_to_process_df.alias("source"),
+                "target.sensor_id = source.sensor_id",
+            )
+            .whenMatchedUpdate(
+                condition=not_acquired_during_job,
+                set={
+                    "target.status": f"'{SensorStatus.PROCESSED_NEW_DATA.value}'",
+                    "target.status_change_timestamp": "source.processed_timestamp",
+                },
+            )
+            # Same values as SensorControlTableManager when it inserts a new sensor.
+            .whenNotMatchedInsert(
+                values={
+                    "sensor_id": cls._SOURCE_SENSOR_ID,
+                    "assets": "CAST(array() AS ARRAY<STRING>)",
+                    "status": f"'{SensorStatus.PROCESSED_NEW_DATA.value}'",
+                    "status_change_timestamp": "source.processed_timestamp",
+                    "checkpoint_location": "NULL",
+                    "upstream_key": "'None'",
+                    "upstream_value": "'None'",
+                }
+            )
+            .execute()
+        )
+
+        kept_sensors_df = (
+            ExecEnv.SESSION.table(sensor_table)
+            .alias("target")
+            .join(sensors_to_process_df.alias("source"), "sensor_id")
+            .filter(f"NOT ({not_acquired_during_job})")
+        )
+        for row in kept_sensors_df.select("sensor_id").collect():
+            cls._LOGGER.info(
+                f"Sensor {row['sensor_id']} acquired new data while the job was "
+                "running. Keeping ACQUIRED_NEW_DATA status."
             )
 
     @classmethod
@@ -792,7 +975,9 @@ class Heartbeat(Algorithm):
         Update heartbeat sensor control table with COMPLETE status and
         job_end_timestamp for the triggered job.
         Update sensor control table with PROCESSED_NEW_DATA status and
-        status_change_timestamp for the triggered job.
+        status_change_timestamp for the triggered job. Sensors that acquired new
+        data while the job was running (after its job_start_timestamp) keep the
+        ACQUIRED_NEW_DATA status, so that the new data triggers the job again.
 
         Args:
             job_id: job_id of the running job. It will refer to
@@ -800,15 +985,19 @@ class Heartbeat(Algorithm):
             sensor_table: lakehouse engine sensor table name.
             heartbeat_sensor_control_table: Heartbeat sensor control table.
         """
+        job_id_control_table_df = ExecEnv.SESSION.table(
+            heartbeat_sensor_control_table
+        ).filter(col("trigger_job_id") == job_id)
+
+        cls.update_sensor_processed_status(sensor_table, job_id_control_table_df)
+
         job_id_filter_control_table_df = (
-            ExecEnv.SESSION.table(heartbeat_sensor_control_table)
-            .filter(col("trigger_job_id") == job_id)
-            .withColumn("status", lit(HeartbeatStatus.COMPLETED.value))
+            job_id_control_table_df.withColumn(
+                "status", lit(HeartbeatStatus.COMPLETED.value)
+            )
             .withColumn("status_change_timestamp", current_timestamp())
             .withColumn("job_end_timestamp", current_timestamp())
         )
-
-        cls.update_sensor_processed_status(sensor_table, job_id_filter_control_table_df)
 
         delta_table = DeltaTable.forName(
             ExecEnv.SESSION, heartbeat_sensor_control_table

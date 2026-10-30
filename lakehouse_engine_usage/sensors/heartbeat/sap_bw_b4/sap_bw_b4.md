@@ -18,6 +18,7 @@ SAP BW/B4 and trigger Databricks Workflows related to them.
 - **jdbc_db_table**: SAP logchain table name to query for process chain status.
 - **domain**: Databricks workflows domain for job triggering.
 - **token**: Databricks workflows token for authentication.
+- **max_event_gap_hours** (optional): maximum number of hours between the new events of the hard dependencies of a job for them to be considered from the same upstream cycle. If not set, the default behaviour is kept. Check [Same Cycle Validation](../heartbeat.md#step-5-dependency-validation-and-job-triggering).
 
 ### SAP BW/B4 Data Feed CSV Configuration Entry
 

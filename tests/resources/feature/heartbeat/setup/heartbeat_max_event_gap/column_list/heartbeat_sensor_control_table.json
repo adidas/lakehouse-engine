@@ -1,0 +1,17 @@
+{
+  "sensor_source": "string",
+  "sensor_id": "string",
+  "sensor_read_type": "string",
+  "asset_description": "string",
+  "upstream_key": "string",
+  "preprocess_query": "string",
+  "latest_event_fetched_timestamp": "timestamp",
+  "trigger_job_id": "string",
+  "trigger_job_name": "string",
+  "status": "string",
+  "status_change_timestamp": "timestamp",
+  "job_start_timestamp": "timestamp",
+  "job_end_timestamp": "timestamp",
+  "job_state": "string",
+  "dependency_flag": "string"
+}

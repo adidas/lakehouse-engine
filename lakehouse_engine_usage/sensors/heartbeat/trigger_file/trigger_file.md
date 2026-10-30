@@ -39,6 +39,7 @@ output = dbutils.fs.put(file_path, "Success")
 - **base_trigger_file_location**: S3 path where trigger files are located.
 - **domain**: Databricks workflows domain for job triggering.
 - **token**: Databricks workflows token for authentication.
+- **max_event_gap_hours** (optional): maximum number of hours between the new events of the hard dependencies of a job for them to be considered from the same upstream cycle. If not set, the default behaviour is kept. Check [Same Cycle Validation](../heartbeat.md#step-5-dependency-validation-and-job-triggering).
 
 ### Trigger File Data Feed CSV Configuration Entry
 

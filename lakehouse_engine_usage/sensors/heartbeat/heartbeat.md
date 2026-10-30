@@ -168,7 +168,10 @@ The Heartbeat sensor cluster (running on a single node) performs the following o
 - Filters records based on:
     - Supported sensor sources: `Delta Table`, `Kafka`, `SAP BW/4HANA`, `Lakehouse Manual Upload`, `Trigger file`.
     - Job state: `job_state = 'UNPAUSED'`.
-    - Status conditions: `status IS NULL` or `status = 'COMPLETED'`.
+    - Status conditions: `status IS NULL` or `status = 'COMPLETED'`. When
+        [`max_event_gap_hours`](#step-5-dependency-validation-and-job-triggering) is set,
+        `status = 'NEW_EVENT_AVAILABLE'` records are also checked, so that an older
+        event can be replaced by a newer one before the job is triggered.
 
 !!! important "Orchestration job recommendation"
     We recommend running multiple tasks for each sensor source type in the same Heartbeat
@@ -244,6 +247,46 @@ For jobs that pass dependency validation:
     - `job_start_timestamp` → current timestamp.
     - `status_change_timestamp` → current timestamp.
 
+**5.4 Same Cycle Validation (optional)**
+
+When a job depends on several upstream sources that run at different times, the hard
+dependencies can all be `NEW_EVENT_AVAILABLE` while their events belong to different
+upstream cycles (e.g. one event from yesterday's evening run and the others from
+today's morning run). In that case the job would be triggered with incomplete data.
+
+To prevent this, set the optional `max_event_gap_hours` parameter in the Heartbeat
+ACON. Before triggering a job, the Heartbeat compares the time of the new event of each
+hard dependency and only triggers the job if the gap between the oldest and the most
+recent event is not bigger than `max_event_gap_hours`. Otherwise, the job is not
+triggered and the Heartbeat waits for the newer events.
+
+- The event time is the `status_change_timestamp` of the sensor record in the
+`lakehouse_engine_sensor_db_table` with `ACQUIRED_NEW_DATA` status, as it only
+changes when the sensor acquires new data from the upstream.
+- Jobs with a single hard dependency are not affected (the gap is always 0).
+- If any hard dependency has no valid event time (no sensor record with
+`ACQUIRED_NEW_DATA` status and a valid `status_change_timestamp`), the gap cannot be
+validated, so the job is not triggered and a warning is logged.
+- If `max_event_gap_hours` is not set, the Heartbeat keeps its default behaviour.
+
+```python
+heartbeat_sensor_config_acon = {
+    "sensor_source": "trigger_file",
+    # ... other parameters ...
+    "max_event_gap_hours": 6,
+}
+```
+
+!!! note "Choosing max_event_gap_hours"
+    The value is a time window and not an exact upstream cycle, so it must be chosen
+    based on the schedules of each data product: bigger than the time between the
+    first and the last upstream of the same cycle, and smaller than the time between
+    cycles. A value that is too small blocks the job: if the upstreams of the same
+    cycle usually finish further apart than `max_event_gap_hours`, the job is **never**
+    triggered, and if it only happens occasionally (e.g. one upstream finishes a few
+    hours later than usual), the job is only triggered in the next cycle. A value that
+    is too big allows events from different cycles to be combined.
+
 ### Phase 3: Job Execution and Completion
 
 #### Step 6: Databricks Job Execution
@@ -260,6 +303,10 @@ Upon successful job completion, the update status task:
 - Sets `status` → `COMPLETED`.
 - Updates `status_change_timestamp` → current timestamp.
 - Sets `job_end_timestamp` → job completion timestamp.
+- Sets the sensor status → `PROCESSED_NEW_DATA`, except for sensors that acquired new
+    data while the job was running (after its `job_start_timestamp`). These keep the
+    `ACQUIRED_NEW_DATA` status, so that the new data triggers the job again and no event
+    is lost. This applies whether `max_event_gap_hours` is set or not.
 
 ### Phase 4: Error Handling and Recovery
 
@@ -320,6 +367,9 @@ The Heartbeat sensor automatically handles parallel processing of multiple sourc
 | Jobs stuck in `IN_PROGRESS` | No completion status updates                  | Verify that jobs include the update status task as the final step. |
 | Failed job recovery         | Jobs not resuming after fixes                 | Manually run the job successfully at least once.                   |
 | Missing events              | `latest_event_fetched_timestamp` not updating | Check sensor source connectivity and configuration.                |
+| Jobs not triggering: events from different cycles | Log message `Event gap for job ... hours (max allowed: ... hours)` | The events belong to different cycles according to `max_event_gap_hours`. Wait for the newer events or review the configured value. |
+| Jobs not triggering: missing event time | Warning `Job ... not triggered: only ... of ... hard dependencies have a valid event time` | With `max_event_gap_hours` set, every hard dependency needs a sensor record with `ACQUIRED_NEW_DATA` status and a valid `status_change_timestamp`. Check the sensor records of the job in the `lakehouse_engine_sensor_db_table`. |
+| Update status task fails with a Delta concurrent modification error | Records of the job stay `IN_PROGRESS` | The sensor table was changed by another process (e.g. the Heartbeat) at the same time. No sensor status is overwritten: repair the update status task to complete the job. |
 
 This workflow ensures reliable, automated data pipeline orchestration with robust error handling and dependency management.
 

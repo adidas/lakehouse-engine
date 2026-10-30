@@ -95,6 +95,32 @@ def _create_heartbeat_table() -> None:
             },
             "jobs_triggered_count": 0,
         },
+        {
+            "use_case_name": "trigger_file_cross_cycle_events",
+            "sensor_source": "trigger_file",
+            "trigger_jobs_records": {
+                "heartbeat": """
+                ("trigger_file","pgr_a971_data","streaming",
+                "pgr a971 data",NULL,NULL,TIMESTAMP'2026-08-21 05:30:00',
+                "151920838540073","product_crp_dtc","NEW_EVENT_AVAILABLE",
+                TIMESTAMP'2026-08-21 05:30:00',NULL,NULL,"UNPAUSED","TRUE"),
+                ("trigger_file","pgr_a972_data","streaming",
+                "pgr a972 data",NULL,NULL,TIMESTAMP'2026-08-21 04:30:00',
+                "151920838540073","product_crp_dtc","NEW_EVENT_AVAILABLE",
+                TIMESTAMP'2026-08-21 04:30:00',NULL,NULL,"UNPAUSED","TRUE"),
+                ("trigger_file","s4_pricing","streaming",
+                "s4 pricing data",NULL,NULL,TIMESTAMP'2026-08-21 05:30:00',
+                "151920838540073","product_crp_dtc","NEW_EVENT_AVAILABLE",
+                TIMESTAMP'2026-08-21 05:30:00',NULL,NULL,"UNPAUSED","TRUE"),
+                ("trigger_file","als_pricing_data","streaming",
+                "als pricing data",NULL,NULL,TIMESTAMP'2026-08-20 19:00:00',
+                "151920838540073","product_crp_dtc","NEW_EVENT_AVAILABLE",
+                TIMESTAMP'2026-08-20 19:00:00',NULL,NULL,"UNPAUSED","TRUE")
+                """,
+            },
+            "jobs_triggered_count": 1,
+            "job_id": ["151920838540073"],
+        },
     ],
 )
 @patch(

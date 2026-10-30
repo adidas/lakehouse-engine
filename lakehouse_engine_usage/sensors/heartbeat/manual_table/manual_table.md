@@ -18,6 +18,7 @@ Manual Table and trigger Databricks Workflows related to them.
 - **lakehouse_engine_sensor_db_table**: Database table name for the lakehouse engine sensors (e.g., `my_database.lakehouse_engine_sensors`).
 - **domain**: Databricks workflows domain for job triggering.
 - **token**: Databricks workflows token for authentication.
+- **max_event_gap_hours** (optional): maximum number of hours between the new events of the hard dependencies of a job for them to be considered from the same upstream cycle. If not set, the default behaviour is kept. Check [Same Cycle Validation](../heartbeat.md#step-5-dependency-validation-and-job-triggering).
 
 ### Manual Tables Data Feed CSV Configuration Entry
 

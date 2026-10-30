@@ -1,0 +1,71 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name":"sensor_source",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"sensor_id",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"sensor_read_type",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"asset_description",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"upstream_key",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"preprocess_query",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"trigger_job_id",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"trigger_job_name",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"status",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"job_state",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name":"dependency_flag",
+      "type":"string",
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}
