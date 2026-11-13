@@ -328,7 +328,15 @@ bump-up-version:
 		$(image_name):$(version) \
 		/bin/bash -c 'uv run --frozen $(uv_cicd_extra) bump2version --config-file cicd/.bumpversion.cfg $(increment)'
 
-prepare-release: bump-up-version create-changelog
+check-lock-file:
+	$(container_cli) run --rm \
+		-w /app \
+		-v "$$PWD":/app \
+		$(image_name):$(version) \
+		/bin/bash -c 'uv lock --check'
+
+# The lock check runs before the version bump, so the lock refresh can only update the engine version.
+prepare-release: check-lock-file bump-up-version build-lock-file create-changelog
 	echo "Prepared version and changelog to release!"
 
 create-release-commit:

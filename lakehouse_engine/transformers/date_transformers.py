@@ -4,7 +4,14 @@ from collections.abc import Callable
 from datetime import datetime
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, date_format, lit, to_date, to_timestamp
+from pyspark.sql.functions import (
+    col,
+    date_format,
+    lit,
+    to_date,
+    to_timestamp,
+    try_to_date,
+)
 
 from lakehouse_engine.utils.logging_handler import LoggingHandler
 
@@ -35,13 +42,16 @@ class DateTransformers:
         return inner
 
     @staticmethod
-    def convert_to_date(cols: list[str], source_format: str | None = None) -> Callable:
+    def convert_to_date(
+        cols: list[str], source_format: str | None = None, fail_safe: bool = False
+    ) -> Callable:
         """Convert multiple string columns with a source format into dates.
 
         Args:
             cols: list of names of the string columns to convert.
             source_format: dates source format (e.g., YYYY-MM-dd). [Check here](
                 https://docs.oracle.com/javase/10/docs/api/java/time/format/DateTimeFormatter.html).
+            fail_safe: if True, will use try_to_date instead of to_date, which will return null for invalid dates
 
         Returns:
             A function to be executed in the .transform() spark function.
@@ -53,7 +63,10 @@ class DateTransformers:
             converted_df = df
             for c in cols:
                 converted_df = converted_df.withColumn(
-                    c, to_date(col(c), source_format)
+                    c,
+                    try_to_date(col(c), source_format)
+                    if fail_safe
+                    else to_date(col(c), source_format),
                 )
 
             return converted_df

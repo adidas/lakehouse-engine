@@ -1,9 +1,16 @@
 """Test Date Transformers."""
 
-import pytest
+from datetime import date
 
-from lakehouse_engine.core.definitions import OutputFormat
+import pytest
+from py4j.protocol import Py4JJavaError
+from pyspark.errors import DateTimeException
+from pyspark.sql.types import DateType
+
+from lakehouse_engine.core.definitions import OutputFormat, TransformerSpec
+from lakehouse_engine.core.exec_env import ExecEnv
 from lakehouse_engine.engine import load_data
+from lakehouse_engine.transformers.transformer_factory import TransformerFactory
 from lakehouse_engine.utils.configs.config_utils import ConfigUtils
 from lakehouse_engine.utils.schema_utils import SchemaUtils
 from tests.conftest import (
@@ -20,6 +27,51 @@ TEST_RESOURCES = f"{FEATURE_RESOURCES}/{TEST_PATH}"
 TEST_LAKEHOUSE_IN = f"{LAKEHOUSE_FEATURE_IN}/{TEST_PATH}"
 TEST_LAKEHOUSE_CONTROL = f"{LAKEHOUSE_FEATURE_CONTROL}/{TEST_PATH}"
 TEST_LAKEHOUSE_OUT = f"{LAKEHOUSE_FEATURE_OUT}/{TEST_PATH}"
+
+
+@pytest.mark.parametrize(
+    ("source_format", "valid_date", "invalid_date"),
+    [
+        (None, "2024-02-29", "2024-02-30"),
+        ("dd-MM-yyyy", "29-02-2024", "30-02-2024"),
+    ],
+)
+@pytest.mark.parametrize("fail_safe", [True, False])
+def test_convert_to_date_fail_safe(
+    source_format: str | None, valid_date: str, invalid_date: str, fail_safe: bool
+) -> None:
+    """Malformed dates become null in fail-safe mode and raise otherwise."""
+    spark = ExecEnv.SESSION
+
+    source = spark.createDataFrame(
+        [(valid_date, invalid_date), ("not a date", valid_date)],
+        ["first_date", "second_date"],
+    )
+    transformer = TransformerFactory.get_transformer(
+        TransformerSpec(
+            function="convert_to_date",
+            args={
+                "cols": ["first_date", "second_date"],
+                "source_format": source_format,
+                "fail_safe": fail_safe,
+            },
+        )
+    )
+    result = source.transform(transformer)
+
+    assert isinstance(result.schema["first_date"].dataType, DateType)
+    assert isinstance(result.schema["second_date"].dataType, DateType)
+    if fail_safe:
+        assert set(result.collect()) == {
+            (date(2024, 2, 29), None),
+            (None, date(2024, 2, 29)),
+        }
+    else:
+        with pytest.raises(
+            (Py4JJavaError, DateTimeException),
+            match="CAST_INVALID_INPUT|CANNOT_PARSE_TIMESTAMP",
+        ):
+            result.collect()
 
 
 @pytest.mark.parametrize(
