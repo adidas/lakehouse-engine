@@ -85,17 +85,37 @@ Tests use `tests/configs/engine.yaml` (the open source version uses `tests/confi
 
 ## CI/CD, Releasing & Open-Source Sync
 
+- **Continuous Integration**: pull requests to master and commits to branches are validated by a GitHub Actions workflow that runs the same `make` targets used in local development, in the same order. The local `make` targets reproduce CI exactly — if it passes locally it will pass on CI. The required check is named `ci` and covers: build, docs, lint, dependency audit, dependency tests, local tests, Spark Connect tests, combined coverage and a Sonar quality gate. Test results, coverage and docs are published as workflow artifacts on every run.
+- **Continuous Deployment**: deployments are handled by `.github/workflows/cd.yaml`. Check [CONTRIBUTING.md](CONTRIBUTING.md#continuous-deployment) for CD behavior and inputs, and its [release procedures](CONTRIBUTING.md#general-steps-for-releasing) for triggering releases and redeployments.
 - **Versioning**: version lives in `cicd/.bumpversion.cfg`. Run `make prepare-release increment=<major|minor|patch>` to bump and auto-generate `CHANGELOG.md`.
 - **Wheel builds**: `make build` produces `lakehouse-engine-<version>-py3-none-any.whl`. Non-release builds (when `version ≠ project_version`) produce `lakehouse-engine-experimental` wheels with a `+` suffix.
 - **Lock file**: `uv.lock` is the single lock source of truth for core dependencies and extras. After changing dependencies in `pyproject.toml`, run `make build-lock-file` to refresh it.
 - **Security**: `make audit-dep-safety` runs `uv audit`.
-- **Open-source sync**: the internal repo contains files not present on [public GitHub](https://github.com/adidas/lakehouse-engine). On `make sync-to-github`, several internal-only files are **removed** and config files are **renamed**:
+- **Open-source sync**: the internal repo contains files not present on the [public GitHub](https://github.com/adidas/lakehouse-engine) repository. On `make sync-to-github`, several internal-only files are **removed** and config files are **renamed**:
   - `lakehouse_engine/configs/engine_os.yaml` → `engine.yaml` (the `engine.yaml` internal file is deleted)
   - `tests/configs/engine_os.yaml` → `tests/configs/engine.yaml`
   - `cicd/meta_os.yaml` → `cicd/meta.yaml`
   - `CONTRIBUTING_OS.md` → `CONTRIBUTING.md`
+  - `.github/workflows/` is deleted entirely — CI workflows are internal-only and must never reach the public repository
   - Also removed: `sonar-project.properties`, `CODEOWNERS`, `CHANGELOG.md`, internal `assets/`
-- **Agent caution**: when contributing, do not reference or commit the internal `engine.yaml` (the private config). Only `engine_os.yaml` should carry open-source-safe defaults. Check that any new config in added internally has an `_os` counterpart if it needs to be public.
+- **Agent caution**: when contributing, do not reference or commit the internal `engine.yaml` (the private config). Only `engine_os.yaml` should carry open-source-safe defaults. Check that any new config added internally has an `_os` counterpart if it needs to be public.
+
+## Internal vs Public Repository
+
+This project maintains two repositories: an internal one and a public one. They are kept in sync via `make sync-to-github`, which removes or renames files before pushing to the public repository.
+
+**Files that are internal-only (removed on sync):**
+- `sonar-project.properties` — CI quality gate configuration
+- `CODEOWNERS` — internal team ownership
+- `CHANGELOG.md` — auto-generated release log
+- `CONTRIBUTING.md` — replaced by `CONTRIBUTING_OS.md` on sync
+- `lakehouse_engine/configs/engine.yaml` — replaced by `engine_os.yaml` on sync
+- `tests/configs/engine.yaml` — replaced by `engine_os.yaml` on sync
+- `cicd/meta.yaml` — replaced by `meta_os.yaml` on sync
+- `assets/img/os_strategy.png` — internal asset
+- `.github/workflows/` — all CI/CD workflows are internal-only; they are deleted entirely before the public sync
+
+**Rule for contributors and agents**: any new file that must remain internal (contains credentials, internal infrastructure references, or internal tooling config) must be added to the `remove_files_from_os` variable in `Makefile` (for files) or handled with an explicit `rm -rf` in the `sync-to-github` target (for directories) **in the same pull request** that introduces the file. Never add internal URLs, hostnames, secret names, runner labels or team contacts to files that reach the public repository.
 
 ## Key Conventions
 

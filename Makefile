@@ -1,6 +1,7 @@
 SHELL := /bin/bash -euxo pipefail
 
 container_cli := docker
+docker_compose := docker compose
 image_name := lakehouse-engine
 deploy_env := dev
 project_version := $(shell cat cicd/.bumpversion.cfg | grep "current_version =" | cut -f 3 -d " ")
@@ -67,6 +68,22 @@ else
 build_src_dir := .
 endif
 
+prepare-runner:
+	@echo "Installing Docker Compose V2..."
+	@mkdir -p ~/.docker/cli-plugins
+	@curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$$(uname -s)-$$(uname -m) -o ~/.docker/cli-plugins/docker-compose
+	@chmod +x ~/.docker/cli-plugins/docker-compose
+	@docker compose version
+	@if [ -n "$(BRANCH)" ]; then \
+		sanitized_version=$$(printf '%s' "$(BRANCH)" | tr '/-' '__' | tr '[:upper:]' '[:lower:]'); \
+		if ! echo "$$sanitized_version" | grep -qE '^[a-z0-9_][a-z0-9_.]{0,127}$$'; then \
+			echo "Error: Branch name cannot be used as a Docker image version." >&2; \
+			exit 1; \
+		fi; \
+		echo "VERSION=$$sanitized_version" >> $(GITHUB_ENV); \
+		echo "Sanitized version: $$sanitized_version"; \
+	fi
+
 build-image:
 	$(container_cli) build \
 		--build-arg USER_ID=$(shell id -u ${USER}) \
@@ -106,9 +123,12 @@ deploy: build
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
-		-v $(artifactory_credentials_file):$(container_user_dir)/.pypirc \
+		-e UV_PUBLISH_URL \
+		-e UV_PUBLISH_CHECK_URL \
+		-e UV_PUBLISH_USERNAME \
+		-e UV_PUBLISH_PASSWORD \
 		$(image_name):$(version) \
-		/bin/bash -c 'twine upload -r artifactory dist/$(subst -,_,$(project_name))-$(wheel_version)-py3-none-any.whl --skip-existing'
+		/bin/bash -c 'uv publish --trusted-publishing never dist/$(subst -,_,$(project_name))-$(wheel_version)-py3-none-any.whl'
 
 docs:
 	$(container_cli) run --rm \
@@ -165,13 +185,13 @@ test-local:
             --spark_driver_memory=$(spark_driver_memory) --spark_mode=local $(test_only)" && \
 	mv .coverage artefacts/.coverage.local
 
-# Run tests with Spark Connect using docker-compose
+# Run tests with Spark Connect using docker compose
 # Usage: make test-spark-connect-compose
 #        make test-spark-connect-compose test_only="tests/feature/test_delta_load.py"
 # The stop-spark-connect target is a dependency of this target to ensure a clean environment before running the tests
 # The build target is a dependency because the tests need the most up to date version of the whl to be installed in the container
 test-spark-connect: build stop-spark-connect
-	VERSION=$(version) TEST_ONLY="$(test_only)" SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(container_cli)-compose \
+	VERSION=$(version) TEST_ONLY="$(test_only)" SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(docker_compose) \
 		-f cicd/docker-compose-spark-connect.yml up \
 		--abort-on-container-exit \
 		--exit-code-from lakehouse-engine-tests && \
@@ -191,12 +211,12 @@ combine-coverage:
 
 # Stop and remove Spark Connect containers and volumes
 stop-spark-connect:
-	$(container_cli)-compose -f cicd/docker-compose-spark-connect.yml down -v
+	$(docker_compose) -f cicd/docker-compose-spark-connect.yml down --volumes
 
 # Start only the Spark Connect server (useful for manual testing)
 # Access Spark UI at http://localhost:4040
 start-spark-connect:
-	VERSION=$(version) SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(container_cli)-compose \
+	VERSION=$(version) SPARK_REPOSITORIES_URL=$(spark_repositories_url) $(docker_compose) \
 		-f cicd/docker-compose-spark-connect.yml up -d spark-connect-server
 	@echo "Spark Connect server starting... waiting for health check..."
 	@echo "Server will be available at sc://localhost:15002"
@@ -273,6 +293,7 @@ sync-to-github: prepare-github-repo
 		/bin/bash -c """cd tmp_os/lakehouse-engine; \
 		rsync -r --delete --exclude=.git --exclude=.*cache* --exclude=venv --exclude=dist --exclude=tmp_os /app/ . ; \
 		rm -f $(remove_files_from_os); \
+		rm -rf .github/workflows; \
 		mv $(engine_os_conf_file) $(engine_conf_file); \
 		mv $(engine_os_conf_test_file) $(engine_conf_test_file); \
 		mv $(meta_os_conf_file) $(meta_conf_file); \
@@ -301,9 +322,10 @@ deploy-to-pypi: build
 	$(container_cli) run --rm \
 		-w /app \
 		-v "$$PWD":/app \
-		-v $(pypi_credentials_file):$(container_user_dir)/.pypirc \
+		-e UV_PUBLISH_USERNAME \
+		-e UV_PUBLISH_PASSWORD \
 		$(image_name):$(version) \
-		/bin/bash -c 'twine upload tmp_os/lakehouse-engine/dist/lakehouse_engine-$(project_version)-py3-none-any.whl --skip-existing'
+		/bin/bash -c 'uv publish --trusted-publishing never tmp_os/lakehouse-engine/dist/lakehouse_engine-$(project_version)-py3-none-any.whl'
 
 deploy-to-pypi-and-clean: deploy-to-pypi
 	$(container_cli) run --rm \

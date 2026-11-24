@@ -54,7 +54,7 @@ ARG CPU_ARCHITECTURE
 # Install runtime dependencies including temporary tools for JDK setup
 RUN mkdir -p /usr/share/man/man1 && \
     apt-get -y update && \
-    apt-get install -y --no-install-recommends rsync=3.4.1+ds1-5+deb13u4 git=1:2.47.3-0+deb13u1 wget=1.25.0-2 gnupg=2.4.7-21+deb13u1 g++=4:14.2.0-1 openssh-client=1:10.0p1-7+deb13u4 && \
+    apt-get install -y --no-install-recommends rsync=3.5.0+ds1-0+deb13u2 git=1:2.47.3-0+deb13u1 wget=1.25.0-2 gnupg=2.4.7-21+deb13u1 g++=4:14.2.0-1 openssh-client=1:10.0p1-7+deb13u4 && \
     mkdir -p /etc/apt/keyrings && \
     wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null && \
     echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \

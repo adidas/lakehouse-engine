@@ -9,7 +9,7 @@ name = "lakehouse-engine"
 requires-python = ">=3.12"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-version = "2.3.1"
+version = "2.3.2"
 authors = [{name = "Adidas Lakehouse Foundations Team", email = "software.engineering@adidas.com"}]
 description = "A configuration-driven Spark framework serving as the engine for several lakehouse algorithms and data flows."
 keywords = ["framework", "big-data", "spark", "databricks", "data-quality", "data-engineering", "great-expectations",
@@ -45,7 +45,8 @@ azure = [
     "nest-asyncio==1.6.0",
     "msal==1.37.0",
     "multidict==6.9.1",
-    "pyjwt[crypto]==2.15.0"
+    "pyjwt[crypto]==2.15.0",
+    "opentelemetry-api==1.45.2"  # Pinning transitive dependency of msgraph-sdk to avoid security issues
 ]
 dq = [
     "great-expectations==1.20.0"
@@ -106,8 +107,7 @@ cicd = [
     "types-requests<2.31.0.7",
     "moto==4.2.14",
     "Werkzeug==3.1.9",
-    "junitparser==4.0.2",
-    "twine==5.1.1"
+    "junitparser==4.0.2"
 ]
 
 [project.urls]
